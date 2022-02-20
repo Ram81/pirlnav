@@ -1,0 +1,20 @@
+filename,object_name,main_word,synset,category
+006_mustard_bottle.glb,mustard bottle,bottle,foodstuff.n.01,foodstuff
+007_tuna_fish_can.glb,tuna fish can,can,foodstuff.n.01,foodstuff
+010_potted_meat_can.glb,potted meat can,can,foodstuff.n.01,foodstuff
+011_banana.glb,banana,banana,fruit.n.01,fruit
+012_strawberry.glb,strawberry,strawberry,fruit.n.01,fruit
+014_lemon.glb,lemon,lemon,fruit.n.01,fruit
+024_bowl.glb,bowl,bowl,kitchenware.n.01,kitchenware
+025_mug.glb,mug,mug,kitchenware.n.01,kitchenware
+029_plate.glb,plate,plate,kitchenware.n.01,kitchenware
+037_scissors.glb,scissors,scissors,stationery.n.01,stationery
+040_large_marker.glb,large marker,marker,stationery.n.01,stationery
+042_adjustable_wrench.glb,adjustable wrench,wrench,hand_tool.n.01,hand_tool
+043_phillips_screwdriver.glb,phillips screwdriver,screwdriver,hand_tool.n.01,hand_tool
+048_hammer.glb,hammer,hammer,hand_tool.n.01,hand_tool
+053_mini_soccer_ball.glb,mini soccer ball,ball,game_equipment.n.01,game_equipment
+062_dice.glb,dice,dice,game_equipment.n.01,game_equipment
+070-a_colored_wood_blocks.glb,a colored wood blocks,blocks,game_equipment.n.01,game_equipment
+072-a_toy_airplane.glb,a toy airplane,toy,plaything.n.01,plaything
+073-a_lego_duplo.glb,a lego duplo,lego,plaything.n.01,plaything

@@ -1,0 +1,361 @@
+ENVIRONMENT:
+  MAX_EPISODE_STEPS: 5000
+
+TASK:
+  TYPE: Int-v0
+  SUCCESS_DISTANCE: 0.2
+  SENSORS: ['POINTGOAL_WITH_GPS_COMPASS_SENSOR']
+  POINTGOAL_WITH_GPS_COMPASS_SENSOR:
+    GOAL_FORMAT: "POLAR"
+    DIMENSIONALITY: 2
+  GOAL_SENSOR_UUID: pointgoal_with_gps_compass
+
+  INSTRUCTION: "Place the {} {} the {}"
+
+  TYPE: "arrangement"
+
+  NUM_OBJECTS: 1
+
+  NUM_RECEPTACLES: 1
+
+  OBJECTS: [
+    "tomato_soup_can",
+    "master_chef_can",
+    "tuna_fish_can",
+    "potted_meat_can",
+    "gelatin_box",
+    "apple",
+    "banana",
+    "orange",
+    "plum",
+    "pear",
+    "cracker_box",
+    "sugar_box",
+    "mustard_bottle",
+    "bleach_cleanser",
+    "spoon",
+    "fork",
+    "knife",
+    "spatula",
+    "b_cups",
+    "c_cups",
+    "e_cups",
+    "d_cups",
+    "a_cups",
+    "f_cups",
+    "mug",
+    "bowl",
+    "plate",
+    "pitcher_base",
+    "rubiks_cube",
+    "toy_airplane",
+    "b_lego_duplo",
+    "e_lego_duplo",
+    "a_lego_duplo",
+    "b_toy_airplane",
+    "baseball",
+    "tennis_ball",
+    "softball",
+    "racquetball",
+    "hammer",
+    "adjustable_wrench",
+    "power_drill",
+    "phillips_screwdriver",
+    "large_clamp",
+    "scissors",
+  ]
+
+  RECEPTACLES: [
+    "plate",
+    "bowl",
+    "colored_wood_blocks",
+    "wood_block",
+    "b_colored_wood_blocks",
+    "foam_brick",
+    "Room_Essentials_Dish_Drainer_Collapsible_White",
+    "Threshold_Dinner_Plate_Square_Rim_White_Porcelain",
+    "Threshold_Bistro_Ceramic_Dinner_Plate_Ruby_Ring",
+    "Dixie_10_ounce_Bowls_35_ct",
+    "Bradshaw_International_11642_7_Qt_MP_Plastic_Bowl",
+    "Curver_Storage_Bin_Black_Small",
+    "Closetmaid_Premium_Fabric_Cube_Red",
+    "Room_Essentials_Fabric_Cube_Lavender",
+    "basket"
+  ]
+
+  OBJECT_NAME_MAP:
+    "apple": "apple"
+    "banana": "banana"
+    "cracker_box": "cheezit box"
+    "colored_wood_blocks": "colored wood blocks"
+    "gelatin_box": "jello box"
+    "hammer": "hammer"
+    "master_chef_can": "masterchef can"
+    "mini_soccer_ball": "soccer ball"
+    "mustard_bottle": "mustard bottle"
+    "orange": "orange"
+    "bowl": "red bowl"
+    "mug": "red mug"
+    "plate": "red plate"
+    "sphere": "red sphere"
+    "tomato_soup_can": "tomato soup can"
+    "toy_airplane": "toy airplane"
+    "wood_block": "wood block"
+    "large_clamp": "large clamp"
+    "b_cups": "blue cup"
+    "c_cups": "green cup"
+    "baseball": "baseball"
+    "tennis_ball": "tennis ball"
+    "pitcher_base": "blue jug"
+    "potted_meat_can": "potted meat can"
+    "sugar_box": "sugar box"
+    "rubiks_cube": "rubiks cube"
+    "softball": "softball"
+    "plum": "plum"
+    "spoon": "spoon"
+    "b_colored_wood_blocks": "blue wood block"
+    "fork": "fork"
+    "knife": "knife"
+    "e_cups": "red cup"
+    "d_cups": "yellow cup"
+    "b_toy_airplane": "toy gun"
+    "phillips_screwdriver": "screwdriver"
+    "foam_brick": "brown box"
+    "b_lego_duplo": "purple lego"
+    "e_lego_duplo": "blue lego"
+    "spatula": "spatula"
+    "adjustable_wrench": "wrench"
+    "a_cups": "orange cup"
+    "tuna_fish_can": "tuna fish can"
+    "power_drill": "power drill"
+    "a_lego_duplo": "green lego"
+    "f_cups": "purple cup"
+    "pear": "pear"
+    "flat_screwdriver": "flat screwdriver"
+    "racquetball": "racquetball"
+    "scissors": "scissors"
+    "bleach_cleanser": "white bottle"
+    "Room_Essentials_Dish_Drainer_Collapsible_White": "dish drainer"
+    "Cole_Hardware_Bowl_Scirocco_YellowBlue": "yellow serving bowl"
+    "Dixie_10_ounce_Bowls_35_ct": "dixie bowl"
+    "Threshold_Bead_Cereal_Bowl_White": "cereal bowl"
+    "Bradshaw_International_11642_7_Qt_MP_Plastic_Bowl": "red plastic bowl"
+    "Pennington_Electric_Pot_Cabana_4": "yellow plant pot"
+    "Down_To_Earth_Orchid_Pot_Ceramic_Red": "red orchid pot"
+    "Down_To_Earth_Ceramic_Orchid_Pot_Asst_Blue": "blue orchid pot"
+    "Down_To_Earth_Orchid_Pot_Ceramic_Lime": "lime orchid pot"
+    "SpiderMan_Titan_Hero_12Inch_Action_Figure_5Hnn4mtkFsP": "spiderman action figure"
+    "Schleich_Spinosaurus_Action_Figure": "dinosaur action figure"
+    "Teenage_Mutant_Ninja_Turtles_Rahzar_Action_Figure": "rahzar action figure"
+    "Schleich_Lion_Action_Figure": "lion action figure"
+    "SCHOOL_BUS": "toy school bus"
+    "Thomas_Friends_Woodan_Railway_Henry": "green toy train"
+    "Weisshai_Great_White_Shark": "toy shark"
+    "Sonny_School_Bus": "toy school bus"
+    "Vtech_Roll_Learn_Turtle": "turtle toy"
+    "Thomas_Friends_Wooden_Railway_Porter_5JzRhMm3a9o": "green toy rail"
+    "Fisher_price_Classic_Toys_Buzzy_Bee": "buzzy bee toy"
+    "TURBOPROP_AIRPLANE_WITH_PILOT": "toy airplane"
+    "Thomas_Friends_Wooden_Railway_Talking_Thomas_z7yi7UFHJRj": "blue toy train"
+    "Vtech_Stack_Sing_Rings_636_Months": "stack ring toy"
+    "Toysmith_Windem_Up_Flippin_Animals_Dog": "toy dog"
+    "Squirrel": "squirrel toy"
+    "Threshold_Porcelain_Teapot_White": "teapot"
+    "KS_Chocolate_Cube_Box_Assortment_By_Neuhaus_2010_Ounces": "chocolate box"
+    "Closetmaid_Premium_Fabric_Cube_Red": "red fabric cube"
+    "Great_Dinos_Triceratops_Toy": "android figure"
+    "Remington_TStudio_Silk_Ceramic_Hair_Straightener_2_Inch_Floating_Plates": "hair straightner"
+    "Threshold_Porcelain_Pitcher_White": "white pitcher"
+    "Chef_Style_Round_Cake_Pan_9_inch_pan": "baking pan"
+    "Ocedar_Snap_On_Dust_Pan_And_Brush_1_ct": "dust pan"
+    "Shark": "toy shark"
+    "Victor_Reversible_Bookend": "bookend"
+    "HeavyDuty_Flashlight": "flashlight"
+    "Grreatv_Choice_Dog_Bowl_Gray_Bones_Plastic_20_fl_oz_total": "grey dog food bowl"
+    "Top_Paw_Dog_Bowl_Blue_Paw_Bone_Ceramic_25_fl_oz_total": "blue dog food bowl"
+    "Grreat_Choice_Dog_Double_Dish_Plastic_Blue": "plastic dog food dish"
+    "Threshold_Bamboo_Ceramic_Soap_Dish": "soap dish"
+    "Cole_Hardware_Butter_Dish_Square_Red": "red butter dish"
+    "Android_Lego": "android lego"
+    "grey_hat": "grey hat"
+    "DPC_Handmade_Hat_Brown": "brown hat"
+    "BIA_Cordon_Bleu_White_Porcelain_Utensil_Holder_900028": "utensil holder"
+    "Ecoforms_Quadra_Saucer_SQ1_Avocado": "green saucer"
+    "Cole_Hardware_Saucer_Electric": "pink saucer"
+    "Ecoforms_Plant_Saucer_SQ8COR": "red saucer"
+    "Threshold_Bistro_Ceramic_Dinner_Plate_Ruby_Ring": "ceramic plate"
+    "Threshold_Dinner_Plate_Square_Rim_White_Porcelain": "square porcelain plate"
+    "ACE_Coffee_Mug_Kristen_16_oz_cup": "red coffee mug"
+    "Cole_Hardware_Mug_Classic_Blue": "blue mug"
+    "Room_Essentials_Mug_White_Yellow": "yellow mug"
+    "Threshold_Porcelain_Coffee_Mug_All_Over_Bead_White": "white mug"
+    "TriStar_Products_PPC_Power_Pressure_Cooker_XL_in_Black": "pressure cooker"
+    "Cole_Hardware_Hammer_Black": "cole hammer"
+    "Room_Essentials_Fabric_Cube_Lavender": "pink fabric cube"
+    "Curver_Storage_Bin_Black_Small": "storage bin"
+    "basket": "basket"
+    "INTERNATIONAL_PAPER_Willamette_4_Brown_Bag_500Count": "brown bag"
+    "Toys_R_Us_Treat_Dispenser_Smart_Puzzle_Foobler": "puzzle ball"
+
+  OBJECTS_RECEPTACLE_MAP:
+    # Food
+    "tomato_soup_can": ["plate"]
+    "master_chef_can": ["plate"]
+    "tuna_fish_can": ["plate"]
+    "potted_meat_can": ["plate"]
+    "gelatin_box": ["plate"]
+    "apple": ["plate", "bowl"]
+    "banana": ["plate", "bowl"]
+    "orange": ["plate", "bowl"]
+    "plum": ["bowl", "plate"]
+    "pear": ["plate", "bowl"]
+    "cracker_box": ["b_colored_wood_blocks", "plate", "foam_brick"]
+    "sugar_box": ["b_colored_wood_blocks", "plate", "foam_brick"]
+    "mustard_bottle": ["plate", "b_colored_wood_blocks", "foam_brick"]
+    "bleach_cleanser": ["plate", "b_colored_wood_blocks", "foam_brick"]
+    # Utensils
+    "spoon": ["plate"]
+    "fork": ["plate"]
+    "knife": ["plate"]
+    "spatula": ["plate"]
+    "b_cups": ["wood_block", "b_colored_wood_blocks", "plate", "foam_brick"]
+    "c_cups": ["wood_block", "b_colored_wood_blocks", "plate", "foam_brick"]
+    "e_cups": ["wood_block", "b_colored_wood_blocks", "plate", "foam_brick"]
+    "d_cups": ["wood_block", "b_colored_wood_blocks", "plate", "foam_brick"]
+    "a_cups": ["wood_block", "b_colored_wood_blocks", "plate", "foam_brick"]
+    "f_cups": ["wood_block", "b_colored_wood_blocks", "plate", "foam_brick"]
+    "mug": ["plate", "b_colored_wood_blocks", "wood_block", "foam_brick"]
+    "bowl": ["plate", "b_colored_wood_blocks", "wood_block", "foam_brick"]
+    "plate": ["b_colored_wood_blocks", "wood_block", "foam_brick"]
+    "pitcher_base": ["wood_block", "b_colored_wood_blocks", "foam_brick"]
+    # Toys
+    "rubiks_cube": ["colored_wood_blocks", "b_colored_wood_blocks", "foam_brick"]
+    "toy_airplane": ["colored_wood_blocks", "b_colored_wood_blocks", "foam_brick"]
+    "b_lego_duplo": ["colored_wood_blocks", "b_colored_wood_blocks", "foam_brick"]
+    "e_lego_duplo": ["colored_wood_blocks", "b_colored_wood_blocks", "foam_brick"]
+    "a_lego_duplo": ["colored_wood_blocks", "b_colored_wood_blocks", "foam_brick"]
+    "b_toy_airplane": ["colored_wood_blocks", "b_colored_wood_blocks", "foam_brick"]
+    "baseball": ["colored_wood_blocks", "b_colored_wood_blocks", "foam_brick"]
+    "tennis_ball": ["colored_wood_blocks", "b_colored_wood_blocks", "foam_brick"]
+    "softball": ["colored_wood_blocks", "b_colored_wood_blocks", "foam_brick"]
+    "racquetball": ["colored_wood_blocks", "b_colored_wood_blocks", "foam_brick"]
+    # Hardware tools
+    "hammer": ["b_colored_wood_blocks", "wood_block", "foam_brick"]
+    "adjustable_wrench": ["b_colored_wood_blocks", "wood_block", "foam_brick"]
+    "power_drill": ["b_colored_wood_blocks", "wood_block", "foam_brick"]
+    "phillips_screwdriver": ["b_colored_wood_blocks", "wood_block", "foam_brick"]    
+    "large_clamp": ["b_colored_wood_blocks", "wood_block", "foam_brick"]
+    "scissors": ["b_colored_wood_blocks", "wood_block", "foam_brick"]
+    # 117 object receptacle pair
+
+  GOOGLE_OBJECT_RECEPTACLE_MAP:
+    "tomato_soup_can": ["Threshold_Dinner_Plate_Square_Rim_White_Porcelain", "Threshold_Bistro_Ceramic_Dinner_Plate_Ruby_Ring"]
+    "master_chef_can": ["Threshold_Dinner_Plate_Square_Rim_White_Porcelain", "Threshold_Bistro_Ceramic_Dinner_Plate_Ruby_Ring"]
+    "tuna_fish_can": ["Threshold_Dinner_Plate_Square_Rim_White_Porcelain", "Threshold_Bistro_Ceramic_Dinner_Plate_Ruby_Ring"]
+    "potted_meat_can": ["Threshold_Dinner_Plate_Square_Rim_White_Porcelain", "Threshold_Bistro_Ceramic_Dinner_Plate_Ruby_Ring"]
+    "gelatin_box": ["Threshold_Dinner_Plate_Square_Rim_White_Porcelain", "Threshold_Bistro_Ceramic_Dinner_Plate_Ruby_Ring"]
+    "apple": ["Threshold_Dinner_Plate_Square_Rim_White_Porcelain", "Threshold_Bistro_Ceramic_Dinner_Plate_Ruby_Ring", "Dixie_10_ounce_Bowls_35_ct", "Bradshaw_International_11642_7_Qt_MP_Plastic_Bowl"]
+    "banana": ["Threshold_Dinner_Plate_Square_Rim_White_Porcelain", "Threshold_Bistro_Ceramic_Dinner_Plate_Ruby_Ring", "Dixie_10_ounce_Bowls_35_ct", "Bradshaw_International_11642_7_Qt_MP_Plastic_Bowl"]
+    "orange": ["Threshold_Dinner_Plate_Square_Rim_White_Porcelain", "Threshold_Bistro_Ceramic_Dinner_Plate_Ruby_Ring", "Dixie_10_ounce_Bowls_35_ct", "Bradshaw_International_11642_7_Qt_MP_Plastic_Bowl"]
+    "plum": ["Threshold_Dinner_Plate_Square_Rim_White_Porcelain", "Threshold_Bistro_Ceramic_Dinner_Plate_Ruby_Ring", "Dixie_10_ounce_Bowls_35_ct", "Bradshaw_International_11642_7_Qt_MP_Plastic_Bowl"]
+    "pear": ["Threshold_Dinner_Plate_Square_Rim_White_Porcelain", "Threshold_Bistro_Ceramic_Dinner_Plate_Ruby_Ring", "Dixie_10_ounce_Bowls_35_ct", "Bradshaw_International_11642_7_Qt_MP_Plastic_Bowl"]
+    "cracker_box": ["Threshold_Dinner_Plate_Square_Rim_White_Porcelain", "Threshold_Bistro_Ceramic_Dinner_Plate_Ruby_Ring"]
+    "sugar_box": ["Threshold_Dinner_Plate_Square_Rim_White_Porcelain", "Threshold_Bistro_Ceramic_Dinner_Plate_Ruby_Ring"]
+    "mustard_bottle": ["Threshold_Dinner_Plate_Square_Rim_White_Porcelain", "Threshold_Bistro_Ceramic_Dinner_Plate_Ruby_Ring"]
+    "bleach_cleanser": ["Threshold_Dinner_Plate_Square_Rim_White_Porcelain", "Threshold_Bistro_Ceramic_Dinner_Plate_Ruby_Ring"]
+
+    # Utensils
+    "spoon": ["Threshold_Dinner_Plate_Square_Rim_White_Porcelain", "Threshold_Bistro_Ceramic_Dinner_Plate_Ruby_Ring", "Room_Essentials_Dish_Drainer_Collapsible_White"]
+    "fork": ["Threshold_Dinner_Plate_Square_Rim_White_Porcelain", "Threshold_Bistro_Ceramic_Dinner_Plate_Ruby_Ring", "Room_Essentials_Dish_Drainer_Collapsible_White"]
+    "knife": ["Threshold_Dinner_Plate_Square_Rim_White_Porcelain", "Threshold_Bistro_Ceramic_Dinner_Plate_Ruby_Ring", "Room_Essentials_Dish_Drainer_Collapsible_White"]
+    "spatula": ["Threshold_Dinner_Plate_Square_Rim_White_Porcelain", "Threshold_Bistro_Ceramic_Dinner_Plate_Ruby_Ring", "Room_Essentials_Dish_Drainer_Collapsible_White"]
+    "b_cups": ["Threshold_Dinner_Plate_Square_Rim_White_Porcelain", "Threshold_Bistro_Ceramic_Dinner_Plate_Ruby_Ring", "Room_Essentials_Dish_Drainer_Collapsible_White"]
+    "c_cups": ["Threshold_Dinner_Plate_Square_Rim_White_Porcelain", "Threshold_Bistro_Ceramic_Dinner_Plate_Ruby_Ring", "Room_Essentials_Dish_Drainer_Collapsible_White"]
+    "e_cups": ["Threshold_Dinner_Plate_Square_Rim_White_Porcelain", "Threshold_Bistro_Ceramic_Dinner_Plate_Ruby_Ring", "Room_Essentials_Dish_Drainer_Collapsible_White"]
+    "d_cups": ["Threshold_Dinner_Plate_Square_Rim_White_Porcelain", "Threshold_Bistro_Ceramic_Dinner_Plate_Ruby_Ring", "Room_Essentials_Dish_Drainer_Collapsible_White"]
+    "a_cups": ["Threshold_Dinner_Plate_Square_Rim_White_Porcelain", "Threshold_Bistro_Ceramic_Dinner_Plate_Ruby_Ring", "Room_Essentials_Dish_Drainer_Collapsible_White"]
+    "f_cups": ["Threshold_Dinner_Plate_Square_Rim_White_Porcelain", "Threshold_Bistro_Ceramic_Dinner_Plate_Ruby_Ring", "Room_Essentials_Dish_Drainer_Collapsible_White"]
+    "mug": ["Threshold_Dinner_Plate_Square_Rim_White_Porcelain", "Threshold_Bistro_Ceramic_Dinner_Plate_Ruby_Ring", "Room_Essentials_Dish_Drainer_Collapsible_White"]
+    "bowl": ["Threshold_Dinner_Plate_Square_Rim_White_Porcelain", "Threshold_Bistro_Ceramic_Dinner_Plate_Ruby_Ring", "Room_Essentials_Dish_Drainer_Collapsible_White"]
+    "plate": ["Room_Essentials_Dish_Drainer_Collapsible_White", "Dixie_10_ounce_Bowls_35_ct", "Bradshaw_International_11642_7_Qt_MP_Plastic_Bowl"]
+
+    # bowls
+    "Cole_Hardware_Bowl_Scirocco_YellowBlue": ["plate", "b_colored_wood_blocks", "foam_brick", "Room_Essentials_Dish_Drainer_Collapsible_White", "Threshold_Dinner_Plate_Square_Rim_White_Porcelain", "Threshold_Bistro_Ceramic_Dinner_Plate_Ruby_Ring"]
+    "Dixie_10_ounce_Bowls_35_ct": ["plate", "b_colored_wood_blocks", "foam_brick", "Room_Essentials_Dish_Drainer_Collapsible_White", "Threshold_Dinner_Plate_Square_Rim_White_Porcelain", "Threshold_Bistro_Ceramic_Dinner_Plate_Ruby_Ring"]
+    "Threshold_Bead_Cereal_Bowl_White": ["plate", "b_colored_wood_blocks", "foam_brick", "Room_Essentials_Dish_Drainer_Collapsible_White", "Threshold_Dinner_Plate_Square_Rim_White_Porcelain", "Threshold_Bistro_Ceramic_Dinner_Plate_Ruby_Ring"]
+    "Bradshaw_International_11642_7_Qt_MP_Plastic_Bowl": ["plate", "b_colored_wood_blocks", "foam_brick", "Room_Essentials_Dish_Drainer_Collapsible_White", "Threshold_Dinner_Plate_Square_Rim_White_Porcelain", "Threshold_Bistro_Ceramic_Dinner_Plate_Ruby_Ring"]
+    "Top_Paw_Dog_Bowl_Blue_Paw_Bone_Ceramic_25_fl_oz_total": ["b_colored_wood_blocks", "colored_wood_blocks", "Curver_Storage_Bin_Black_Small"]
+    "Grreat_Choice_Dog_Double_Dish_Plastic_Blue": ["b_colored_wood_blocks", "colored_wood_blocks", "Curver_Storage_Bin_Black_Small"]
+    "Grreatv_Choice_Dog_Bowl_Gray_Bones_Plastic_20_fl_oz_total": ["b_colored_wood_blocks", "colored_wood_blocks", "Curver_Storage_Bin_Black_Small"]
+
+    # pots
+    "Pennington_Electric_Pot_Cabana_4": ["b_colored_wood_blocks", "wood_block", "foam_brick", "Curver_Storage_Bin_Black_Small"]
+    "Down_To_Earth_Orchid_Pot_Ceramic_Red": ["b_colored_wood_blocks", "wood_block", "foam_brick", "Curver_Storage_Bin_Black_Small"]
+    "Down_To_Earth_Ceramic_Orchid_Pot_Asst_Blue": ["b_colored_wood_blocks", "wood_block", "foam_brick", "Curver_Storage_Bin_Black_Small"]
+    "Down_To_Earth_Orchid_Pot_Ceramic_Lime": ["b_colored_wood_blocks", "wood_block", "foam_brick", "Curver_Storage_Bin_Black_Small"]
+
+    # toys
+    "SpiderMan_Titan_Hero_12Inch_Action_Figure_5Hnn4mtkFsP": ["b_colored_wood_blocks", "colored_wood_blocks", "Closetmaid_Premium_Fabric_Cube_Red", "basket", "Room_Essentials_Fabric_Cube_Lavender", "Curver_Storage_Bin_Black_Small"]
+    "Schleich_Spinosaurus_Action_Figure": ["b_colored_wood_blocks", "colored_wood_blocks", "Closetmaid_Premium_Fabric_Cube_Red", "basket", "Room_Essentials_Fabric_Cube_Lavender", "Curver_Storage_Bin_Black_Small"]
+    "Teenage_Mutant_Ninja_Turtles_Rahzar_Action_Figure": ["b_colored_wood_blocks", "colored_wood_blocks", "Closetmaid_Premium_Fabric_Cube_Red", "basket", "Room_Essentials_Fabric_Cube_Lavender", "Curver_Storage_Bin_Black_Small"]
+    "Schleich_Lion_Action_Figure": ["b_colored_wood_blocks", "colored_wood_blocks", "Closetmaid_Premium_Fabric_Cube_Red", "basket", "Room_Essentials_Fabric_Cube_Lavender", "Curver_Storage_Bin_Black_Small"]
+    "SCHOOL_BUS": ["b_colored_wood_blocks", "colored_wood_blocks", "Closetmaid_Premium_Fabric_Cube_Red", "basket", "Room_Essentials_Fabric_Cube_Lavender", "Curver_Storage_Bin_Black_Small"]
+    "Thomas_Friends_Woodan_Railway_Henry": ["b_colored_wood_blocks", "colored_wood_blocks", "Closetmaid_Premium_Fabric_Cube_Red", "basket", "Room_Essentials_Fabric_Cube_Lavender", "Curver_Storage_Bin_Black_Small"]
+    "Weisshai_Great_White_Shark": ["b_colored_wood_blocks", "colored_wood_blocks", "Closetmaid_Premium_Fabric_Cube_Red", "basket", "Room_Essentials_Fabric_Cube_Lavender", "Curver_Storage_Bin_Black_Small"]
+    "Sonny_School_Bus": ["b_colored_wood_blocks", "colored_wood_blocks", "Closetmaid_Premium_Fabric_Cube_Red", "basket", "Room_Essentials_Fabric_Cube_Lavender", "Curver_Storage_Bin_Black_Small"]
+    "Vtech_Roll_Learn_Turtle": ["b_colored_wood_blocks", "colored_wood_blocks", "Closetmaid_Premium_Fabric_Cube_Red", "basket", "Room_Essentials_Fabric_Cube_Lavender", "Curver_Storage_Bin_Black_Small"]
+    "Thomas_Friends_Wooden_Railway_Porter_5JzRhMm3a9o": ["b_colored_wood_blocks", "colored_wood_blocks", "Closetmaid_Premium_Fabric_Cube_Red", "basket", "Room_Essentials_Fabric_Cube_Lavender", "Curver_Storage_Bin_Black_Small"]
+    "Fisher_price_Classic_Toys_Buzzy_Bee": ["b_colored_wood_blocks", "colored_wood_blocks", "Closetmaid_Premium_Fabric_Cube_Red", "basket", "Room_Essentials_Fabric_Cube_Lavender", "Curver_Storage_Bin_Black_Small"]
+    "TURBOPROP_AIRPLANE_WITH_PILOT": ["b_colored_wood_blocks", "colored_wood_blocks", "Closetmaid_Premium_Fabric_Cube_Red", "basket", "Room_Essentials_Fabric_Cube_Lavender", "Curver_Storage_Bin_Black_Small"]
+    "Thomas_Friends_Wooden_Railway_Talking_Thomas_z7yi7UFHJRj": ["b_colored_wood_blocks", "colored_wood_blocks", "Closetmaid_Premium_Fabric_Cube_Red", "basket", "Room_Essentials_Fabric_Cube_Lavender", "Curver_Storage_Bin_Black_Small"]
+    "Vtech_Stack_Sing_Rings_636_Months": ["b_colored_wood_blocks", "colored_wood_blocks", "Closetmaid_Premium_Fabric_Cube_Red", "basket", "Room_Essentials_Fabric_Cube_Lavender", "Curver_Storage_Bin_Black_Small"]
+    "Toysmith_Windem_Up_Flippin_Animals_Dog": ["b_colored_wood_blocks", "colored_wood_blocks", "Closetmaid_Premium_Fabric_Cube_Red", "basket", "Room_Essentials_Fabric_Cube_Lavender", "Curver_Storage_Bin_Black_Small"]
+    "Squirrel": ["b_colored_wood_blocks", "colored_wood_blocks", "Closetmaid_Premium_Fabric_Cube_Red", "basket", "Room_Essentials_Fabric_Cube_Lavender", "Curver_Storage_Bin_Black_Small"]
+    "Threshold_Porcelain_Teapot_White": ["b_colored_wood_blocks", "colored_wood_blocks", "Closetmaid_Premium_Fabric_Cube_Red", "basket", "Room_Essentials_Fabric_Cube_Lavender", "Curver_Storage_Bin_Black_Small"]
+    "KS_Chocolate_Cube_Box_Assortment_By_Neuhaus_2010_Ounces": ["b_colored_wood_blocks", "colored_wood_blocks", "Closetmaid_Premium_Fabric_Cube_Red", "basket", "Room_Essentials_Fabric_Cube_Lavender", "Curver_Storage_Bin_Black_Small"]
+    "Great_Dinos_Triceratops_Toy": ["b_colored_wood_blocks", "colored_wood_blocks", "Closetmaid_Premium_Fabric_Cube_Red", "basket", "Room_Essentials_Fabric_Cube_Lavender", "Curver_Storage_Bin_Black_Small"]
+    "Remington_TStudio_Silk_Ceramic_Hair_Straightener_2_Inch_Floating_Plates": ["b_colored_wood_blocks", "colored_wood_blocks", "Closetmaid_Premium_Fabric_Cube_Red", "basket", "Room_Essentials_Fabric_Cube_Lavender", "Curver_Storage_Bin_Black_Small"]
+    "Threshold_Porcelain_Pitcher_White": ["b_colored_wood_blocks", "colored_wood_blocks", "Closetmaid_Premium_Fabric_Cube_Red", "basket", "Room_Essentials_Fabric_Cube_Lavender", "Curver_Storage_Bin_Black_Small"]
+    "Chef_Style_Round_Cake_Pan_9_inch_pan": ["b_colored_wood_blocks", "colored_wood_blocks"]
+    "Ocedar_Snap_On_Dust_Pan_And_Brush_1_ct": ["b_colored_wood_blocks", "colored_wood_blocks", "Curver_Storage_Bin_Black_Small"]
+    "Shark": ["b_colored_wood_blocks", "colored_wood_blocks", "Closetmaid_Premium_Fabric_Cube_Red", "basket", "Room_Essentials_Fabric_Cube_Lavender", "Curver_Storage_Bin_Black_Small"]
+    "Victor_Reversible_Bookend": ["b_colored_wood_blocks", "colored_wood_blocks", "Curver_Storage_Bin_Black_Small"]
+    "HeavyDuty_Flashlight": ["b_colored_wood_blocks", "colored_wood_blocks", "Closetmaid_Premium_Fabric_Cube_Red", "basket", "Room_Essentials_Fabric_Cube_Lavender", "Curver_Storage_Bin_Black_Small"]
+    "Android_Lego": ["b_colored_wood_blocks", "colored_wood_blocks", "Closetmaid_Premium_Fabric_Cube_Red", "basket", "Room_Essentials_Fabric_Cube_Lavender", "Curver_Storage_Bin_Black_Small"]
+    "DPC_Handmade_Hat_Brown": ["b_colored_wood_blocks", "colored_wood_blocks", "Closetmaid_Premium_Fabric_Cube_Red", "basket", "Room_Essentials_Fabric_Cube_Lavender", "Curver_Storage_Bin_Black_Small"]
+    "grey_hat": ["b_colored_wood_blocks", "colored_wood_blocks", "Closetmaid_Premium_Fabric_Cube_Red", "basket", "Room_Essentials_Fabric_Cube_Lavender", "Curver_Storage_Bin_Black_Small"]
+    "INTERNATIONAL_PAPER_Willamette_4_Brown_Bag_500Count": ["b_colored_wood_blocks", "colored_wood_blocks", "Closetmaid_Premium_Fabric_Cube_Red", "basket", "Room_Essentials_Fabric_Cube_Lavender", "Curver_Storage_Bin_Black_Small"]
+    "Toys_R_Us_Treat_Dispenser_Smart_Puzzle_Foobler": ["b_colored_wood_blocks", "colored_wood_blocks", "Closetmaid_Premium_Fabric_Cube_Red", "basket", "Room_Essentials_Fabric_Cube_Lavender", "Curver_Storage_Bin_Black_Small"]
+
+    # plates
+    "Threshold_Bamboo_Ceramic_Soap_Dish": ["b_colored_wood_blocks", "colored_wood_blocks"]
+    "Cole_Hardware_Butter_Dish_Square_Red": ["b_colored_wood_blocks", "colored_wood_blocks"]
+    "BIA_Cordon_Bleu_White_Porcelain_Utensil_Holder_900028": ["b_colored_wood_blocks", "colored_wood_blocks"]
+    "Ecoforms_Quadra_Saucer_SQ1_Avocado": ["b_colored_wood_blocks", "foam_brick", "Room_Essentials_Dish_Drainer_Collapsible_White"]
+    "Ecoforms_Plant_Saucer_SQ8COR": ["b_colored_wood_blocks", "foam_brick", "Room_Essentials_Dish_Drainer_Collapsible_White"]
+    "Cole_Hardware_Saucer_Electric": ["b_colored_wood_blocks", "foam_brick", "Room_Essentials_Dish_Drainer_Collapsible_White"]
+    "Threshold_Bistro_Ceramic_Dinner_Plate_Ruby_Ring": ["b_colored_wood_blocks", "foam_brick", "Room_Essentials_Dish_Drainer_Collapsible_White"]
+    "Threshold_Dinner_Plate_Square_Rim_White_Porcelain": ["b_colored_wood_blocks", "foam_brick", "Room_Essentials_Dish_Drainer_Collapsible_White"]
+
+    # mugs
+    "ACE_Coffee_Mug_Kristen_16_oz_cup": ["plate", "Threshold_Dinner_Plate_Square_Rim_White_Porcelain", "Threshold_Bistro_Ceramic_Dinner_Plate_Ruby_Ring"]
+    "Cole_Hardware_Mug_Classic_Blue": ["plate", "Threshold_Dinner_Plate_Square_Rim_White_Porcelain", "Threshold_Bistro_Ceramic_Dinner_Plate_Ruby_Ring"]
+    "Room_Essentials_Mug_White_Yellow": ["plate", "Threshold_Dinner_Plate_Square_Rim_White_Porcelain", "Threshold_Bistro_Ceramic_Dinner_Plate_Ruby_Ring"]
+    "Threshold_Porcelain_Coffee_Mug_All_Over_Bead_White": ["plate", "Threshold_Dinner_Plate_Square_Rim_White_Porcelain", "Threshold_Bistro_Ceramic_Dinner_Plate_Ruby_Ring"]
+
+    # tools
+    "TriStar_Products_PPC_Power_Pressure_Cooker_XL_in_Black": ["b_colored_wood_blocks", "foam_brick"]
+    "Cole_Hardware_Hammer_Black": ["b_colored_wood_blocks", "wood_block", "foam_brick"]
+
+  EXCLUDE_OBJECTS: [
+    "b_colored_wood_blocks",
+    "wood_block",
+    "hammer",
+    "adjustable_wrench"
+  ]
+
+DATASET:
+  TYPE: "Interactive"
+  SCENES_DIR: "."
+  SPLIT: test
+  DATA_PATH: ("data/{split}2.json.gz")

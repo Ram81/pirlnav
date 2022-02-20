@@ -1,0 +1,79 @@
+filename,object_name,main_word,synset,category
+002_master_chef_can.glb,master chef can,can,foodstuff.n.01,foodstuff
+003_cracker_box.glb,cracker box,cracker,foodstuff.n.01,foodstuff
+004_sugar_box.glb,sugar box,sugar,foodstuff.n.01,foodstuff
+005_tomato_soup_can.glb,tomato soup can,can,foodstuff.n.01,foodstuff
+006_mustard_bottle.glb,mustard bottle,bottle,foodstuff.n.01,foodstuff
+007_tuna_fish_can.glb,tuna fish can,can,foodstuff.n.01,foodstuff
+008_pudding_box.glb,pudding box,pudding,foodstuff.n.01,foodstuff
+009_gelatin_box.glb,gelatin box,gelatin,foodstuff.n.01,foodstuff
+010_potted_meat_can.glb,potted meat can,can,foodstuff.n.01,foodstuff
+011_banana.glb,banana,banana,fruit.n.01,fruit
+012_strawberry.glb,strawberry,strawberry,fruit.n.01,fruit
+013_apple.glb,apple,apple,fruit.n.01,fruit
+014_lemon.glb,lemon,lemon,fruit.n.01,fruit
+015_peach.glb,peach,peach,fruit.n.01,fruit
+016_pear.glb,pear,pear,fruit.n.01,fruit
+017_orange.glb,orange,orange,fruit.n.01,fruit
+018_plum.glb,plum,plum,fruit.n.01,fruit
+019_pitcher_base.glb,pitcher base,pitcher,kitchenware.n.01,kitchenware
+021_bleach_cleanser.glb,bleach cleanser,cleanser,kitchenware.n.01,kitchenware
+024_bowl.glb,bowl,bowl,kitchenware.n.01,kitchenware
+025_mug.glb,mug,mug,kitchenware.n.01,kitchenware
+026_sponge.glb,sponge,sponge,kitchenware.n.01,kitchenware
+027_skillet.glb,skillet,skillet,kitchenware.n.01,kitchenware
+028_skillet_lid.glb,skillet lid,lid,kitchenware.n.01,kitchenware
+029_plate.glb,plate,plate,kitchenware.n.01,kitchenware
+030_fork.glb,fork,fork,kitchenware.n.01,kitchenware
+031_spoon.glb,spoon,spoon,kitchenware.n.01,kitchenware
+032_knife.glb,knife,knife,kitchenware.n.01,kitchenware
+033_spatula.glb,spatula,spatula,hand_tool.n.01,hand_tool
+035_power_drill.glb,power drill,drill,hand_tool.n.01,hand_tool
+036_wood_block.glb,wood block,block,hand_tool.n.01,hand_tool
+037_scissors.glb,scissors,scissors,stationery.n.01,stationery
+038_padlock.glb,padlock,padlock,hand_tool.n.01,hand_tool
+040_large_marker.glb,large marker,marker,stationery.n.01,stationery
+042_adjustable_wrench.glb,adjustable wrench,wrench,hand_tool.n.01,hand_tool
+043_phillips_screwdriver.glb,phillips screwdriver,screwdriver,hand_tool.n.01,hand_tool
+044_flat_screwdriver.glb,flat screwdriver,screwdriver,hand_tool.n.01,hand_tool
+048_hammer.glb,hammer,hammer,hand_tool.n.01,hand_tool
+050_medium_clamp.glb,medium clamp,clamp,hand_tool.n.01,hand_tool
+051_large_clamp.glb,large clamp,clamp,hand_tool.n.01,hand_tool
+052_extra_large_clamp.glb,extra large clamp,clamp,hand_tool.n.01,hand_tool
+053_mini_soccer_ball.glb,mini soccer ball,ball,game_equipment.n.01,game_equipment
+054_softball.glb,softball,softball,game_equipment.n.01,game_equipment
+055_baseball.glb,baseball,baseball,game_equipment.n.01,game_equipment
+056_tennis_ball.glb,tennis ball,ball,game_equipment.n.01,game_equipment
+057_racquetball.glb,racquetball,racquetball,game_equipment.n.01,game_equipment
+058_golf_ball.glb,golf ball,ball,game_equipment.n.01,game_equipment
+059_chain.glb,chain,chain,game_equipment.n.01,game_equipment
+061_foam_brick.glb,foam brick,brick,game_equipment.n.01,game_equipment
+062_dice.glb,dice,dice,game_equipment.n.01,game_equipment
+063-a_marbles.glb,a marbles,marbles,game_equipment.n.01,game_equipment
+063-b_marbles.glb,b marbles,marbles,game_equipment.n.01,game_equipment
+065-a_cups.glb,a cups,cups,kitchenware.n.01,kitchenware
+065-b_cups.glb,b cups,cups,kitchenware.n.01,kitchenware
+065-c_cups.glb,c cups,cups,kitchenware.n.01,kitchenware
+065-d_cups.glb,d cups,cups,kitchenware.n.01,kitchenware
+065-e_cups.glb,e cups,cups,kitchenware.n.01,kitchenware
+065-f_cups.glb,f cups,cups,kitchenware.n.01,kitchenware
+065-g_cups.glb,g cups,cups,kitchenware.n.01,kitchenware
+065-h_cups.glb,h cups,cups,kitchenware.n.01,kitchenware
+065-i_cups.glb,i cups,cups,kitchenware.n.01,kitchenware
+065-j_cups.glb,j cups,cups,kitchenware.n.01,kitchenware
+070-a_colored_wood_blocks.glb,a colored wood blocks,blocks,game_equipment.n.01,game_equipment
+070-b_colored_wood_blocks.glb,b colored wood blocks,blocks,game_equipment.n.01,game_equipment
+071_nine_hole_peg_test.glb,nine hole peg test,test,game_equipment.n.01,game_equipment
+072-a_toy_airplane.glb,a toy airplane,toy,plaything.n.01,plaything
+072-b_toy_airplane.glb,b toy airplane,toy,plaything.n.01,plaything
+072-c_toy_airplane.glb,c toy airplane,toy,plaything.n.01,plaything
+072-d_toy_airplane.glb,d toy airplane,toy,plaything.n.01,plaything
+072-e_toy_airplane.glb,e toy airplane,toy,plaything.n.01,plaything
+073-a_lego_duplo.glb,a lego duplo,lego,plaything.n.01,plaything
+073-b_lego_duplo.glb,b lego duplo,lego,plaything.n.01,plaything
+073-c_lego_duplo.glb,c lego duplo,lego,plaything.n.01,plaything
+073-d_lego_duplo.glb,d lego duplo,lego,plaything.n.01,plaything
+073-e_lego_duplo.glb,e lego duplo,lego,plaything.n.01,plaything
+073-f_lego_duplo.glb,f lego duplo,lego,plaything.n.01,plaything
+073-g_lego_duplo.glb,g lego duplo,lego,plaything.n.01,plaything
+077_rubiks_cube.glb,rubiks cube,cube,game_equipment.n.01,game_equipment
