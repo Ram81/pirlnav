@@ -5,7 +5,7 @@ SIMULATOR:
   TURN_ANGLE: 5
   TILT_ANGLE: 5
   TYPE: PickPlaceSim-v0
-  ACTION_SPACE_CONFIG: RearrangementActions-v0
+  ACTION_SPACE_CONFIG: PickPlaceActions-v0
   AGENT_0:
     SENSORS: ["RGB_SENSOR", "DEPTH_SENSOR"]
     MAX_CLIMB: 0.5

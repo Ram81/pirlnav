@@ -31,7 +31,7 @@ class GrabReleaseActuationSpec(ActuationSpec):
     amount: float = 2.0
 
 
-@registry.register_action_space_configuration(name="RearrangementActions-v0")
+@registry.register_action_space_configuration(name="PickPlaceActions-v0")
 class PickPlaceSimV0ActionSpaceConfiguration(ActionSpaceConfiguration):
     def __init__(self, config):
         super().__init__(config)

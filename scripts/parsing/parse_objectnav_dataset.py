@@ -6,14 +6,11 @@ import glob
 import gzip
 import json
 import os
-import re
-import sys
 import zipfile
 
 from collections import defaultdict
 from tqdm import tqdm
-from habitat.datasets.utils import VocabFromText
-from psiturk_dataset.utils.utils import load_dataset
+from scripts.utils.utils import load_dataset
 
 
 max_instruction_len = 9

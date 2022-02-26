@@ -512,10 +512,8 @@ class ILEnvTrainer(BaseRLTrainer):
         logger.info(f"env config: {config}")
         self.envs = construct_envs(config, get_env_class(config.ENV_NAME))
         self._setup_actor_critic_agent(il_cfg, config.MODEL)
-        logger.info("model setup")
 
-        self.agent.load_state_dict(ckpt_dict["state_dict"], strict=True)
-        logger.info("state dict loaded")
+        self.agent.load_state_dict(ckpt_dict["state_dict"], strict=True)    
         self.policy = self.agent.model
         self.policy.eval()
 
