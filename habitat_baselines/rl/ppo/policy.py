@@ -22,15 +22,17 @@ from habitat_baselines.utils.common import CategoricalNet
 
 
 class Policy(nn.Module, metaclass=abc.ABCMeta):
-    def __init__(self, net, dim_actions):
+    def __init__(self, net, dim_actions, no_critic=False):
         super().__init__()
         self.net = net
         self.dim_actions = dim_actions
+        self.no_critic = no_critic
 
         self.action_distribution = CategoricalNet(
             self.net.output_size, self.dim_actions
         )
-        self.critic = CriticHead(self.net.output_size)
+        if not self.no_critic:
+            self.critic = CriticHead(self.net.output_size)
 
     def forward(self, *x):
         features, rnn_hidden_states = self.net(
@@ -52,15 +54,17 @@ class Policy(nn.Module, metaclass=abc.ABCMeta):
             observations, rnn_hidden_states, prev_actions, masks
         )
         distribution = self.action_distribution(features)
-        value = self.critic(features)
 
         if deterministic:
             action = distribution.mode()
         else:
             action = distribution.sample()
-
         action_log_probs = distribution.log_probs(action)
 
+        if self.no_critic:
+            return action, rnn_hidden_states            
+
+        value = self.critic(features)
         return value, action, action_log_probs, rnn_hidden_states
 
     def get_value(self, observations, rnn_hidden_states, prev_actions, masks):

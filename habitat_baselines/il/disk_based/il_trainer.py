@@ -27,8 +27,8 @@ from habitat_baselines.common.base_il_trainer import BaseILTrainer
 from habitat_baselines.common.baseline_registry import baseline_registry
 from habitat_baselines.common.environments import get_env_class
 from habitat_baselines.common.tensorboard_utils import TensorboardWriter
-from habitat_baselines.il.disk_based.dataset.dataset import RearrangementEpisodeDataset, collate_fn
-from habitat_baselines.il.disk_based.models.seq_2_seq_model import Seq2SeqModel
+from habitat_baselines.il.disk_based.dataset.dataset import PickPlaceDataset, collate_fn
+from habitat_baselines.il.disk_based.policy.resnet_policy import PickPlacePolicy
 from habitat_baselines.utils.env_utils import construct_envs
 from habitat_baselines.utils.common import (
     batch_obs,
@@ -41,7 +41,7 @@ class RearrangementBCTrainer(BaseILTrainer):
     r"""Trainer class for PPO algorithm
     Paper: https://arxiv.org/abs/1707.06347.
     """
-    supported_tasks = ["RearrangementTask-v0"]
+    supported_tasks = ["PickPlaceTask-v0"]
 
     def __init__(self, config=None):
         super().__init__(config)
@@ -153,15 +153,17 @@ class RearrangementBCTrainer(BaseILTrainer):
             batch,
             rgb_frames,
         )
-    
 
-    def _setup_model(self, observation_space, action_space, model_config):
+    def _setup_actor_critic_agent(self, observation_space, action_space, model_config):
         model_config.defrost()
         model_config.TORCH_GPU_ID = self.config.TORCH_GPU_ID
         model_config.freeze()
 
-        model = Seq2SeqModel(observation_space, action_space, model_config)
-        return model
+        policy = baseline_registry.get_policy(self.config.IL.POLICY.name)
+        policy = policy.from_config(
+            self.config, observation_space, action_space
+        )
+        return policy
 
     def _setup_dataset(self):
         config = self.config
@@ -173,8 +175,9 @@ class RearrangementBCTrainer(BaseILTrainer):
             )
             content_scenes = dataset.get_scenes_to_load(config.TASK_CONFIG.DATASET)
         datasets = []
-        for scene in content_scenes:
-            dataset = RearrangementEpisodeDataset(
+        print(content_scenes)
+        for scene in ["q9vSo1VnCiC"]:
+            dataset = PickPlaceDataset(
                 config,
                 content_scenes=[scene],
                 use_iw=config.IL.USE_IW,
@@ -229,16 +232,16 @@ class RearrangementBCTrainer(BaseILTrainer):
 
         action_space = self.envs.action_spaces[0]
 
-        self.model = self._setup_model(
+        self.policy = self._setup_actor_critic_agent(
             self.envs.observation_spaces[0],
             action_space,
             config.MODEL
         )
-        self.model = torch.nn.DataParallel(self.model, dim=1)
-        self.model.to(self.device)
+        self.policy = torch.nn.DataParallel(self.policy, dim=1)
+        self.policy.to(self.device)
 
         optim = torch.optim.Adam(
-            filter(lambda p: p.requires_grad, self.model.parameters()),
+            filter(lambda p: p.requires_grad, self.policy.parameters()),
             lr=float(config.IL.BehaviorCloning.lr),
         )
 
@@ -311,7 +314,7 @@ class RearrangementBCTrainer(BaseILTrainer):
 
                         train_time = time.time()
 
-                        logits, rnn_hidden_states = self.model(
+                        logits, rnn_hidden_states = self.policy(
                             observations_batch_sample,
                             rnn_hidden_states,
                             gt_prev_action_sample,
@@ -362,7 +365,7 @@ class RearrangementBCTrainer(BaseILTrainer):
 
                 if epoch % config.CHECKPOINT_INTERVAL == 0:
                     self.save_checkpoint(
-                        self.model.module.state_dict(), "model_{}.ckpt".format(epoch)
+                        self.policy.module.state_dict(), "model_{}.ckpt".format(epoch)
                     )
 
                 epoch += 1
@@ -408,7 +411,7 @@ class RearrangementBCTrainer(BaseILTrainer):
 
         action_space = self.envs.action_spaces[0]
 
-        self.model = self._setup_model(
+        self.policy = self._setup_actor_critic_agent(
             self.envs.observation_spaces[0],
             action_space,
             config.MODEL
@@ -416,9 +419,9 @@ class RearrangementBCTrainer(BaseILTrainer):
 
         # Map location CPU is almost always better than mapping to a CUDA device.
         ckpt_dict = torch.load(checkpoint_path, map_location=self.device)
-        self.model.load_state_dict(ckpt_dict, strict=True)
-        self.model.to(self.device)
-        self.model.eval()
+        self.policy.load_state_dict(ckpt_dict, strict=True)
+        self.policy.to(self.device)
+        self.policy.eval()
 
         observations = self.envs.reset()
         batch = batch_obs(observations, device=self.device)
@@ -477,7 +480,7 @@ class RearrangementBCTrainer(BaseILTrainer):
                 (
                     logits,
                     rnn_hidden_states
-                ) = self.model(
+                ) = self.policy(
                     batch,
                     rnn_hidden_states,
                     prev_actions,

@@ -28,8 +28,8 @@ from habitat_baselines.common.base_il_trainer import BaseILTrainer
 from habitat_baselines.common.baseline_registry import baseline_registry
 from habitat_baselines.common.environments import get_env_class
 from habitat_baselines.common.tensorboard_utils import TensorboardWriter
-from habitat_baselines.il.disk_based.dataset.dataset import RearrangementEpisodeDataset, collate_fn
-from habitat_baselines.il.disk_based.models.seq_2_seq_model import Seq2SeqModel
+from habitat_baselines.il.disk_based.dataset.dataset import PickPlaceDataset, collate_fn
+from habitat_baselines.il.disk_based.policy.resnet_policy import PickPlacePolicy
 from habitat_baselines.utils.env_utils import construct_envs
 from habitat_baselines.utils.common import (
     batch_obs,
@@ -51,7 +51,7 @@ class RearrangementBCDistribTrainer(BaseILTrainer):
     r"""Trainer class for PPO algorithm
     Paper: https://arxiv.org/abs/1707.06347.
     """
-    supported_tasks = ["RearrangementTask-v0"]
+    supported_tasks = ["PickPlaceTask-v0"]
 
     def __init__(self, config=None):
         super().__init__(config)
@@ -65,7 +65,14 @@ class RearrangementBCDistribTrainer(BaseILTrainer):
             torch.device("cuda", self.config.TORCH_GPU_ID)
             if torch.cuda.is_available()
             else torch.device("cpu")
-        )  
+        )
+
+    def _make_results_dir(self, split="val"):
+        r"""Makes directory for saving eqa-cnn-pretrain eval results."""
+        for s_type in ["rgb", "seg", "depth", "top_down_map"]:
+            dir_name = self.config.RESULTS_DIR.format(split=split, type=s_type)
+            if not os.path.isdir(dir_name):
+                os.makedirs(dir_name)
 
     METRICS_BLACKLIST = {"top_down_map", "collisions.is_collision", "goal_vis_pixels", "rearrangement_reward", "coverage", "collisions.count", "release_failed", "object_receptacle_distance", "exploration_metrics", "room_visitation_map"}
 
@@ -162,7 +169,7 @@ class RearrangementBCDistribTrainer(BaseILTrainer):
         model_config.TORCH_GPU_ID = self.config.TORCH_GPU_ID
         model_config.freeze()
 
-        model = Seq2SeqModel(observation_space, action_space, model_config)
+        model = PickPlacePolicy(observation_space, action_space, model_config)
         return model
 
     def _setup_dataset(self):
@@ -171,8 +178,8 @@ class RearrangementBCDistribTrainer(BaseILTrainer):
         content_scenes = self.envs.scene_splits()[0]
         logger.info("Scene splits: {}".format(content_scenes))
         datasets = []
-        for scene in content_scenes:
-            dataset = RearrangementEpisodeDataset(
+        for scene in ["q9vSo1VnCiC"]:
+            dataset = PickPlaceDataset(
                 config,
                 content_scenes=[scene],
                 use_iw=config.IL.USE_IW,
@@ -268,10 +275,12 @@ class RearrangementBCDistribTrainer(BaseILTrainer):
         # Distributed data parallel setup
         if torch.cuda.is_available():
             self.model = torch.nn.parallel.DistributedDataParallel(
-                self.model, device_ids=[self.device], output_device=self.device
+                self.model,
+                device_ids=[self.device],
+                output_device=self.device
             )
         else:
-            self.model = torch.nn.parallel.DistributedDataParallel(self.model)    
+            self.model = torch.nn.parallel.DistributedDataParallel(self.model)
 
         optim = torch.optim.Adam(
             filter(lambda p: p.requires_grad, self.model.parameters()),

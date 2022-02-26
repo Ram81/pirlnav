@@ -1393,9 +1393,9 @@ def merge_sim_episode_with_object_config(
     return sim_config
 
 
-@registry.register_task(name="RearrangementTask-v0")
-class RearrangementTask(EmbodiedTask):
-    r"""Language based Object Rearrangement Task
+@registry.register_task(name="PickPlaceTask-v0")
+class PickPlaceTask(EmbodiedTask):
+    r"""Language based Pick Place Task
     Goal: An agent must rearrange objects in a 3D environment
         specified by a natural language instruction.
     Usage example:
@@ -1407,9 +1407,7 @@ class RearrangementTask(EmbodiedTask):
         self._is_episode_active = False
     
     def reset(self, **kwargs):
-        # self._is_episode_active = False
         observations = super().reset(**kwargs)
-        # self._is_episode_active = True
         return observations
 
     def _check_episode_is_active(self, *args: Any, **kwargs: Any) -> bool:

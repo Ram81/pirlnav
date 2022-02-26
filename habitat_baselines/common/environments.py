@@ -20,7 +20,7 @@ from habitat_baselines.common.baseline_registry import baseline_registry
 from habitat.tasks.nav.nav import (
     TopDownMap
 )
-from habitat.tasks.rearrangement.rearrangement import (
+from habitat.tasks.pickplace.pickplace import (
     GoalObjectVisible,
     AgentToReceptacleDistance,
     ObjectToReceptacleDistance,

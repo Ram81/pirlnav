@@ -10,7 +10,7 @@
 2. Unzip the the contents in `data/` folder
 
 ### Dataset Setup
-1. Change the `DATASET_PATH` field in the file `habitat_baselines/config/object_rearrangement/il_object_rearrangement.yaml` (for pick and place task) and `habitat_baselines/config/object_rearrangement/il_objectnav.yaml` (for objectnav task) to point to the dataset split path. 
+1. Change the `DATASET_PATH` field in the file `habitat_baselines/config/object_rearrangement/il_pickplace_mp3d.yaml` (for pick and place task) and `habitat_baselines/config/object_rearrangement/il_objectnav.yaml` (for objectnav task) to point to the dataset split path. 
 
 2. Run
     ```
@@ -46,9 +46,9 @@
 
 ### Training setup
 
-1. Set the `DATASET_PATH` in the file `habitat_baselines/config/object_rearrangement/il_object_rearrangement.yaml`
+1. Set the `DATASET_PATH` in the file `habitat_baselines/config/object_rearrangement/il_pickplace_mp3d.yaml`
 
-2. Change the folder paths for the following configs in the file `habitat_baselines/config/object_rearrangement/il_object_rearrangement.yaml`:
+2. Change the folder paths for the following configs in the file `habitat_baselines/config/object_rearrangement/il_pickplace_mp3d.yaml`:
     ```
     TENSORBOARD_DIR
     VIDEO_DIR
@@ -56,11 +56,11 @@
     ```
 3. Set the value of `MODEL.inflection_weight_coef` based on the split you are training. Find the values for each splits [here](https://www.notion.so/ab2173d31ce3425a97a4fad874920b5d?v=65c29317d4494122918b56e63e421dad)
 
-4. Change the `DATA_PATH` to dataset path in the file `configs/tasks/object_rearrangement.yaml` to point to `data/datasets/object_rearrangement/v4/{split}/{split}.json.gz`
+4. Change the `DATA_PATH` to dataset path in the file `configs/tasks/pickplace_mp3d.yaml` to point to `data/datasets/object_rearrangement/v4/{split}/{split}.json.gz`
 
-5. Make sure `CHECKPOINT_INTERVAL` is set to `1` in `habitat_baselines/config/object_rearrangement/il_object_rearrangement.yaml`
+5. Make sure `CHECKPOINT_INTERVAL` is set to `1` in `habitat_baselines/config/object_rearrangement/il_pickplace_mp3d.yaml`
 
-6. Set `NUM_PROCESSES` to the `1` in the file `habitat_baselines/config/object_rearrangement/il_object_rearrangement.yaml`.
+6. Set `NUM_PROCESSES` to the `1` in the file `habitat_baselines/config/object_rearrangement/il_pickplace_mp3d.yaml`.
 
 7. Run
     ```
@@ -142,20 +142,20 @@
 
 ### Evaluation setup
 
-1. Change the folder paths for the following configs in the file `habitat_baselines/config/object_rearrangement/il_object_rearrangement.yaml`:
+1. Change the folder paths for the following configs in the file `habitat_baselines/config/object_rearrangement/il_pickplace_mp3d.yaml`:
     ```
     TENSORBOARD_DIR
     VIDEO_DIR
     ```
 
-2. Set the checkpoint path in the file `habitat_baselines/config/object_rearrangement/il_object_rearrangement.yaml`:
+2. Set the checkpoint path in the file `habitat_baselines/config/object_rearrangement/il_pickplace_mp3d.yaml`:
     ```
     EVAL_CKPT_PATH_DIR
     ```
 
-3. Change the `DATA_PATH` to dataset path in the file `configs/tasks/object_rearrangement.yaml`:
+3. Change the `DATA_PATH` to dataset path in the file `configs/tasks/pickplace_mp3d.yaml`:
 
-4. Set `NUM_PROCESSES` to the number of scenes in the dataset in the file `habitat_baselines/config/object_rearrangement/il_object_rearrangement.yaml`.
+4. Set `NUM_PROCESSES` to the number of scenes in the dataset in the file `habitat_baselines/config/object_rearrangement/il_pickplace_mp3d.yaml`.
 
 5. Run
     ```

@@ -131,16 +131,10 @@ class ResNetEncoder(nn.Module):
             input_channels = self._n_input_depth + self._n_input_rgb + self._n_input_semantics
             self.backbone = make_backbone(input_channels, baseplanes, ngroups, dropout_prob=dropout_prob)
 
-            # final_spatial = int(
-            #     spatial_size * self.backbone.final_spatial_compress
-            # )
             final_spatial = np.array([math.ceil(
                 d * self.backbone.final_spatial_compress
             ) for d in spatial_size])
             after_compression_flat_size = 2048
-            # num_compression_channels = int(
-            #     round(after_compression_flat_size / (final_spatial ** 2))
-            # )
             num_compression_channels = int(
                 round(after_compression_flat_size / np.prod(final_spatial))
             )

@@ -4,39 +4,29 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-from typing import Any, Dict, List, Optional
+from typing import Dict, List, Optional
 
 import numpy as np
 import math
 import magnum as mn
-import sys
-from gym import spaces
 
-import habitat_sim
 from collections import defaultdict
-from habitat.core.dataset import Episode
-from habitat.core.registry import registry
-from habitat.core.simulator import (
-    AgentState,
-    Config,
-    DepthSensor,
-    Observations,
-    RGBSensor,
-    SemanticSensor,
-    SensorSuite,
-    ShortestPathPoint,
-    Simulator,
-)
-from habitat.core.spaces import Space
+
 from habitat_sim.nav import NavMeshSettings
 from habitat_sim.utils.common import quat_from_coeffs, quat_to_magnum, quat_to_coeffs, quat_from_magnum
 from habitat_sim.physics import MotionType
+
+from habitat.core.registry import registry
+from habitat.core.simulator import (
+    Config,
+    Observations
+)
 from habitat.sims.habitat_simulator.habitat_simulator import HabitatSim
-from habitat.tasks.rearrangement.rearrangement import RearrangementObjectSpec, ObjectStateSpec
+from habitat.tasks.pickplace.pickplace import ObjectStateSpec
 
 
-@registry.register_simulator(name="RearrangementSim-v0")
-class RearrangementSim(HabitatSim):
+@registry.register_simulator(name="PickPlaceSim-v0")
+class PickPlaceSim(HabitatSim):
     r"""Simulator wrapper over habitat-sim with
     object rearrangement functionalities.
     """

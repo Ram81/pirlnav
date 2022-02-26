@@ -8,13 +8,13 @@ from habitat.core.embodied_task import EmbodiedTask
 from habitat.core.registry import registry
 
 
-def _try_register_rearrangement_task():
+def _try_register_pickplace_task():
     try:
-        from habitat.tasks.rearrangement.rearrangement import RearrangementTask  # noqa
+        from habitat.tasks.pickplace.pickplace import PickPlaceTask  # noqa
     except ImportError as e:
         rearrangement_task_import_error = e
 
-        @registry.register_task(name="RearrangementTask-v0")
-        class RearrangementTaskImportError(EmbodiedTask):
+        @registry.register_task(name="PickPlaceTask-v0")
+        class PickPlaceTaskImportError(EmbodiedTask):
             def __init__(self, *args, **kwargs):
                 raise rearrangement_task_import_error

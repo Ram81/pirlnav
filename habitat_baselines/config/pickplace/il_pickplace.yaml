@@ -1,25 +1,25 @@
 # Note:  This is an example config, see habitat_baselines/config/pointnav/ppo_pointnav.yaml
 # for better hyperparameters for actual training
 
-BASE_TASK_CONFIG_PATH: "configs/tasks/object_rearrangement.yaml"
+BASE_TASK_CONFIG_PATH: "configs/tasks/pickplace_mp3d.yaml"
 TRAINER_NAME: "rearrangement-behavior-cloning"
 ENV_NAME: RearrangementRLEnv
 SIMULATOR_GPU_ID: 0
 TORCH_GPU_ID: 0
 VIDEO_OPTION: ["disk"]
-TENSORBOARD_DIR: "tb/object_rearrangement/unseen_scenes_v2/seed_1/"
-VIDEO_DIR: "video_dir/object_rearrangement/unseen_scenes_v2/seed_1/"
+TENSORBOARD_DIR: "tb/object_rearrangement/v3/seed_1/"
+VIDEO_DIR: "video_dir/object_rearrangement/v3/seed_1/"
 # To evaluate on all episodes, set this to -1
 TEST_EPISODE_COUNT: -1
-EVAL_CKPT_PATH_DIR: "data/new_checkpoints/pick_and_place/unseen_scenes_v2/seed_1/model_10.ckpt"
+EVAL_CKPT_PATH_DIR: "data/new_checkpoints/pick_and_place/v3/seed_1/model_10.ckpt"
 SHOW_TOP_DOWN_MAP: False
 NUM_PROCESSES: 1
-CHECKPOINT_FOLDER: "data/new_checkpoints/pick_and_place/unseen_scenes_v2/seed_1/"
+CHECKPOINT_FOLDER: "data/new_checkpoints/pick_and_place/v3/seed_1/"
 OUTPUT_LOG_DIR: data/object_rearrangement/logs
 LOG_INTERVAL: 10
 LOG_METRICS: True
 CHECKPOINT_INTERVAL: 1
-DATASET_PATH: "data/datasets/object_rearrangement/v1/{split}/{scene_split}.db"
+DATASET_PATH: "data/datasets/object_rearrangement/v3/{split}/{scene_split}.db"
 RESULTS_DIR: "data/object_rearrangement/results/{split}/{type}"
 EVAL_RESUTLS_DIR: "data/object_rearrangement/results/"
 EVAL_SAVE_RESULTS: True
@@ -28,27 +28,19 @@ EVAL:
   SPLIT: "val"
 
 IL:
+  POLICY:
+    name: "PickPlacePolicy"
+
   USE_IW: True
   BehaviorCloning:
     lr: 0.001
-    max_epochs: 20
-    batch_size: 8
+    max_epochs: 1
+    batch_size: 1
     timestep_batch_size: 800
     freeze_encoder: False
 
-RL:
-  REWARD_MEASURE: "agent_receptacle_distance"
-  REWARD_MEASURE_2: "agent_object_distance"
-  SUCCESS_MEASURE: "success"
-  SLACK_REWARD: -0.01
-  SUCCESS_REWARD: 2.5
-  GRAB_SUCCESS_REWARD: 1.5
-
 MODEL:
   inflection_weight_coef: 6.933316942425072
-  ablate_depth: False
-  ablate_rgb: False
-  ablate_instruction: False
   INSTRUCTION_ENCODER:
     vocab_size: 128
     embedding_size: 64

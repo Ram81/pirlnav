@@ -546,7 +546,7 @@ with habitat_sim.Simulator(cfg) as sim:
 # @markdown To read the saved episodes in Habitat-Lab, we will extend the `Dataset` class and the `Episode` base class. It will help provide all the relevant details about the episode through a consistent API to all downstream tasks.
 
 # @markdown - We will first create a `RearrangementEpisode` by extending the `NavigationEpisode` to include additional information about object's initial configuration and desired final configuration.
-# @markdown - We will then define a `RearrangementDatasetV0` class that builds on top of `PointNavDatasetV1` class to read the JSON file stored earlier and initialize a list of `RearrangementEpisode`.
+# @markdown - We will then define a `PickPlaceDatasetV0` class that builds on top of `PointNavDatasetV1` class to read the JSON file stored earlier and initialize a list of `RearrangementEpisode`.
 
 from habitat.core.utils import DatasetFloatJSONEncoder, not_none_validator
 from habitat.datasets.pointnav.pointnav_dataset import (
@@ -603,8 +603,8 @@ class RearrangementEpisode(NavigationEpisode):
     )
 
 
-@registry.register_dataset(name="RearrangementDataset-v0")
-class RearrangementDatasetV0(PointNavDatasetV1):
+@registry.register_dataset(name="PickPlaceDataset-v0")
+class PickPlaceDatasetV0(PointNavDatasetV1):
     r"""Class inherited from PointNavDataset that loads Rearrangement dataset."""
     episodes: List[RearrangementEpisode]
     content_scenes_path: str = "{data_path}/content/{scene}.json.gz"
@@ -658,10 +658,10 @@ config.defrost()
 config.DATASET.DATA_PATH = (
     "data/datasets/rearrangement/coda/v1/{split}/{split}.json.gz"
 )
-config.DATASET.TYPE = "RearrangementDataset-v0"
+config.DATASET.TYPE = "PickPlaceDataset-v0"
 config.freeze()
 
-dataset = RearrangementDatasetV0(config.DATASET)
+dataset = PickPlaceDatasetV0(config.DATASET)
 
 # check if the dataset got correctly deserialized
 assert len(dataset.episodes) == 1
@@ -798,7 +798,7 @@ class GrabReleaseActuationSpec(ActuationSpec):
 
 # @markdown Then, we extend the `HabitatSimV1ActionSpaceConfiguration` to add the above action into the agent's action space. `ActionSpaceConfiguration` is a mapping between action name and the corresponding `ActionSpec`
 @registry.register_action_space_configuration(name="RearrangementActions-v0")
-class RearrangementSimV0ActionSpaceConfiguration(
+class PickPlaceSimV0ActionSpaceConfiguration(
     HabitatSimV1ActionSpaceConfiguration
 ):
     def __init__(self, config):
@@ -844,7 +844,7 @@ _C.SIMULATOR.VISUAL_SENSOR = "rgb"
 # ![sim](https://drive.google.com/uc?id=1ce6Ti-gpumMEyfomqAKWqOspXm6tN4_8)
 
 # %%
-# @title RearrangementSim Class
+# @title PickPlaceSim Class
 # @markdown Here we will extend the `HabitatSim` class for the rearrangement task. We will make the following changes:
 # @markdown - define a new `_initialize_objects` function which will load the object in its initial configuration as defined by the episode.
 # @markdown - define a `gripped_object_id` property that stores whether the agent is holding any object or not.
@@ -862,8 +862,8 @@ from habitat_sim.nav import NavMeshSettings
 from habitat_sim.utils.common import quat_from_coeffs, quat_to_magnum
 
 
-@registry.register_simulator(name="RearrangementSim-v0")
-class RearrangementSim(HabitatSim):
+@registry.register_simulator(name="PickPlaceSim-v0")
+class PickPlaceSim(HabitatSim):
     r"""Simulator wrapper over habitat-sim with
     object rearrangement functionalities.
     """
@@ -1066,7 +1066,7 @@ class GrippedObjectSensor(Sensor):
     cls_uuid = "gripped_object_id"
 
     def __init__(
-        self, *args: Any, sim: RearrangementSim, config: Config, **kwargs: Any
+        self, *args: Any, sim: PickPlaceSim, config: Config, **kwargs: Any
     ):
         self._sim = sim
         super().__init__(config=config)
@@ -1266,7 +1266,7 @@ _C.TASK.AGENT_TO_OBJECT_DISTANCE.TYPE = "AgentToObjectDistance"
 from habitat.config.default import CN, Config
 
 # %%
-# @title Define `RearrangementTask` by extending `NavigationTask`
+# @title Define `PickPlaceTask` by extending `NavigationTask`
 from habitat.tasks.nav.nav import NavigationTask, merge_sim_episode_config
 
 
@@ -1281,8 +1281,8 @@ def merge_sim_episode_with_object_config(
     return sim_config
 
 
-@registry.register_task(name="RearrangementTask-v0")
-class RearrangementTask(NavigationTask):
+@registry.register_task(name="PickPlaceTask-v0")
+class PickPlaceTask(NavigationTask):
     r"""Embodied Rearrangement Task
     Goal: An agent must place objects at their corresponding goal position.
     """
@@ -1300,17 +1300,17 @@ class RearrangementTask(NavigationTask):
 #
 
 # %%
-# @title Load the `RearrangementTask` in Habitat-Lab and run a hard-coded agent
+# @title Load the `PickPlaceTask` in Habitat-Lab and run a hard-coded agent
 import habitat
 
 config = habitat.get_config("configs/tasks/pointnav.yaml")
 config.defrost()
 config.ENVIRONMENT.MAX_EPISODE_STEPS = 50
-config.SIMULATOR.TYPE = "RearrangementSim-v0"
+config.SIMULATOR.TYPE = "PickPlaceSim-v0"
 config.SIMULATOR.ACTION_SPACE_CONFIG = "RearrangementActions-v0"
 config.SIMULATOR.GRAB_DISTANCE = 2.0
 config.SIMULATOR.HABITAT_SIM_V0.ENABLE_PHYSICS = True
-config.TASK.TYPE = "RearrangementTask-v0"
+config.TASK.TYPE = "PickPlaceTask-v0"
 config.TASK.SUCCESS_DISTANCE = 1.0
 config.TASK.SENSORS = [
     "GRIPPED_OBJECT_SENSOR",
@@ -1323,7 +1323,7 @@ config.TASK.MEASUREMENTS = [
     "AGENT_TO_OBJECT_DISTANCE",
 ]
 config.TASK.POSSIBLE_ACTIONS = ["STOP", "MOVE_FORWARD", "GRAB_RELEASE"]
-config.DATASET.TYPE = "RearrangementDataset-v0"
+config.DATASET.TYPE = "PickPlaceDataset-v0"
 config.DATASET.SPLIT = "train"
 config.DATASET.DATA_PATH = (
     "data/datasets/rearrangement/coda/v1/{split}/{split}.json.gz"
@@ -1728,7 +1728,7 @@ class RearrangementBaselineNet(Net):
 
 @baseline_registry.register_trainer(name="ppo-rearrangement")
 class RearrangementTrainer(PPOTrainer):
-    supported_tasks = ["RearrangementTask-v0"]
+    supported_tasks = ["PickPlaceTask-v0"]
 
     def _setup_actor_critic_agent(self, ppo_cfg: Config) -> None:
         r"""Sets up actor critic and agent for PPO.

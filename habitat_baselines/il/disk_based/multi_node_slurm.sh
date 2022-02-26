@@ -25,5 +25,5 @@ sensor=$1
 
 set -x
 srun python -u -m habitat_baselines.run \
-    --exp-config habitat_baselines/config/object_rearrangement/il_distrib_object_rearrangement.yaml \
+    --exp-config habitat_baselines/config/object_rearrangement/il_distrib_pickplace_mp3d.yaml \
     --run-type train

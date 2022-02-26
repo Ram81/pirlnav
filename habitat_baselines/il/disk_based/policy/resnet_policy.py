@@ -12,19 +12,17 @@ from habitat.tasks.nav.nav import (
     EpisodicCompassSensor,
     EpisodicGPSSensor,
 )
-from habitat_baselines.il.disk_based.models.encoders.instruction import InstructionEncoder
-from habitat_baselines.il.disk_based.models.encoders.resnet_encoders import (
-    TorchVisionResNet50,
+from habitat_baselines.il.common.encoders.instruction import InstructionEncoder
+from habitat_baselines.il.common.encoders.resnet_encoders import (
     VlnResnetDepthEncoder,
     ResnetRGBEncoder,
 )
-from habitat_baselines.il.disk_based.models.encoders.simple_cnns import SimpleDepthCNN, SimpleRGBCNN
 from habitat_baselines.rl.models.rnn_state_encoder import RNNStateEncoder
-from habitat_baselines.rl.ppo.policy import Net
-from habitat_baselines.utils.common import CategoricalNet, CustomFixedCategorical
+from habitat_baselines.common.baseline_registry import baseline_registry
+from habitat_baselines.rl.ppo import Net, Policy
 
 
-class Seq2SeqNet(Net):
+class PickPlaceNet(Net):
     r"""A baseline sequence to sequence network that concatenates instruction,
     RGB, and depth encodings before decoding an action distribution with an RNN.
     Modules:
@@ -43,14 +41,10 @@ class Seq2SeqNet(Net):
 
         # Init the depth encoder
         assert model_config.DEPTH_ENCODER.cnn_type in [
-            "SimpleDepthCNN",
             "VlnResnetDepthEncoder",
+            "Noe"
         ], "DEPTH_ENCODER.cnn_type must be SimpleDepthCNN or VlnResnetDepthEncoder"
-        if model_config.DEPTH_ENCODER.cnn_type == "SimpleDepthCNN":
-            self.depth_encoder = SimpleDepthCNN(
-                observation_space, model_config.DEPTH_ENCODER.output_size
-            )
-        elif model_config.DEPTH_ENCODER.cnn_type == "VlnResnetDepthEncoder":
+        if model_config.DEPTH_ENCODER.cnn_type == "VlnResnetDepthEncoder":
             self.depth_encoder = VlnResnetDepthEncoder(
                 observation_space,
                 output_size=model_config.DEPTH_ENCODER.output_size,
@@ -61,25 +55,10 @@ class Seq2SeqNet(Net):
 
         # Init the RGB visual encoder
         assert model_config.RGB_ENCODER.cnn_type in [
-            "SimpleRGBCNN",
-            "TorchVisionResNet50",
             "ResnetRGBEncoder",
         ], "RGB_ENCODER.cnn_type must be either 'SimpleRGBCNN' or 'TorchVisionResNet50'."
 
-        if model_config.RGB_ENCODER.cnn_type == "SimpleRGBCNN":
-            self.rgb_encoder = SimpleRGBCNN(
-                observation_space, model_config.RGB_ENCODER.output_size
-            )
-        elif model_config.RGB_ENCODER.cnn_type == "TorchVisionResNet50":
-            device = (
-                torch.device("cuda", model_config.TORCH_GPU_ID)
-                if torch.cuda.is_available()
-                else torch.device("cpu")
-            )
-            self.rgb_encoder = TorchVisionResNet50(
-                observation_space, model_config.RGB_ENCODER.output_size, device
-            )
-        elif model_config.RGB_ENCODER.cnn_type == "ResnetRGBEncoder":
+        if model_config.RGB_ENCODER.cnn_type == "ResnetRGBEncoder":
             self.rgb_encoder = ResnetRGBEncoder(
                 observation_space,
                 output_size=model_config.RGB_ENCODER.output_size,
@@ -149,13 +128,6 @@ class Seq2SeqNet(Net):
         depth_embedding = self.depth_encoder(observations)
         rgb_embedding = self.rgb_encoder(observations)
 
-        if self.model_config.ablate_instruction:
-            instruction_embedding = instruction_embedding * 0
-        if self.model_config.ablate_depth:
-            depth_embedding = depth_embedding * 0
-        if self.model_config.ablate_rgb:
-            rgb_embedding = rgb_embedding * 0
-
         x = [instruction_embedding, depth_embedding, rgb_embedding]
 
         if EpisodicGPSSensor.cls_uuid in observations:
@@ -186,28 +158,27 @@ class Seq2SeqNet(Net):
 
         return x, rnn_hidden_states
 
-
-class Seq2SeqModel(nn.Module):
+@baseline_registry.register_policy
+class PickPlacePolicy(Policy):
     def __init__(
         self, observation_space: Space, action_space: Space, model_config: Config
     ):
-        super().__init__()
-        self.net = Seq2SeqNet(
-            observation_space=observation_space,
-            model_config=model_config,
-            num_actions=action_space.n,
+        super().__init__(
+            PickPlaceNet(
+                observation_space=observation_space,
+                model_config=model_config,
+                num_actions=action_space.n,
+            ),
+            action_space.n,
+            no_critic=True
         )
-        self.action_distribution = CategoricalNet(
-            self.net.output_size, action_space.n
-        )
-        self.train()
-    
-    def forward(
-        self, observations, rnn_hidden_states, prev_actions, masks
-    ) -> CustomFixedCategorical:
-        features, rnn_hidden_states = self.net(
-            observations, rnn_hidden_states, prev_actions, masks
-        )
-        distribution = self.action_distribution(features)
 
-        return distribution.logits, rnn_hidden_states
+    @classmethod
+    def from_config(
+        cls, config: Config, observation_space, action_space
+    ):
+        return cls(
+            observation_space=observation_space,
+            action_space=action_space,
+            model_config=config.MODEL,
+        )

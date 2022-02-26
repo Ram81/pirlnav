@@ -13,7 +13,7 @@ from tqdm import tqdm
 import habitat
 from habitat import logger
 from habitat.datasets.utils import VocabDict
-from habitat.tasks.rearrangement.rearrangement import RearrangementEpisode
+from habitat.tasks.pickplace.pickplace import RearrangementEpisode
 
 
 class ObservationsDict(dict):
@@ -86,7 +86,7 @@ def collate_fn(batch):
     )
 
 
-class RearrangementEpisodeDataset(Dataset):
+class PickPlaceDataset(Dataset):
     """Pytorch dataset for object rearrangement task for each episode"""
 
     def __init__(self, config, content_scenes=["*"], mode="train", use_iw=False, inflection_weight_coef=1.0):
@@ -193,6 +193,7 @@ class RearrangementEpisodeDataset(Dataset):
         }
         reference_replay = episode.reference_replay
         instruction = episode.instruction
+        print("Replay len: {}".format(len(reference_replay)))
         for state_index in state_index_queue:
             instruction_tokens = np.array(instruction.instruction_tokens)
 

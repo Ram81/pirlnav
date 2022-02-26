@@ -32,7 +32,7 @@ class GrabReleaseActuationSpec(ActuationSpec):
 
 
 @registry.register_action_space_configuration(name="RearrangementActions-v0")
-class RearrangementSimV0ActionSpaceConfiguration(ActionSpaceConfiguration):
+class PickPlaceSimV0ActionSpaceConfiguration(ActionSpaceConfiguration):
     def __init__(self, config):
         super().__init__(config)
         # self.config = config

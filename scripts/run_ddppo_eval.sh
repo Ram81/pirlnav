@@ -13,5 +13,5 @@ if [[ $sensor == "pos" ]]; then
     echo "DDPPO pos eval"
     python habitat_baselines/run.py --exp-config habitat_baselines/config/object_rearrangement/ddppo_object_rearrangement_pos.yaml --run-type eval
 else
-    python habitat_baselines/run.py --exp-config habitat_baselines/config/object_rearrangement/ddppo_object_rearrangement.yaml --run-type eval
+    python habitat_baselines/run.py --exp-config habitat_baselines/config/object_rearrangement/ddppo_pickplace_mp3d.yaml --run-type eval
 fi

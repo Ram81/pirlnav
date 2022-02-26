@@ -17,13 +17,12 @@ from habitat.tasks.nav.object_nav_task import (
     task_cat2mpcat40,
     mapping_mpcat40_to_goal21
 )
-from habitat_baselines.il.disk_based.models.encoders.resnet_encoders import (
+from habitat_baselines.il.common.encoders.resnet_encoders import (
     VlnResnetDepthEncoder,
     ResnetRGBEncoder,
     ResnetSemSeqEncoder,
 )
 from habitat_baselines.rl.models.rnn_state_encoder import RNNStateEncoder
-from habitat_baselines.rl.ppo.policy import Net
 from habitat_baselines.common.baseline_registry import baseline_registry
 from habitat_baselines.rl.ppo import Net, Policy
 
@@ -303,7 +302,8 @@ class ObjectNavILPolicy(Policy):
                 model_config=model_config,
                 num_actions=action_space.n,
             ),
-            action_space.n
+            action_space.n,
+            no_critic=True
         )
 
     @classmethod

@@ -13,9 +13,8 @@ from typing import List, Optional
 from habitat.config import Config
 from habitat.core.dataset import Dataset
 from habitat.core.registry import registry
-from habitat.core.utils import not_none_validator
 from habitat.datasets.utils import VocabFromText
-from habitat.tasks.rearrangement.rearrangement import (
+from habitat.tasks.pickplace.pickplace import (
     InstructionData,
     RearrangementEpisode,
     RearrangementSpec,
@@ -25,13 +24,12 @@ from habitat.tasks.rearrangement.rearrangement import (
     AgentStateSpec,
     ObjectStateSpec
 )
-from habitat.tasks.utils import get_habitat_sim_action
 
 DEFAULT_SCENE_PATH_PREFIX = "data/scene_datasets/"
 
 
-@registry.register_dataset(name="RearrangementDataset-v0")
-class RearrangementDatasetV1(Dataset):
+@registry.register_dataset(name="PickPlaceDataset-v0")
+class PickPlaceDatasetV1(Dataset):
     r"""Class inherited from Dataset that loads a Vision and Language
     Navigation dataset.
     """
@@ -71,9 +69,7 @@ class RearrangementDatasetV1(Dataset):
 
         for i, episode in enumerate(deserialized["episodes"]):
             episode["reference_replay"] = []
-            # del episode["_shortest_path_cache"]
             episode = RearrangementEpisode(**episode)
-            # episode.episode_id = str(i)
 
             if scenes_dir is not None:
                 if episode.scene_id.startswith(DEFAULT_SCENE_PATH_PREFIX):
@@ -98,8 +94,8 @@ class RearrangementDatasetV1(Dataset):
             self.episodes.append(episode)
 
 
-@registry.register_dataset(name="RearrangementDataset-v1")
-class RearrangementDatasetV2(Dataset):
+@registry.register_dataset(name="PickPlaceDataset-v1")
+class PickPlaceDatasetV2(Dataset):
     r"""Class inherited from Dataset that loads a Vision and Language
     Navigation dataset.
     """
@@ -138,10 +134,8 @@ class RearrangementDatasetV2(Dataset):
         )
 
         for i, episode in enumerate(deserialized["episodes"]):
-            # del episode["task"]
-            # del episode["_shortest_path_cache"]
             episode = RearrangementEpisode(**episode)
-            # episode.episode_id = str(i)
+            episode.episode_id = str(i)
 
             if scenes_dir is not None:
                 if episode.scene_id.startswith(DEFAULT_SCENE_PATH_PREFIX):

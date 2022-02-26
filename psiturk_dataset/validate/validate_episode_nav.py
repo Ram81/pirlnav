@@ -151,7 +151,7 @@ def main():
         "--num-steps", type=int, default=5
     )
     parser.add_argument(
-        "--config", type=str, default="configs/tasks/object_rearrangement.yaml"
+        "--config", type=str, default="configs/tasks/pickplace_mp3d.yaml"
     )
     parser.add_argument(
         "--objectnav", dest="is_objectnav", action="store_true"

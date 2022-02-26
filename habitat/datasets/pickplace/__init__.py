@@ -8,15 +8,15 @@ from habitat.core.dataset import Dataset
 from habitat.core.registry import registry
 
 
-def _try_register_rearrangement_dataset():
+def _try_register_pickplace_dataset():
     try:
-        from habitat.datasets.rearrangement.rearrangement_dataset import (  # noqa: F401 isort:skip
-            RearrangementDatasetV1,
+        from habitat.datasets.pickplace.pickplace_dataset import (  # noqa: F401 isort:skip
+            PickPlaceDatasetV1,
         )
     except ImportError as e:
         rearrangement_dataset_import_error = e
 
         @registry.register_dataset(name="RearrangementDS-v1")
-        class RearrangementDatasetImportError(Dataset):
+        class PickPlaceDatasetImportError(Dataset):
             def __init__(self, *args, **kwargs):
                 raise rearrangement_dataset_import_error

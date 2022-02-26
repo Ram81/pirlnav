@@ -14,7 +14,7 @@ from time import sleep
 
 from PIL import Image
 
-config = habitat.get_config("habitat_baselines/config/object_rearrangement/ppo_agile_object_rearrangement.yaml")
+config = habitat.get_config("habitat_baselines/config/object_rearrangement/ppo_agile_pickplace_mp3d.yaml")
 
 
 def generate_episode_dataset(cfg, mode):

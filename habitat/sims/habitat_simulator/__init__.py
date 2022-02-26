@@ -16,7 +16,7 @@ def _try_register_habitat_sim():
         habitat_sim_import_error = e
 
     if has_habitat_sim:
-        from habitat.sims.rearrangement.simulator import RearrangementSim
+        from habitat.sims.pickplace.simulator import PickPlaceSim
         from habitat.sims.habitat_simulator.actions import (  # noqa: F401
             HabitatSimV1ActionSpaceConfiguration,
         )
