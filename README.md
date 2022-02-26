@@ -8,7 +8,7 @@ Code for the training imitation learning agents for [Objectnav](https://arxiv.or
 If you use this code in your research, please consider citing:
 ```
 @misc{ramrakhya2022,
-      title={Learning Embodied Object-Search from Human Demonstrations at Scale},
+      title={Habitat-Web: Learning Embodied Object-Search from Human Demonstrations at Scale},
       author={Ram Ramrakhya and Eric Undersander and Dhruv Batra and Abhishek Das},
       year={2022},
       eprint={},

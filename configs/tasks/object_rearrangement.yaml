@@ -101,6 +101,6 @@ TASK:
 
 DATASET:
   TYPE: RearrangementDataset-v0
-  SPLIT: train_sample
-  DATA_PATH: "/srv/share3/rramrakhya6/habitat-lab/data/datasets/object_rearrangement/unseen_scenes_v2/{split}/{split}.json.gz"
+  SPLIT: train
+  DATA_PATH: "data/datasets/object_rearrangement/v1/{split}/{split}.json.gz"
   SCENES_DIR: "data/scene_datasets/habitat-test-scenes/"
