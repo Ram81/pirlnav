@@ -2,6 +2,18 @@
 
 Code for the training imitation learning agents for [Objectnav](https://arxiv.org/abs/2006.13171) and [PickPlace]() in [Habitat](https://aihabitat.org/). This repo is the official code repository for the paper **[Habitat-Web: Learning Embodied Object-Search from Human Demonstrations at Scale]()**
 
+## Details
+
+We present a large-scale study of imitating human demonstrations on tasks that
+require a virtual robot to search for objects in new environments -- (1) ObjectGoal Navigation
+(e.g. find & go to a chair) and (2) PickPlace (e.g. find mug, pick mug,
+find counter, place mug on counter). Towards this we collect a large scale dataset of 70k human demonstrations for ObjectNav and 12k human demonstrations for PickPlace tasks using our web infrastructure [Habitat-Web](https://github.com/Ram81/habitat-web). We use this data to answer the question - how does large-scale imitation learning (IL) compare to large-scale reinforcement learning (RL)? On ObjectNav we find that IL using only 70k human demonstrations outperforms RL using 240k agent gathered trajecotries by 3.3% on success and 1.1% on SPL. On PickPlace, the comparison is even starker - IL agent achieves ~18% success on episodes with new object-receptacle locations while RL agent fails to get beyond 0% success. More importantly, we find that IL-trained agents learn efficient object-search behavior from humans - it peeks into rooms, checks corners for small objects, etc.
+
+<p align="center">
+  <img src="res/img/teaser_isometric.png"  height="250">
+  <p align="center">Example of ObjectNav trajectories</p>
+</p>
+
 
 ## Overview
 
@@ -112,31 +124,31 @@ The primary code contributions from the paper are located in:
 
 The code requires the datasets in a `data` folder in the following format:
 
-    ```bash
-    habitat-web-baselines/
-      data/
-        scene_datasets/
-          mp3d/
-            JeFG25nYj2p
-              JeFG25nYj2p.glb
-              JeFG25nYj2p.navmesh
-              ...
-      datasets/
-        objectnav/
-          objectnav_mp3d_70k/
-            train/
-        pick_place/
-          pick_place_12k/
-            train/
-    ```
+  ```bash
+  habitat-web-baselines/
+    data/
+      scene_datasets/
+        mp3d/
+          JeFG25nYj2p
+            JeFG25nYj2p.glb
+            JeFG25nYj2p.navmesh
+            ...
+    datasets/
+      objectnav/
+        objectnav_mp3d_70k/
+          train/
+      pick_place/
+        pick_place_12k/
+          train/
+  ```
 
 ### Test setup
 
 To verify that the data is set up correctly, run:
 
-    ```bash
-    python examples/objectnav_replay.py --path data/datasets/objectnav/objectnav_mp3d_70k/sample/sample.json.gz
-    ```
+  ```bash
+  python examples/objectnav_replay.py --path data/datasets/objectnav/objectnav_mp3d_70k/sample/sample.json.gz
+  ```
 
 ## Usage
 
@@ -147,29 +159,29 @@ For training the behavior cloning policy on the ObjectGoal Navigation task using
     
 1. Use the following script for multi-node training
 
-    ```bash
-    sbatch job_scripts/run_objectnav_training.sh habitat_baselines/config/objectnav/il_ddp_objectnav.yaml
-    ```
+  ```bash
+  sbatch job_scripts/run_objectnav_training.sh habitat_baselines/config/objectnav/il_ddp_objectnav.yaml
+  ```
 
 1. To run training on a single node use:
 
-    ```bash
-    sbatch job_scripts/run_objectnav_training.sh habitat_baselines/config/objectnav/il_objectnav.yaml
-    ```
+  ```bash
+  sbatch job_scripts/run_objectnav_training.sh habitat_baselines/config/objectnav/il_objectnav.yaml
+  ```
 
 For training the behavior cloning policy on the PickPlace task using the disk based setup:
     
 1. Use the following script for multi-node training
 
-    ```bash
-    sbatch job_scripts/run_pickplace_training.sh ddp
-    ```
+  ```bash
+  sbatch job_scripts/run_pickplace_training.sh ddp
+  ```
 
 1. To run training on a single node use:
 
-    ```bash
-    sbatch job_scripts/run_pickplace_training.sh single_node
-    ```
+  ```bash
+  sbatch job_scripts/run_pickplace_training.sh single_node
+  ```
 
 ### Evaluation
 
@@ -178,33 +190,34 @@ For evaluating a checkpoint on the ObjectGoal Navigation task using the environm
     
 1. Use the following script if trained using distributed setup
 
-    ```bash
-    sbatch job_scripts/run_objectnav_eval.sh habitat_baselines/config/objectnav/il_ddp_objectnav.yaml
-    ```
+  ```bash
+  sbatch job_scripts/run_objectnav_eval.sh habitat_baselines/config/objectnav/il_ddp_objectnav.yaml
+  ```
 
 1. Use the following script for evaluating single node checkpoint
 
-    ```bash
-    sbatch job_scripts/run_objectnav_eval.sh habitat_baselines/config/objectnav/il_objectnav.yaml
-    ```
+  ```bash
+  sbatch job_scripts/run_objectnav_eval.sh habitat_baselines/config/objectnav/il_objectnav.yaml
+  ```
 
 For evaluating the behavior cloning policy on the PickPlace task using the disk based setup:
     
 1. Use the following script if trained using dristributed setup
 
-    ```bash
-    sbatch job_scripts/run_pickplace_eval.sh ddp
-    ```
+  ```bash
+  sbatch job_scripts/run_pickplace_eval.sh ddp
+  ```
 
 1. Use the following script for evaluating single node checkpoint
 
-    ```bash
-    sbatch job_scripts/run_pickplace_eval.sh single_node
-    ```
+  ```bash
+  sbatch job_scripts/run_pickplace_eval.sh single_node
+  ```
 
 ## Citation
 
 If you use this code in your research, please consider citing:
+
 ```
 @misc{ramrakhya2022,
       title={Habitat-Web: Learning Embodied Object-Search from Human Demonstrations at Scale},
