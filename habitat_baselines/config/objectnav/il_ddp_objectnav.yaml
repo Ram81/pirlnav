@@ -20,16 +20,12 @@ LOG_INTERVAL: 10
 LOG_METRICS: True
 CHECKPOINT_INTERVAL: 500
 SENSORS: ['RGB_SENSOR', 'SEMANTIC_SENSOR', 'DEPTH_SENSOR']
-DATASET_PATH: "/srv/flash1/rramrakhya6/habitat-lab/data/datasets/objectnav_mp3d_v2/{split}/{scene_split}.db"
 RESULTS_DIR: "data/objectnav/results/objectnav_mp3d_thda_70k/sem_seg_pred/{split}/{type}"
 EVAL_RESUTLS_DIR: "data/objectnav/results/"
 EVAL_SAVE_RESULTS: True
 EVAL_SAVE_RESULTS_INTERVAL: 50
 EVAL:
   SPLIT: "val"
-  sample: False
-  semantic_metrics: False
-  evaluation_meta_file: "tb/objectnav/objectnav_mp3d_thda_70k/sem_seg_pred/seed_1/ckpt_20/evaluation_meta_35k_3.json"
 NUM_UPDATES: 16000
 
 IL:
@@ -46,11 +42,6 @@ IL:
     use_linear_lr_decay: True
     reward_window_size: 50
     sync_frac: 0.6
-  # OBS_TRANSFORMS:
-  #   ENABLED_TRANSFORMS: RGBRandomNoise
-  #   RGBRandomNoise:
-  #     MEAN: 0.7681586
-  #     STD: 0.69570744
 
 RL:
   SUCCESS_REWARD: 2.5
@@ -74,7 +65,6 @@ MODEL:
   SWITCH_TO_PRED_SEMANTICS_UPDATE: 0
   SEMANTIC_ENCODER:
     rednet_ckpt: "data/rednet-models/rednet_semmap_mp3d_40_v2_vince.pth"
-    # rednet_ckpt: "data/rednet-models/rednet_semmap_mp3d_tuned.pth"
     cnn_type: "ResnetSemSegEncoder"
     output_size: 256
     backbone: "resnet18"
