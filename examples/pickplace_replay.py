@@ -24,11 +24,10 @@ def run_reference_replay(cfg, restore_state=False, step_env=False, num_episodes=
             observation_list = []
             env.reset()
             i = 0
-            success = 0
             step_index = 1
 
             for data in env.current_episode.reference_replay[step_index:]:
-                action = possible_actions.index(data.action)
+                action = possible_actions.index(data.action)            
 
                 if step_env:
                     observations = env.step(action=action)
@@ -75,6 +74,7 @@ def main():
     args = parser.parse_args()
     cfg = config
     cfg.defrost()
+    cfg.DATASET.TYPE = "PickPlaceDataset-v1"
     cfg.DATASET.DATA_PATH = args.path
     cfg.freeze()
 

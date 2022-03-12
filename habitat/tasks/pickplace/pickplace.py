@@ -109,10 +109,10 @@ class GrabReleaseActionSpec:
     r"""Grab/Release action reaply data specifications that capture states
      of each grab/release action.
     """
-    new_object_translation: Optional[List[float]] = attr.ib(default=None)
-    gripped_object_id: Optional[int] = attr.ib(default=None)
-    new_object_id: Optional[int] = attr.ib(default=None)
-    object_handle: Optional[str] = attr.ib(default=None)
+    released_object_position: Optional[List[float]] = attr.ib(default=None)
+    released_object_id: Optional[int] = attr.ib(default=None)
+    released_object_handle: Optional[str] = attr.ib(default=None)
+    grab_object_id: Optional[int] = attr.ib(default=None)
 
 
 @attr.s(auto_attribs=True, kw_only=True)
@@ -141,15 +141,12 @@ class ReplayActionSpec:
     """
     action: str = attr.ib(default=None, validator=not_none_validator)
     object_under_cross_hair: Optional[int] = attr.ib(default=None)
-    object_drop_point: Optional[List[float]] = attr.ib(default=None)
     action_data: Optional[GrabReleaseActionSpec] = attr.ib(default=None)
     is_grab_action: Optional[bool] = attr.ib(default=None)
     is_release_action: Optional[bool] = attr.ib(default=None)
     object_states: Optional[List[ObjectStateSpec]] = attr.ib(default=None)
     agent_state: Optional[AgentStateSpec] = attr.ib(default=None)
     collision: Optional[dict] = attr.ib(default=None)
-    timestamp: Optional[int] = attr.ib(default=None)
-    nearest_object_id: Optional[int] = attr.ib(default=None)
     gripped_object_id: Optional[int] = attr.ib(default=None)
 
 
@@ -234,21 +231,16 @@ class DemonstrationSensor(Sensor):
         task: EmbodiedTask,
         **kwargs
     ):
-
         # Fetch next action as observation
         if task.is_resetting:  # reset
             self.timestep = 1
-            # logger.info("Episode start: {}".format(episode.episode_id))
         
         if self.timestep < len(episode.reference_replay):
             action_name = episode.reference_replay[self.timestep].action
             action = get_habitat_sim_action(action_name)
-            #logger.info("{} -- {}".format(self.timestep, action_name))
         else:
             action = 0
-            # logger.info("{} -- {}".format(self.timestep, "STOP"))
 
-        # logger.info("{} -- {}".format(self.timestep, action))
         self.timestep += 1
         return action
 
@@ -275,15 +267,12 @@ class InflectionWeightSensor(Sensor):
         **kwargs
     ):
         if task.is_resetting:  # reset
-            # logger.info("Reset: {}, lim: {}".format(self.timestep, len(episode.reference_replay)))
             self.timestep = 0
         
         inflection_weight = 1.0
-        # logger.info("Ts: {}, lim: {}".format(self.timestep, len(episode.reference_replay)))
         if self.timestep == 0:
             inflection_weight = 1.0
         elif self.timestep >= len(episode.reference_replay):
-            # logger.info("EP: {} Ts: {}, lim: {}".format(episode.episode_id, self.timestep, len(episode.reference_replay)))
             inflection_weight = 1.0 
         elif episode.reference_replay[self.timestep - 1].action != episode.reference_replay[self.timestep].action:
             inflection_weight = self._config.INFLECTION_COEF
@@ -643,12 +632,6 @@ class Coverage(Measure):
         return grid_x, grid_y, grid_z
 
     def reset_metric(self, episode, task, observations, *args: Any, **kwargs: Any):
-        # If EGOCENTRIC, we use the episodic coordinate frame, as defined by GPS Sensor
-        # ! EGOCENTRIC will ASSUME sensor available (I don't know the API to check sensor atm)
-        # if self._config.EGOCENTRIC:
-        #     task.measurements.check_measure_dependencies(
-        #         self.uuid, [EpisodicGPSSensor.cls_uuid]
-        #     ) # Also better be 3D
         self._visited = {}
         self._mini_visited = {}
         self._reached_count = 0

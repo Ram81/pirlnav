@@ -419,17 +419,6 @@ class PickPlaceSim(HabitatSim):
             object_id = self.add_object_by_handle(object_handle)
             self.set_object_semantic_id(object_.semantic_object_id, object_id)
 
-    
-    def update_drop_point(self, replay_data=None, show=False):
-        if self.gripped_object_id == -1 or show == False:
-            position = self._default_agent.body.object.absolute_translation
-            position = mn.Vector3(position.x, position.y - 0.5, position.z)
-            self.update_drop_point_node(position)
-        else:
-            if replay_data.object_drop_point is not None and len(replay_data.object_drop_point) > 0:
-                position = mn.Vector3(replay_data.object_drop_point)
-                self.update_drop_point_node(position)
-
     def step_from_replay(self, action: int, replay_data: Dict = {}):
         dt = 1.0 / 20.0
         self._num_total_frames += 1
@@ -440,24 +429,24 @@ class PickPlaceSim(HabitatSim):
 
         if action_spec.name == "grab_or_release_object_under_crosshair":
             action_data = replay_data.action_data
-            if action_data is not None and action_data.gripped_object_id != -1:
+            if action_data is not None and action_data.released_object_id != -1:
                 if replay_data.is_release_action:
                     # Fetch object handle and drop point from replay
-                    new_object_position = mn.Vector3(action_data.new_object_translation)
-                    scene_object = self.get_object_from_scene(action_data.gripped_object_id)
+                    new_object_position = mn.Vector3(action_data.released_object_position)
+                    scene_object = self.get_object_from_scene(action_data.released_object_id)
                     new_object_id = self.add_object_by_handle(
                         scene_object.object_handle
                     )
                     self.set_translation(new_object_position, new_object_id)
                     self.set_object_semantic_id(scene_object.semantic_object_id, new_object_id)
 
-                    self.update_object_in_scene(new_object_id, action_data.gripped_object_id)
+                    self.update_object_in_scene(new_object_id, action_data.released_object_id)
                     self.gripped_object_id = replay_data.gripped_object_id
                 elif replay_data.is_grab_action:
                     self.gripped_object_transformation = self.get_transformation(
-                        action_data.gripped_object_id
+                        action_data.grab_object_id
                     )
-                    self.remove_object(action_data.gripped_object_id)
+                    self.remove_object(action_data.grab_object_id)
                     self.gripped_object_id = replay_data.gripped_object_id
         elif action_spec.name == "no_op":
             self.restore_object_states(replay_data.object_states)

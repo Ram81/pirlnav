@@ -1,17 +1,17 @@
 # Habitat-Web
 
-Code for training imitation learning agents for [Objectnav](https://arxiv.org/abs/2006.13171) and [PickPlace]() in [Habitat](https://aihabitat.org/). This repo is the official code repository for the paper **[Habitat-Web: Learning Embodied Object-Search from Human Demonstrations at Scale]()**
+Code for training imitation learning agents for [Objectnav](https://arxiv.org/abs/2006.13171) and [Pick-and-Place]() in [Habitat](https://aihabitat.org/). This repo is the official code repository for the paper **[Habitat-Web: Learning Embodied Object-Search from Human Demonstrations at Scale]()**
 
 ## Reproducing Results
 
-We provide te best checkpoints for agents trained on ObjectNav and PickPlace. You can use the following checkpoints to reproduce results reported in our paper.
+We provide best checkpoints for agents trained on ObjectNav and Pick-and-Place. You can use the following checkpoints to reproduce results reported in our paper.
 
 | Task | Split | Checkpoint | Success Rate | SPL |
 | --- | --- | --- | --- | --- |
 | 🆕[ObjectNav](https://arxiv.org/abs/2006.13171) | v1 | [objectnav_semseg.ckpt]() | 27.8 | 9.9 |
-| 🆕[PickPlace]() | New Initializations | [pick_place_rgbd_new_inits.ckpt]() | 17.5 | 9.8 |
-| 🆕[PickPlace]() | New Instructions | [pick_place_rgbd_new_insts.ckpt]() | 15.1 | 8.3 |
-| 🆕[PickPlace]() | New Environments | [pick_place_rgbd_new_envs.ckpt]() | 8.3 | 4.1 |
+| 🆕[Pick-and-Place]() | New Initializations | [pick_place_rgbd_new_inits.ckpt]() | 17.5 | 9.8 |
+| 🆕[Pick-and-Place]() | New Instructions | [pick_place_rgbd_new_insts.ckpt]() | 15.1 | 8.3 |
+| 🆕[Pick-and-Place]() | New Environments | [pick_place_rgbd_new_envs.ckpt]() | 8.3 | 4.1 |
 
 
 You can find the pretrained RedNet semantic segmentation model weights [here]().
@@ -21,15 +21,15 @@ You can find the pretrained RedNet semantic segmentation model weights [here]().
 The primary code contributions from the paper are located in:
 - Imitation Learning Baselines:
     - ObjectNav: `habitat_baselines/il/env_based/`
-    - PickPlace: `habitat_baselines/il/disk_based/`
+    - Pick-and-Place: `habitat_baselines/il/disk_based/`
 
 - Experiment Configurations:
     - ObjectNav: `habitat_baselines/config/objectnav/*.yaml`
-    - PickPlace: `habitat_baselines/config/pickplace/*.yaml`
+    - Pick-and-Place: `habitat_baselines/config/pickplace/*.yaml`
 
 - Replay Scripts:
     - ObjectNav: `examples/objectnav_replay.py`
-    - PickPlace: `examples/pickplace_replay.py`
+    - Pick-and-Place: `examples/pickplace_replay.py`
 
 ## Installation
 
@@ -113,7 +113,7 @@ The primary code contributions from the paper are located in:
     Unzip the dataset into `data/datasets/objectnav/`
 
 
-- Download the PickPlace dataset:
+- Download the Pick-and-Place dataset:
 
     ```bash
     wget https://habitat-on-web.s3.amazonaws.com/release/datasets/pick_place/pick_place_12k.zip
@@ -123,7 +123,7 @@ The primary code contributions from the paper are located in:
 
 ### Setting up datasets
 
-The code requires the datasets in a `data` folder in the following format:
+The code requires the datasets in `data` folder in the following format:
 
   ```bash
   habitat-web-baselines/
@@ -142,6 +142,17 @@ The code requires the datasets in a `data` folder in the following format:
         pick_place_12k/
           train/
   ```
+### Pick-and-Place dataset splits
+
+We provide 3 different splits for Pick-and-Place dataset. You can use the following datasets to reproduce results reported in our paper.
+
+| Dataset | Split | Link | Extract path |
+| --- | --- | --- | --- |
+| 🆕[Pick-and-Place]() | New Initializations | [pick_place_unseen_initializations.json.gz]() | `data/datasets/pick_place/unseen_initializations/` |
+| 🆕[Pick-and-Place]() | New Instructions | [pick_place_unseen_instructions.json.gz]() | `data/datasets/pick_place/unseen_instructions/` |
+| 🆕[Pick-and-Place]() | New Environments | [pick_place_unseen_scenes.json.gz]() | `data/datasets/pick_place/unseen_scenes/` |
+
+
 
 ### Test setup
 
@@ -170,7 +181,7 @@ For training the behavior cloning policy on the ObjectGoal Navigation task using
   sbatch job_scripts/run_objectnav_training.sh habitat_baselines/config/objectnav/il_objectnav.yaml
   ```
 
-For training the behavior cloning policy on the PickPlace task using the disk based setup:
+For training the behavior cloning policy on the Pick-and-Place task using the disk based setup:
     
 1. Use the following script for multi-node training
 
@@ -201,7 +212,7 @@ For evaluating a checkpoint on the ObjectGoal Navigation task using the environm
   sbatch job_scripts/run_objectnav_eval.sh habitat_baselines/config/objectnav/il_objectnav.yaml
   ```
 
-For evaluating the behavior cloning policy on the PickPlace task using the disk based setup:
+For evaluating the behavior cloning policy on the Pick-and-Place task using the disk based setup:
     
 1. Use the following script if trained using dristributed setup
 
