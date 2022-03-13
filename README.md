@@ -104,7 +104,7 @@ The primary code contributions from the paper are located in:
 
 ### Downloading human demonstrations dataset
 
-- Download the ObjectNav dataset:
+- Download the full ObjectNav dataset:
 
     ```bash
     wget https://habitat-on-web.s3.amazonaws.com/release/datasets/objectnav/objectnav_mp3d_70k.zip
@@ -113,13 +113,24 @@ The primary code contributions from the paper are located in:
     Unzip the dataset into `data/datasets/objectnav/`
 
 
-- Download the Pick-and-Place dataset:
+- Download the full Pick-and-Place dataset:
 
     ```bash
     wget https://habitat-on-web.s3.amazonaws.com/release/datasets/pick_place/pick_place_12k.zip
     ```
 
     Unzip the dataset into `data/datasets/pick_place/`
+
+### Pick-and-Place dataset splits
+
+We provide 3 different splits for Pick-and-Place dataset. You can use the following datasets to reproduce results reported in our paper.
+
+| Dataset | Split | Link | Extract path |
+| ----- | --- | --- | --- |
+| 🆕[Pick-and-Place]() | New Initializations | [pick_place_unseen_initializations.json.gz](https://habitat-on-web.s3.amazonaws.com/release/datasets/pick_place/pick_place_unseen_initializations.zip) | `data/datasets/pick_place/unseen_initializations/` |
+| 🆕[Pick-and-Place]() | New Instructions | [pick_place_unseen_instructions.json.gz](https://habitat-on-web.s3.amazonaws.com/release/datasets/pick_place/pick_place_unseen_instructions.zip) | `data/datasets/pick_place/unseen_instructions/` |
+| 🆕[Pick-and-Place]() | New Environments | [pick_place_unseen_scenes.json.gz](https://habitat-on-web.s3.amazonaws.com/release/datasets/pick_place/pick_place_unseen_scenes.zip) | `data/datasets/pick_place/unseen_scenes/` |
+
 
 ### Setting up datasets
 
@@ -142,17 +153,6 @@ The code requires the datasets in `data` folder in the following format:
         pick_place_12k/
           train/
   ```
-### Pick-and-Place dataset splits
-
-We provide 3 different splits for Pick-and-Place dataset. You can use the following datasets to reproduce results reported in our paper.
-
-| Dataset | Split | Link | Extract path |
-| --- | --- | --- | --- |
-| 🆕[Pick-and-Place]() | New Initializations | [pick_place_unseen_initializations.json.gz]() | `data/datasets/pick_place/unseen_initializations/` |
-| 🆕[Pick-and-Place]() | New Instructions | [pick_place_unseen_instructions.json.gz]() | `data/datasets/pick_place/unseen_instructions/` |
-| 🆕[Pick-and-Place]() | New Environments | [pick_place_unseen_scenes.json.gz]() | `data/datasets/pick_place/unseen_scenes/` |
-
-
 
 ### Test setup
 
