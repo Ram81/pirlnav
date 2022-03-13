@@ -106,13 +106,13 @@ The primary code contributions from the paper are located in:
 
 You can use the following datasets to reproduce results reported in our paper.
 
-| <div style="width:180px">Dataset </div>| Scene dataset | Split | Link | Extract path |
+| Dataset| Scene dataset | Split | Link | Extract path |
 | ----- | --- | --- | --- | --- |
-| 🆕[ObjectNav MP3D 70k]() | MP3D | Full | [objectnav_mp3d_70k.json.gz](https://habitat-on-web.s3.amazonaws.com/release/datasets/objectnav/objectnav_mp3d_70k.zip) | `data/datasets/objectnav/` |
-| 🆕[Pick-and-Place 12k]() | MP3D | Full | [pick_place_12k.json.gz](https://habitat-on-web.s3.amazonaws.com/release/datasets/pick_place/pick_place_12k.zip) | `data/datasets/pick_place/pick_place_12k/` |
-| 🆕[Pick-and-Place]() | MP3D | New Initializations | [pick_place_unseen_initializations.json.gz](https://habitat-on-web.s3.amazonaws.com/release/datasets/pick_place/pick_place_unseen_initializations.zip) | `data/datasets/pick_place/unseen_initializations/` |
-| 🆕[Pick-and-Place]() | MP3D | New Instructions | [pick_place_unseen_instructions.json.gz](https://habitat-on-web.s3.amazonaws.com/release/datasets/pick_place/pick_place_unseen_instructions.zip) | `data/datasets/pick_place/unseen_instructions/` |
-| 🆕[Pick-and-Place]() | MP3D | New Environments | [pick_place_unseen_scenes.json.gz](https://habitat-on-web.s3.amazonaws.com/release/datasets/pick_place/pick_place_unseen_scenes.zip) | `data/datasets/pick_place/unseen_scenes/` |
+| ObjectNav MP3D 70k | MP3D | Full | [objectnav_mp3d_70k.json.gz](https://habitat-on-web.s3.amazonaws.com/release/datasets/objectnav/objectnav_mp3d_70k.zip) | `data/datasets/objectnav/` |
+| Pick-and-Place | MP3D | Full | [pick_place_12k.json.gz](https://habitat-on-web.s3.amazonaws.com/release/datasets/pick_place/pick_place_12k.zip) | `data/datasets/pick_place/pick_place_12k/` |
+| Pick-and-Place | MP3D | New Initializations | [pick_place_unseen_initializations.json.gz](https://habitat-on-web.s3.amazonaws.com/release/datasets/pick_place/pick_place_unseen_initializations.zip) | `data/datasets/pick_place/unseen_initializations/` |
+| Pick-and-Place | MP3D | New Instructions | [pick_place_unseen_instructions.json.gz](https://habitat-on-web.s3.amazonaws.com/release/datasets/pick_place/pick_place_unseen_instructions.zip) | `data/datasets/pick_place/unseen_instructions/` |
+| Pick-and-Place | MP3D | New Environments | [pick_place_unseen_scenes.json.gz](https://habitat-on-web.s3.amazonaws.com/release/datasets/pick_place/pick_place_unseen_scenes.zip) | `data/datasets/pick_place/unseen_scenes/` |
 
 
 ### Setting up datasets
