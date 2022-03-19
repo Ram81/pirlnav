@@ -108,11 +108,12 @@ You can use the following datasets to reproduce results reported in our paper.
 
 | Dataset| Scene dataset | Split | Link | Extract path |
 | ----- | --- | --- | --- | --- |
-| ObjectNav MP3D 70k | MP3D | Full | [objectnav_mp3d_70k.json.gz](https://habitat-on-web.s3.amazonaws.com/release/datasets/objectnav/objectnav_mp3d_70k.zip) | `data/datasets/objectnav/` |
-| Pick-and-Place | MP3D | Full | [pick_place_12k.json.gz](https://habitat-on-web.s3.amazonaws.com/release/datasets/pick_place/pick_place_12k.zip) | `data/datasets/pick_place/pick_place_12k/` |
-| Pick-and-Place | MP3D | New Initializations | [pick_place_unseen_initializations.json.gz](https://habitat-on-web.s3.amazonaws.com/release/datasets/pick_place/pick_place_unseen_initializations.zip) | `data/datasets/pick_place/unseen_initializations/` |
-| Pick-and-Place | MP3D | New Instructions | [pick_place_unseen_instructions.json.gz](https://habitat-on-web.s3.amazonaws.com/release/datasets/pick_place/pick_place_unseen_instructions.zip) | `data/datasets/pick_place/unseen_instructions/` |
-| Pick-and-Place | MP3D | New Environments | [pick_place_unseen_scenes.json.gz](https://habitat-on-web.s3.amazonaws.com/release/datasets/pick_place/pick_place_unseen_scenes.zip) | `data/datasets/pick_place/unseen_scenes/` |
+| ObjectNav-HD | MP3D | 70k | [objectnav_mp3d_70k.json.gz](https://habitat-on-web.s3.amazonaws.com/release/datasets/objectnav/objectnav_mp3d_70k.zip) | `data/datasets/objectnav/objectnav_mp3d_70k/` |
+| ObjectNav-HD | MP3D+Gibson | Full | [objectnav_mp3d_gibson_80k.json.gz](https://habitat-on-web.s3.amazonaws.com/release/datasets/objectnav/objectnav_mp3d_gibson_80k.zip) | `data/datasets/objectnav/objectnav_mp3d_gibson_80k/` |
+| Pick-and-Place-HD | MP3D | Full | [pick_place_12k.json.gz](https://habitat-on-web.s3.amazonaws.com/release/datasets/pick_place/pick_place_12k.zip) | `data/datasets/pick_place/pick_place_12k/` |
+| Pick-and-Place-HD | MP3D | New Initializations | [pick_place_unseen_initializations.json.gz](https://habitat-on-web.s3.amazonaws.com/release/datasets/pick_place/pick_place_unseen_initializations.zip) | `data/datasets/pick_place/unseen_initializations/` |
+| Pick-and-Place-HD | MP3D | New Instructions | [pick_place_unseen_instructions.json.gz](https://habitat-on-web.s3.amazonaws.com/release/datasets/pick_place/pick_place_unseen_instructions.zip) | `data/datasets/pick_place/unseen_instructions/` |
+| Pick-and-Place-HD | MP3D | New Environments | [pick_place_unseen_scenes.json.gz](https://habitat-on-web.s3.amazonaws.com/release/datasets/pick_place/pick_place_unseen_scenes.zip) | `data/datasets/pick_place/unseen_scenes/` |
 
 
 ### Setting up datasets
@@ -120,22 +121,22 @@ You can use the following datasets to reproduce results reported in our paper.
 The code requires the datasets in `data` folder in the following format:
 
   ```bash
-  habitat-web-baselines/
-    data/
-      scene_datasets/
-        mp3d/
-          JeFG25nYj2p
-            JeFG25nYj2p.glb
-            JeFG25nYj2p.navmesh
-            ...
-    datasets/
-      objectnav/
-        objectnav_mp3d_70k/
-          train/
-      pick_place/
-        pick_place_12k/
-          train/
+  ├── habitat-web-baselines/
+  │  ├── data
+  │  │  ├── scene_datasets/
+  │  │  │  ├── mp3d/
+  │  │  │  │  ├── JeFG25nYj2p.glb
+  │  │  │  │  └── JeFG25nYj2p.navmesh
+  │  │  ├── datasets
+  │  │  │  ├── objectnav/
+  │  │  │  │  ├── objectnav_mp3d_70k/
+  │  │  │  │  │  ├── train/
+  │  │  │  ├── pick_place/
+  │  │  │  │  ├── pick_place_12k/
+  │  │  │  │  │  ├── train/
   ```
+
+We also provide an example of packaging your own demonstrations dataset to train imitation learning agents with `habitat-imitation-baselines` [here](https://github.com/Ram81/habitat-imitation-baselines/IL_DATASETS.md).
 
 ### Test setup
 
