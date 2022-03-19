@@ -96,13 +96,13 @@ The primary code contributions from the paper are located in:
 
 ## Data
 
-### Downloading MP3D scene dataset
+### Downloading MP3D Scene Dataset
 
 - Download the MP3D dataset using the instructions here: https://github.com/facebookresearch/habitat-lab#scenes-datasets (download the full MP3D dataset for use with habitat)
 
 - Move the MP3D scene dataset or create a symlink at data/scene_datasets/mp3d.
 
-### Downloading human demonstrations dataset
+### Downloading Human Demonstrations Dataset
 
 You can use the following datasets to reproduce results reported in our paper.
 
@@ -116,7 +116,7 @@ You can use the following datasets to reproduce results reported in our paper.
 | Pick-and-Place-HD | MP3D | New Environments | [pick_place_unseen_scenes.json.gz](https://habitat-on-web.s3.amazonaws.com/release/datasets/pick_place/pick_place_unseen_scenes.zip) | `data/datasets/pick_place/unseen_scenes/` |
 
 
-### Setting up datasets
+### Dataset Folder Structure
 
 The code requires the datasets in `data` folder in the following format:
 
@@ -136,9 +136,11 @@ The code requires the datasets in `data` folder in the following format:
   │  │  │  │  │  ├── train/
   ```
 
+### Packaging Demonstration Datasets
+
 We also provide an example of packaging your own demonstrations dataset to train imitation learning agents with `habitat-imitation-baselines` [here](https://github.com/Ram81/habitat-imitation-baselines/IL_DATASETS.md).
 
-### Test setup
+### Test Setup
 
 To verify that the data is set up correctly, run:
 
