@@ -3,7 +3,7 @@ import habitat
 
 from habitat.utils.visualizations.utils import observations_to_image, images_to_video, append_text_to_image
 
-config = habitat.get_config("configs/tasks/objectnav_mp3d_video.yaml")
+config = habitat.get_config("configs/tasks/objectnav_mp3d.yaml")
 
 
 def make_videos(observations_list, output_prefix, ep_id):

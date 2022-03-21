@@ -44,6 +44,7 @@ The primary code contributions from the paper are located in:
     conda activate habitat-web
 
     pip install -e .
+    python setup.py develop --all
     ```
 
 1. Install our custom build of `habitat-sim`, we highly recommend using the `habitat-sim` build from source for working with `habitat-web-baselines`. Use the following commands to set it up:
