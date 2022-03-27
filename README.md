@@ -219,7 +219,7 @@ If you use this code in your research, please consider citing:
 
 ```
 @inproceedings{ramrakhya2022,
-      title={Habitat-Web: Learning Embodied Object-Search from Human Demonstrations at Scale},
+      title={Habitat-Web: Learning Embodied Object-Search Strategies from Human Demonstrations at Scale},
       author={Ram Ramrakhya and Eric Undersander and Dhruv Batra and Abhishek Das},
       year={2022},
       booktitle={CVPR},
