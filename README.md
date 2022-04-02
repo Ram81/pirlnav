@@ -8,10 +8,10 @@ We provide best checkpoints for agents trained on ObjectNav and Pick-and-Place. 
 
 | Task | Split | Checkpoint | Success Rate | SPL |
 | --- | --- | --- | --- | --- |
-| 🆕[ObjectNav](https://arxiv.org/abs/2006.13171) | v1 | [objectnav_semseg.ckpt]() | 27.8 | 9.9 |
-| 🆕[Pick-and-Place]() | New Initializations | [pick_place_rgbd_new_inits.ckpt]() | 17.5 | 9.8 |
-| 🆕[Pick-and-Place]() | New Instructions | [pick_place_rgbd_new_insts.ckpt]() | 15.1 | 8.3 |
-| 🆕[Pick-and-Place]() | New Environments | [pick_place_rgbd_new_envs.ckpt]() | 8.3 | 4.1 |
+| 🆕[ObjectNav](https://arxiv.org/abs/2006.13171) | v1 | [objectnav_semseg.ckpt](https://habitat-on-web.s3.amazonaws.com/release/checkpoints/objectnav/objectnav_semseg.ckpt) | 27.8 | 9.9 |
+| 🆕[Pick-and-Place]() | New Initializations | [pick_place_rgbd_new_inits.ckpt](https://habitat-on-web.s3.amazonaws.com/release/checkpoints/pick_place/pick_place_rgbd_new_inits.ckpt) | 17.5 | 9.8 |
+| 🆕[Pick-and-Place]() | New Instructions | [pick_place_rgbd_new_insts.ckpt](https://habitat-on-web.s3.amazonaws.com/release/checkpoints/pick_place/pick_place_rgbd_new_insts.ckpt) | 15.1 | 8.3 |
+| 🆕[Pick-and-Place]() | New Environments | [pick_place_rgbd_new_envs.ckpt](https://habitat-on-web.s3.amazonaws.com/release/checkpoints/pick_place/pick_place_rgbd_new_envs.ckpt) | 8.3 | 4.1 |
 
 
 You can find the pretrained RedNet semantic segmentation model weights [here]().
