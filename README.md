@@ -1,6 +1,6 @@
 # Habitat-Web
 
-Code for training imitation learning agents for [Objectnav](https://arxiv.org/abs/2006.13171) and [Pick-and-Place]() in [Habitat](https://aihabitat.org/). This repo is the official code repository for the paper **[Habitat-Web: Learning Embodied Object-Search from Human Demonstrations at Scale]()**
+Code for training imitation learning agents for [Objectnav](https://arxiv.org/abs/2006.13171) and [Pick-and-Place](https://arxiv.org/abs/2204.03514) in [Habitat](https://aihabitat.org/). This repo is the official code repository for the paper **[Habitat-Web: Learning Embodied Object-Search from Human Demonstrations at Scale](https://arxiv.org/abs/2204.03514)**
 
 ## Reproducing Results
 
@@ -222,6 +222,6 @@ If you use this code in your research, please consider citing:
       title={Habitat-Web: Learning Embodied Object-Search Strategies from Human Demonstrations at Scale},
       author={Ram Ramrakhya and Eric Undersander and Dhruv Batra and Abhishek Das},
       year={2022},
-      booktitle={CVPR},
+      booktitle={Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition (CVPR)},
 }
 ```
