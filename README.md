@@ -222,6 +222,6 @@ If you use this code in your research, please consider citing:
       title={Habitat-Web: Learning Embodied Object-Search Strategies from Human Demonstrations at Scale},
       author={Ram Ramrakhya and Eric Undersander and Dhruv Batra and Abhishek Das},
       year={2022},
-      booktitle={Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition (CVPR)},
+      booktitle={{Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)},
 }
 ```
