@@ -13,7 +13,6 @@ from typing import DefaultDict, Optional
 
 import numpy as np
 import torch
-from gym import spaces
 from torch import distributed as distrib
 from torch import nn as nn
 from torch.optim.lr_scheduler import LambdaLR
@@ -39,12 +38,10 @@ from habitat_baselines.rl.ddppo.algo.ddp_utils import (
     save_interrupted_state,
 )
 from habitat_baselines.rl.ddppo.algo.ddppo import DDPPO
-from habitat_baselines.rl.ddppo.policy.resnet_policy import (  # noqa: F401
-    PointNavResNetPolicy,
-)
 from habitat_baselines.rl.ppo.ppo_trainer import PPOTrainer
-from habitat_baselines.utils.common import batch_obs, linear_decay
+from habitat_baselines.utils.common import batch_obs, linear_decay, linear_warmup, critic_linear_decay
 from habitat_baselines.utils.env_utils import construct_envs
+from habitat_baselines.il.env_based.policy.rednet import load_rednet
 
 
 @baseline_registry.register_trainer(name="ddppo")
@@ -87,6 +84,17 @@ class DDPPOTrainer(PPOTrainer):
         self.obs_space = observation_space
         self.actor_critic.to(self.device)
 
+        self.semantic_predictor = None
+        self.use_pred_semantic = hasattr(self.config.MODEL, "USE_PRED_SEMANTICS") and self.config.MODEL.USE_PRED_SEMANTICS
+        if self.use_pred_semantic:
+            self.semantic_predictor = load_rednet(
+                self.device,
+                ckpt=self.config.MODEL.SEMANTIC_ENCODER.rednet_ckpt,
+                resize=True, # since we train on half-vision
+                num_classes=self.config.MODEL.SEMANTIC_ENCODER.num_classes
+            )
+            self.semantic_predictor.eval()
+
         if (
             self.config.RL.DDPPO.pretrained_encoder
             or self.config.RL.DDPPO.pretrained
@@ -94,42 +102,33 @@ class DDPPOTrainer(PPOTrainer):
             pretrained_state = torch.load(
                 self.config.RL.DDPPO.pretrained_weights, map_location="cpu"
             )
-
+            logger.info("Loading state")
+        
         if self.config.RL.DDPPO.pretrained:
-            self.actor_critic.load_state_dict(
+            missing_keys = self.actor_critic.load_state_dict(
                 {
-                    k[len("actor_critic.") :]: v
+                    k.replace("model.", ""): v
                     for k, v in pretrained_state["state_dict"].items()
                 }, strict=False
             )
-        elif self.config.RL.DDPPO.pretrained_encoder:
-            prefix = "actor_critic.net.visual_encoder."
-            self.actor_critic.net.visual_encoder.load_state_dict(
-                {
-                    k[len(prefix) :]: v
-                    for k, v in pretrained_state["state_dict"].items()
-                    if k.startswith(prefix)
-                }
-            )
+            logger.info("Loading checkpoint missing keys: {}".format(missing_keys))
 
-        if not self.config.RL.DDPPO.train_encoder:
-            self._static_encoder = True
-            for param in self.actor_critic.net.visual_encoder.parameters():
-                param.requires_grad_(False)
-        
-        self._static_vis_encoder = False
-        if hasattr(self.config, "MODEL") and self.config.MODEL.freeze_encoders:
-            self._static_vis_encoder = True
-            for param in self.actor_critic.net.depth_encoder.parameters():
-                param.requires_grad_(False)
-            for param in self.actor_critic.net.rgb_encoder.parameters():
-                param.requires_grad_(False)
-            for param in self.actor_critic.net.sem_seg_encoder.parameters():
-                param.requires_grad_(False)
+        logger.info("Freeze encoder")
+        if hasattr(self.config.RL, "Finetune"):
+            logger.info("Start Freeze encoder")
+            self.warm_up_critic = True
+            if self.config.RL.Finetune.freeze_encoders:
+                self.actor_critic.freeze_visual_encoders()
+
+            self.actor_finetuning_update = self.config.RL.Finetune.start_actor_finetuning_at
+            self.actor_lr_warmup_update = self.config.RL.Finetune.actor_lr_warmup_update
+            self.critic_lr_decay_update = self.config.RL.Finetune.critic_lr_decay_update
+            self.start_critic_warmup_at = self.config.RL.Finetune.start_critic_warmup_at
 
         if self.config.RL.DDPPO.reset_critic:
-            nn.init.orthogonal_(self.actor_critic.critic.fc.weight)
-            nn.init.constant_(self.actor_critic.critic.fc.bias, 0)
+            pass
+            # nn.init.orthogonal_(self.actor_critic.critic.fc.weight)
+            # nn.init.constant_(self.actor_critic.critic.fc.bias, 0)
 
         self.agent = DDPPO(
             actor_critic=self.actor_critic,
@@ -142,6 +141,7 @@ class DDPPOTrainer(PPOTrainer):
             eps=ppo_cfg.eps,
             max_grad_norm=ppo_cfg.max_grad_norm,
             use_normalized_advantage=ppo_cfg.use_normalized_advantage,
+            finetune=self.warm_up_critic,
         )
 
     @profiling_wrapper.RangeContext("train")
@@ -220,7 +220,7 @@ class DDPPOTrainer(PPOTrainer):
         observations = self.envs.reset()
         batch = batch_obs(observations, device=self.device)
 
-        if self.config.MODEL.USE_PRED_SEMANTICS and self.current_update >= self.config.MODEL.SWITCH_TO_PRED_SEMANTICS_UPDATE:
+        if self.use_pred_semantic:
             batch["semantic"] = self.semantic_predictor(batch["rgb"], batch["depth"])
             # Subtract 1 from class labels for THDA YCB categories
             if self.config.MODEL.SEMANTIC_ENCODER.is_thda:
@@ -229,21 +229,6 @@ class DDPPOTrainer(PPOTrainer):
         batch = apply_obs_transforms_batch(batch, self.obs_transforms)
 
         obs_space = self.obs_space
-        if self._static_encoder:
-            self._encoder = self.actor_critic.net.visual_encoder
-            obs_space = spaces.Dict(
-                {
-                    "visual_features": spaces.Box(
-                        low=np.finfo(np.float32).min,
-                        high=np.finfo(np.float32).max,
-                        shape=self._encoder.output_shape,
-                        dtype=np.float32,
-                    ),
-                    **obs_space.spaces,
-                }
-            )
-            with torch.no_grad():
-                batch["visual_features"] = self._encoder(batch)
 
         rollouts = RolloutStorage(
             ppo_cfg.num_steps,
@@ -267,9 +252,23 @@ class DDPPOTrainer(PPOTrainer):
         current_episode_reward = torch.zeros(
             self.envs.num_envs, 1, device=self.device
         )
+        current_episode_values = torch.zeros(
+            self.envs.num_envs, 1, device=self.device
+        )
+        current_episode_gae = dict(
+            steps=torch.zeros(self.envs.num_envs, 1, device=self.device),
+            sum=torch.zeros(self.envs.num_envs, 1, device=self.device),
+            min=torch.ones(self.envs.num_envs, 1, device=self.device) * 100.0,
+            max=torch.ones(self.envs.num_envs, 1, device=self.device) * -100.0,
+        )
         running_episode_stats = dict(
             count=torch.zeros(self.envs.num_envs, 1, device=self.device),
             reward=torch.zeros(self.envs.num_envs, 1, device=self.device),
+            values=torch.zeros(self.envs.num_envs, 1, device=self.device),
+            values_gae=torch.zeros(self.envs.num_envs, 1, device=self.device), 
+            values_mean=torch.zeros(self.envs.num_envs, 1, device=self.device),
+            values_min=torch.zeros(self.envs.num_envs, 1, device=self.device), 
+            values_max=torch.zeros(self.envs.num_envs, 1, device=self.device), 
         )
         window_episode_stats: DefaultDict[str, deque] = defaultdict(
             lambda: deque(maxlen=ppo_cfg.reward_window_size)
@@ -285,7 +284,11 @@ class DDPPOTrainer(PPOTrainer):
 
         lr_scheduler = LambdaLR(
             optimizer=self.agent.optimizer,
-            lr_lambda=lambda x: linear_decay(x, self.config.NUM_UPDATES),  # type: ignore
+            lr_lambda=[
+                lambda x: critic_linear_decay(x, self.start_critic_warmup_at, self.critic_lr_decay_update, self.config.RL.PPO.lr, self.config.RL.Finetune.policy_ft_lr),
+                lambda x: linear_warmup(x, self.actor_finetuning_update, self.actor_lr_warmup_update, 0.0, self.config.RL.Finetune.policy_ft_lr),
+                lambda x: linear_warmup(x, self.actor_finetuning_update, self.actor_lr_warmup_update, 0.0, self.config.RL.Finetune.policy_ft_lr),
+            ]
         )
 
         interrupted_state = load_interrupted_state()
@@ -351,6 +354,31 @@ class DDPPOTrainer(PPOTrainer):
                     requeue_job()
                     return
 
+                # Enable actor finetuning at update actor_finetuning_update
+                if self.current_update == self.actor_finetuning_update:
+                    for param in self.actor_critic.action_distribution.parameters():
+                        param.requires_grad_(True)
+                    for param in self.actor_critic.net.state_encoder.parameters():
+                        param.requires_grad_(True)                    
+                    for i, param_group in enumerate(self.agent.optimizer.param_groups):
+                        param_group["eps"] = self.config.RL.PPO.eps
+                        lr_scheduler.base_lrs[i] = 1.0
+
+                    if self.world_rank == 0:
+                        logger.info("Start actor finetuning at: {}".format(self.current_update))
+
+                        logger.info(
+                            "updated agent number of parameters: {}".format(
+                                sum(param.numel() if param.requires_grad else 0 for param in self.agent.parameters())
+                            )
+                        )
+                if self.current_update == self.start_critic_warmup_at:
+                    self.agent.optimizer.param_groups[0]["eps"] = self.config.RL.PPO.eps
+                    lr_scheduler.base_lrs[0] = 1.0
+                    if self.world_rank == 0:
+                        logger.info("Set critic LR at: {}".format(self.current_update))
+
+
                 count_steps_delta = 0
                 self.agent.eval()
                 profiling_wrapper.range_push("rollouts loop")
@@ -361,7 +389,8 @@ class DDPPOTrainer(PPOTrainer):
                         delta_env_time,
                         delta_steps,
                     ) = self._collect_rollout_step(
-                        rollouts, current_episode_reward, running_episode_stats
+                        rollouts, current_episode_reward,
+                        running_episode_stats, current_episode_values
                     )
                     pth_time += delta_pth_time
                     env_time += delta_env_time
@@ -381,20 +410,14 @@ class DDPPOTrainer(PPOTrainer):
                 num_rollouts_done_store.add("num_done", 1)
 
                 self.agent.train()
-                if self._static_encoder:
-                    self._encoder.eval()
-                
-                if self._static_vis_encoder:
-                    self.actor_critic.net.rgb_encoder.eval()
-                    self.actor_critic.net.depth_encoder.eval()
-                    self.actor_critic.net.sem_seg_encoder.eval()
 
                 (
                     delta_pth_time,
                     value_loss,
                     action_loss,
                     dist_entropy,
-                ) = self._update_agent(ppo_cfg, rollouts)
+                    grad_norm,
+                ) = self._update_agent(ppo_cfg, rollouts, current_episode_gae, running_episode_stats)
                 pth_time += delta_pth_time
 
                 stats_ordering = sorted(running_episode_stats.keys())
@@ -407,7 +430,7 @@ class DDPPOTrainer(PPOTrainer):
                     window_episode_stats[k].append(stats[i].clone())
 
                 stats = torch.tensor(
-                    [value_loss, action_loss, count_steps_delta],
+                    [value_loss, action_loss, count_steps_delta, dist_entropy, grad_norm],
                     device=self.device,
                 )
                 distrib.all_reduce(stats)
@@ -430,9 +453,19 @@ class DDPPOTrainer(PPOTrainer):
                     }
                     deltas["count"] = max(deltas["count"], 1.0)
 
+                    lrs = {}
+                    for i, param_group in enumerate(self.agent.optimizer.param_groups):
+                        lrs["pg_{}".format(i)] = param_group["lr"]
+
                     writer.add_scalar(
                         "reward",
                         deltas["reward"] / deltas["count"],
+                        count_steps,
+                    )
+
+                    writer.add_scalars(
+                        "learning_rate",
+                        lrs,
                         count_steps,
                     )
 
@@ -450,6 +483,14 @@ class DDPPOTrainer(PPOTrainer):
                         "losses",
                         {k: l for l, k in zip(losses, ["value", "policy"])},
                         count_steps,
+                    )
+
+                    writer.add_scalar(
+                        "entropy", stats[3].item() / self.world_size, count_steps
+                    )
+
+                    writer.add_scalar(
+                        "grad_norm", stats[4].item() / self.world_size, count_steps
                     )
 
                     # log stats
@@ -476,6 +517,13 @@ class DDPPOTrainer(PPOTrainer):
                                     for k, v in deltas.items()
                                     if k != "count"
                                 ),
+                            )
+                        )
+                        logger.info(
+                            "update: {}\tLR: {}\tPG_LR: {}".format(
+                                update,
+                                lr_scheduler.get_lr(),
+                                [param_group["lr"] for param_group in self.agent.optimizer.param_groups],
                             )
                         )
 

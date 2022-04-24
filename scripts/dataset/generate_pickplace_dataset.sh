@@ -1,9 +1,9 @@
 #!/bin/bash
-source /srv/share3/rramrakhya6/miniconda3/etc/profile.d/conda.sh
+source /srv/flash1/rramrakhya6/miniconda3/etc/profile.d/conda.sh
 conda deactivate
-conda activate habitat-3
+conda activate il-rl
 
-cd /srv/share3/rramrakhya6/habitat-lab
+cd /srv/flash1/rramrakhya6/habitat-lab
 echo "Generate IL episode dataset"
 echo "hab sim: ${PYTHONPATH}"
 

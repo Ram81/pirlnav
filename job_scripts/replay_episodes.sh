@@ -1,8 +1,8 @@
 #!/bin/bash
-source /srv/share3/rramrakhya6/miniconda3/etc/profile.d/conda.sh
-conda activate habitat-3
+source /srv/flash1/rramrakhya6/miniconda3/etc/profile.d/conda.sh
+conda activate il-rl
 
-cd /srv/share3/rramrakhya6/habitat-lab
+cd /srv/flash1/rramrakhya6/habitat-lab
 echo "Starting video generation"
 echo "hab sim: ${PYTHONPATH}"
 
@@ -10,8 +10,8 @@ prefix=$1
 task=$2
 
 if [[ $task == "objectnav" ]]; then
-    python psiturk_dataset/parsing/parse_objectnav_dataset.py --replay-path data/hit_data/visualisation/unapproved_hits  --output-path data/datasets/objectnav_gibson_v2/train/content
-    python examples/objectnav_replay.py --replay-episode data/datasets/objectnav_gibson_v2/train/train.json.gz --step-env --output-prefix $prefix
+    python psiturk_dataset/parsing/parse_objectnav_dataset.py --path sample_unapproved_hits.zip --output-path $output_path/content/ --scene-dataset $scene_dataset
+    python examples/objectnav_replay.py --path data/datasets/objectnav_hm3d_demos/train/train.json.gz --output-prefix $prefix
 else
     python psiturk_dataset/parsing/parser.py --replay-path data/hit_data/visualisation/unapproved_hits --output-path data/hit_data/visualisation/hits.json
     python examples/rearrangement_replay.py --replay-episode data/hit_data/visualisation/hits.json.gz --output-prefix $prefix --restore-state

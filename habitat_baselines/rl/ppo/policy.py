@@ -22,7 +22,7 @@ from habitat_baselines.utils.common import CategoricalNet
 
 
 class Policy(nn.Module, metaclass=abc.ABCMeta):
-    def __init__(self, net, dim_actions, no_critic=False):
+    def __init__(self, net, dim_actions, no_critic=False, mlp_critic=False, critic_hidden_dim=512):
         super().__init__()
         self.net = net
         self.dim_actions = dim_actions
@@ -33,6 +33,13 @@ class Policy(nn.Module, metaclass=abc.ABCMeta):
         )
         if not self.no_critic:
             self.critic = CriticHead(self.net.output_size)
+        elif self.no_critic:
+            pass
+        else:
+            if not mlp_critic:
+                self.critic = CriticHead(self.net.output_size)
+            else:
+                self.critic = MLPCriticHead(self.net.output_size, critic_hidden_dim)
 
     def forward(self, *x):
         features, rnn_hidden_states = self.net(
@@ -102,6 +109,24 @@ class CriticHead(nn.Module):
 
     def forward(self, x):
         return self.fc(x)
+
+
+class MLPCriticHead(nn.Module):
+    def __init__(self, input_size, hidden_dim=512):
+        super().__init__()
+        self.fc = nn.Sequential(
+            nn.Linear(input_size, hidden_dim),
+            nn.ReLU(),
+            nn.Linear(hidden_dim,  1),
+        )
+        nn.init.orthogonal_(self.fc[0].weight)
+        nn.init.constant_(self.fc[0].bias, 0)
+
+        nn.init.orthogonal_(self.fc[2].weight)
+        nn.init.constant_(self.fc[2].bias, 0)
+
+    def forward(self, x):
+        return self.fc(x.detach())
 
 
 @baseline_registry.register_policy

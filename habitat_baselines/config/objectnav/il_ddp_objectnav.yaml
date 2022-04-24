@@ -7,20 +7,20 @@ ENV_NAME: NavRLEnv
 SIMULATOR_GPU_ID: 0
 TORCH_GPU_ID: 0
 VIDEO_OPTION: ["disk"]
-TENSORBOARD_DIR: "tb/objectnav/objectnav_mp3d_thda_70k/sem_seg_pred/seed_1/ckpt_20"
-VIDEO_DIR: "video_dir/objectnav/objectnav_mp3d_thda_70k/sem_seg_pred/seed_1/ckpt_20"
+TENSORBOARD_DIR: "tb/objectnav/objectnav_il/overfitting/sem_seg_pred/seed_1/ckpt_20"
+VIDEO_DIR: "video_dir/objectnav/objectnav_il/overfitting/sem_seg_pred/seed_1/ckpt_20"
 # To evaluate on all episodes, set this to -1
 TEST_EPISODE_COUNT: -1
-EVAL_CKPT_PATH_DIR: "data/new_checkpoints/objectnav/objectnav_mp3d_thda_70k/sem_seg_pred/seed_1/ckpt.20.pth"
+EVAL_CKPT_PATH_DIR: "data/new_checkpoints/objectnav/objectnav_il/overfitting/sem_seg_pred/seed_1/ckpt.20.pth"
 SHOW_TOP_DOWN_MAP: False
-NUM_PROCESSES: 8
-CHECKPOINT_FOLDER: "data/new_checkpoints/objectnav/objectnav_mp3d_thda_70k/sem_seg_pred/seed_1/"
+NUM_PROCESSES: 1
+CHECKPOINT_FOLDER: "data/new_checkpoints/objectnav/objectnav_il/overfitting/sem_seg_pred/seed_1/"
 OUTPUT_LOG_DIR: data/objectnav/logs
 LOG_INTERVAL: 10
 LOG_METRICS: True
-CHECKPOINT_INTERVAL: 500
+CHECKPOINT_INTERVAL: 100
 SENSORS: ['RGB_SENSOR', 'SEMANTIC_SENSOR', 'DEPTH_SENSOR']
-RESULTS_DIR: "data/objectnav/results/objectnav_mp3d_thda_70k/sem_seg_pred/{split}/{type}"
+RESULTS_DIR: "data/objectnav/results/objectnav_il/overfitting/sem_seg_pred/{split}/{type}"
 EVAL_RESUTLS_DIR: "data/objectnav/results/"
 EVAL_SAVE_RESULTS: True
 EVAL_SAVE_RESULTS_INTERVAL: 50
@@ -29,13 +29,15 @@ EVAL:
 NUM_UPDATES: 16000
 
 IL:
+  POLICY:
+    name: "ObjectNavILPolicy"
   USE_IW: True
   distrib_backend: GLOO
   BehaviorCloning:
     lr: 0.001
     eps: 1.0e-5
     clip_param: 0.2
-    num_mini_batch: 2
+    num_mini_batch: 1
     max_grad_norm: 0.2
     num_steps: 128
     use_linear_clip_decay: False
@@ -43,23 +45,19 @@ IL:
     reward_window_size: 50
     sync_frac: 0.6
 
+    pretrained: False
+    pretrained_weights: "None"
+  
+  Finetune:
+    freeze_visual_encoders: False
+
 RL:
   SUCCESS_REWARD: 2.5
   SLACK_REWARD: -1e-3
 
 MODEL:
-  ablate_depth: False
-  ablate_rgb: False
-  num_recurrent_layers: 2
-  rnn_type: "GRU"
-  backbone: "resnet18"
-  resnet_baseplanes: 32
-  normalize_visual_inputs: False
-  force_blind_policy: False
+  hm3d_goal: False
   embed_sge: True
-  embed_goal_seg: False
-  sem_seg_pred: True
-  NO_VISION: False
   USE_SEMANTICS: True
   USE_PRED_SEMANTICS: True
   SWITCH_TO_PRED_SEMANTICS_UPDATE: 0
@@ -77,6 +75,7 @@ MODEL:
     output_size: 256
     backbone: "resnet18"
     train_encoder: True
+    normalize_visual_inputs: False
   DEPTH_ENCODER:
     cnn_type: "VlnResnetDepthEncoder"
     output_size: 128
@@ -89,5 +88,7 @@ MODEL:
     num_recurrent_layers: 2
   SEQ2SEQ:
     use_prev_action: True
-  PROGRESS_MONITOR:
-    use: False
+  CRITIC:
+    no_critic: True
+    mlp_critic: False
+    hidden_dim: 512

@@ -90,6 +90,30 @@ class ILEnvDDPTrainer(ILEnvTrainer):
         )
         self.policy.to(self.device)
 
+        # Load pretrained state
+        if self.config.IL.BehaviorCloning.pretrained:
+            pretrained_state = torch.load(
+                self.config.IL.BehaviorCloning.pretrained_weights, map_location="cpu"
+            )
+            logger.info("Loading pretrained state")
+
+        if self.config.IL.BehaviorCloning.pretrained:
+            missing_keys = self.policy.load_state_dict(
+                {
+                    k.replace("model.", ""): v
+                    for k, v in pretrained_state["state_dict"].items()
+                }, strict=False
+            )
+            logger.info("Loading checkpoint missing keys: {}".format(missing_keys))
+
+        # Set up policy for finetuning
+        if hasattr(self.config.IL, "Finetune"):
+            logger.info("Freeze policy encoders")
+            if self.config.IL.Finetune.freeze_visual_encoders:
+                logger.info("Freeze visual encoders")
+                self.policy.freeze_visual_encoders()
+
+
         self.semantic_predictor = None
         if model_config.USE_PRED_SEMANTICS:
             self.semantic_predictor = load_rednet(

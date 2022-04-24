@@ -3,7 +3,7 @@ import habitat
 
 from habitat.utils.visualizations.utils import observations_to_image, images_to_video, append_text_to_image
 
-config = habitat.get_config("configs/tasks/objectnav_mp3d.yaml")
+config = habitat.get_config("configs/tasks/objectnav_mp3d_il.yaml")
 
 
 def make_videos(observations_list, output_prefix, ep_id):
@@ -45,7 +45,7 @@ def run_reference_replay(
                 if action_name == "STOP":
                     break
             make_videos([observation_list], output_prefix, ep_id)
-            print("Total reward for trajectory: {}".format(total_reward))
+            print("Total reward: {}, Success: {}".format(total_reward, info["success"]))
 
             if len(episode.reference_replay) <= 500:
                 total_success += info["success"]

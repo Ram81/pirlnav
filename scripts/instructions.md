@@ -160,11 +160,11 @@
 5. Run
     ```
     cd /path/to/habitat-lab
-    srun -p short --constraint rtx_6000 --gres gpu:1 -c 6 --job-name eval bash /srv/share3/rramrakhya6/habitat-lab/scripts/run_eval.sh
+    srun -p short --constraint rtx_6000 --gres gpu:1 -c 6 --job-name eval bash /srv/flash1/rramrakhya6/habitat-lab/scripts/run_eval.sh
     ```
     
     If you used distributed training run the following
     ```
     cd /path/to/habitat-lab
-    srun -p short --constraint rtx_6000 --gres gpu:1 -c 6 --job-name eval bash /srv/share3/rramrakhya6/habitat-lab/scripts/run_eval.sh distrib
+    srun -p short --constraint rtx_6000 --gres gpu:1 -c 6 --job-name eval bash /srv/flash1/rramrakhya6/habitat-lab/scripts/run_eval.sh distrib
     ```

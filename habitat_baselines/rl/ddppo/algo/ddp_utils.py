@@ -27,7 +27,7 @@ DEFAULT_MASTER_ADDR = "127.0.0.1"
 
 SLURM_JOBID = os.environ.get("SLURM_JOB_ID", None)
 INTERRUPTED_STATE_FILE = osp.join(
-    "/srv/share3/rramrakhya6/habitat-lab/data/new_checkpoints/objectnav/preemption/", ".interrupted_states", f"{SLURM_JOBID}.pth"
+    "/srv/flash1/rramrakhya6/habitat-lab/data/new_checkpoints/objectnav/preemption/", ".interrupted_states", f"{SLURM_JOBID}.pth"
 )
 
 

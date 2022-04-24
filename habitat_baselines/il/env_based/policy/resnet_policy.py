@@ -15,7 +15,8 @@ from habitat.tasks.nav.nav import (
 from habitat.tasks.nav.object_nav_task import (
     ObjectGoalSensor,
     task_cat2mpcat40,
-    mapping_mpcat40_to_goal21
+    task_cat2hm3dcat40,
+    mapping_mpcat40_to_goal21,
 )
 from habitat_baselines.il.common.encoders.resnet_encoders import (
     VlnResnetDepthEncoder,
@@ -71,7 +72,7 @@ class ObjectNavILNet(Net):
                 output_size=model_config.RGB_ENCODER.output_size,
                 backbone=model_config.RGB_ENCODER.backbone,
                 trainable=model_config.RGB_ENCODER.train_encoder,
-                normalize_visual_inputs=model_config.normalize_visual_inputs,
+                normalize_visual_inputs=model_config.RGB_ENCODER.normalize_visual_inputs,
             )
             rnn_input_size += model_config.RGB_ENCODER.output_size
         else:
@@ -82,6 +83,7 @@ class ObjectNavILNet(Net):
         self.semantic_predictor = None
         self.is_thda = False
         if model_config.USE_SEMANTICS:
+            logger.info("\n\nSetting up semantic sensor")
             sem_embedding_size = model_config.SEMANTIC_ENCODER.embedding_size
 
             self.is_thda = model_config.SEMANTIC_ENCODER.is_thda
@@ -110,6 +112,9 @@ class ObjectNavILNet(Net):
             self.embed_sge = model_config.embed_sge
             if self.embed_sge:
                 self.task_cat2mpcat40 = torch.tensor(task_cat2mpcat40, device=device)
+                if model_config.hm3d_goal:
+                    self.task_cat2mpcat40 = torch.tensor(task_cat2hm3dcat40, device=device)
+                    logger.info("Setting up HM3D goal map")
                 self.mapping_mpcat40_to_goal = np.zeros(
                     max(
                         max(mapping_mpcat40_to_goal21.keys()) + 1,
@@ -303,7 +308,9 @@ class ObjectNavILPolicy(Policy):
                 num_actions=action_space.n,
             ),
             action_space.n,
-            no_critic=True
+            no_critic=model_config.CRITIC.no_critic,
+            mlp_critic=model_config.CRITIC.mlp_critic,
+            critic_hidden_dim=model_config.CRITIC.hidden_dim,
         )
 
     @classmethod
@@ -315,3 +322,16 @@ class ObjectNavILPolicy(Policy):
             action_space=action_space,
             model_config=config.MODEL,            
         )
+
+    def freeze_visual_encoders(self):
+        if hasattr(self.net, "rgb_encoder"):
+            for param in self.net.rgb_encoder.parameters():
+                param.requires_grad_(False)
+        
+        if hasattr(self.net, "depth_encoder"):
+            for param in self.net.depth_encoder.parameters():
+                param.requires_grad_(False)
+
+        if hasattr(self.net, "sem_seg_encoder"):
+            for param in self.net.sem_seg_encoder.parameters():
+                param.requires_grad_(False)

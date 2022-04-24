@@ -83,6 +83,29 @@ class ILEnvTrainer(BaseRLTrainer):
         )
         self.policy.to(self.device)
 
+        # Load pretrained state
+        if self.config.IL.BehaviorCloning.pretrained:
+            pretrained_state = torch.load(
+                self.config.IL.BehaviorCloning.pretrained_weights, map_location="cpu"
+            )
+            logger.info("Loading pretrained state")
+
+        if self.config.IL.BehaviorCloning.pretrained:
+            missing_keys = self.policy.load_state_dict(
+                {
+                    k.replace("model.", ""): v
+                    for k, v in pretrained_state["state_dict"].items()
+                }, strict=False
+            )
+            logger.info("Loading checkpoint missing keys: {}".format(missing_keys))
+
+        # Set up policy for finetuning
+        if hasattr(self.config.IL, "Finetune"):
+            logger.info("Freeze policy encoders")
+            if self.config.IL.Finetune.freeze_visual_encoders:
+                logger.info("Freeze visual encoders")
+                self.policy.freeze_visual_encoders()
+
         self.semantic_predictor = None
         if model_config.USE_PRED_SEMANTICS:
             self.semantic_predictor = load_rednet(
@@ -101,13 +124,6 @@ class ILEnvTrainer(BaseRLTrainer):
             eps=il_cfg.eps,
             max_grad_norm=il_cfg.max_grad_norm,
         )
-
-    def _make_results_dir(self, split="val"):
-        r"""Makes directory for saving eqa-cnn-pretrain eval results."""
-        for s_type in ["rgb", "seg", "depth", "top_down_map"]:
-            dir_name = self.config.RESULTS_DIR.format(split=split, type=s_type)
-            if not os.path.isdir(dir_name):
-                os.makedirs(dir_name)
 
     @profiling_wrapper.RangeContext("save_checkpoint")
     def save_checkpoint(
@@ -489,8 +505,6 @@ class ILEnvTrainer(BaseRLTrainer):
         # Map location CPU is almost always better than mapping to a CUDA device.
         ckpt_dict = self.load_checkpoint(checkpoint_path, map_location="cpu")
 
-        self._make_results_dir(self.config.EVAL.SPLIT)
-
         if self.config.EVAL.USE_CKPT_CONFIG:
             conf = ckpt_dict["config"]
             config = self._setup_eval_config(ckpt_dict["config"])
@@ -500,6 +514,7 @@ class ILEnvTrainer(BaseRLTrainer):
         il_cfg = config.IL.BehaviorCloning
 
         config.defrost()
+        config.TASK_CONFIG.DATASET.TYPE = "ObjectNav-v1"
         config.TASK_CONFIG.DATASET.SPLIT = config.EVAL.SPLIT
         config.TASK_CONFIG.ENVIRONMENT.MAX_EPISODE_STEPS = 500
         config.freeze()

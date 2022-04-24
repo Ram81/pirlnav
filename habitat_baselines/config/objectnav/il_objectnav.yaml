@@ -47,6 +47,12 @@ IL:
     hidden_size: 512
     sync_frac: 0.6
 
+    pretrained: False
+    pretrained_weights: "None"
+  
+  Finetune:
+    freeze_visual_encoders: False
+
 RL:
   SUCCESS_REWARD: 2.5
   SLACK_REWARD: -1e-3
@@ -93,5 +99,7 @@ MODEL:
     num_recurrent_layers: 2
   SEQ2SEQ:
     use_prev_action: True
-  PROGRESS_MONITOR:
-    use: False
+  CRITIC:
+    no_critic: True
+    mlp_critic: False
+    hidden_dim: 512

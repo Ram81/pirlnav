@@ -69,7 +69,6 @@ SEED: 103
 DATASET:
   TYPE: ObjectNav-v2
   SPLIT: train
-  DATA_PATH: "data/datasets/objectnav_mp3d_v2/{split}/{split}.json.gz"
+  DATA_PATH: "data/datasets/objectnav/objectnav_mp3d/objectnav_mp3d_v2/{split}/{split}.json.gz"
   SCENES_DIR: "data/scene_datasets/"
-  #CONTENT_SCENES: ["2azQ1b91cZZ"] #, "oLBMNvg9in8", "EU6Fwq7SyZv"] #, "1LXtFkjw3qL", "E9uDoFAP3SH"]
 

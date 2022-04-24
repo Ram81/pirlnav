@@ -111,6 +111,7 @@ class RolloutStorage:
         self.step = 0
 
     def compute_returns(self, next_value, use_gae, gamma, tau):
+        gae_values = []
         if use_gae:
             self.value_preds[self.step] = next_value
             gae = 0
@@ -122,6 +123,7 @@ class RolloutStorage:
                 )
                 gae = delta + gamma * tau * self.masks[step + 1] * gae
                 self.returns[step] = gae + self.value_preds[step]
+                gae_values.append(self.returns[step])
         else:
             self.returns[self.step] = next_value
             for step in reversed(range(self.step)):
@@ -129,6 +131,7 @@ class RolloutStorage:
                     self.returns[step + 1] * gamma * self.masks[step + 1]
                     + self.rewards[step]
                 )
+        return gae_values
 
     def recurrent_generator(self, advantages, num_mini_batch):
         num_processes = self.rewards.size(1)

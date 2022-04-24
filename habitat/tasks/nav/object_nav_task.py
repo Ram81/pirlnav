@@ -61,6 +61,15 @@ task_cat2mpcat40 = [
     49,  # ('kitchenware', 48, 27)
 ]
 
+task_cat2hm3dcat40 = [
+    3,  # ('chair', 2, 0)
+    11,  # ('bed', 10, 6)
+    14,  # ('plant', 13, 8)
+    18,  # ('toilet', 17, 10),
+    22,  # ('tv_monitor', 21, 13)
+    10,  # ('sofa', 9, 5),
+]
+
 mapping_mpcat40_to_goal21 = {
     3: 1,
     5: 2,
@@ -121,6 +130,9 @@ class ObjectGoalNavEpisode(NavigationEpisode):
     scene_state: Optional[List[SceneState]] = None
     is_thda: Optional[bool] = False
     scene_dataset: Optional[str] = "mp3d"
+    scene_dataset_config: Optional[str] = ""
+    additional_obj_config_paths: Optional[List] = []
+    attempts: Optional[int] = 1
 
     @property
     def goals_key(self) -> str:

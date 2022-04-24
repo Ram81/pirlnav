@@ -5,12 +5,14 @@
 # LICENSE file in the root directory of this source tree.
 
 import os
+import sys
 import time
 from collections import defaultdict, deque
 from typing import Any, DefaultDict, Dict, List, Optional
 
 import numpy as np
 import torch
+from torch import nn as nn
 import tqdm
 from torch.optim.lr_scheduler import LambdaLR
 
@@ -34,6 +36,7 @@ from habitat_baselines.utils.common import (
     linear_decay,
 )
 from habitat_baselines.utils.env_utils import construct_envs
+from habitat_baselines.il.env_based.policy.rednet import load_rednet
 
 
 @baseline_registry.register_trainer(name="ppo")
@@ -78,6 +81,47 @@ class PPOTrainer(BaseRLTrainer):
         )
         self.actor_critic.to(self.device)
 
+        self.semantic_predictor = None
+        self.use_pred_semantic = hasattr(self.config.MODEL, "USE_PRED_SEMANTICS") and self.config.MODEL.USE_PRED_SEMANTICS
+        if self.use_pred_semantic:
+            self.semantic_predictor = load_rednet(
+                self.device,
+                ckpt=self.config.MODEL.SEMANTIC_ENCODER.rednet_ckpt,
+                resize=True, # since we train on half-vision
+                num_classes=self.config.MODEL.SEMANTIC_ENCODER.num_classes
+            )
+            self.semantic_predictor.eval()
+
+        if (
+            self.config.RL.DDPPO.pretrained_encoder
+            or self.config.RL.DDPPO.pretrained
+        ):
+            pretrained_state = torch.load(
+                self.config.RL.DDPPO.pretrained_weights, map_location="cpu"
+            )
+            logger.info("Loading state")
+        
+        if self.config.RL.DDPPO.pretrained:
+            missing_keys = self.actor_critic.load_state_dict(
+                {
+                    k.replace("model.", ""): v
+                    for k, v in pretrained_state["state_dict"].items()
+                }, strict=False
+            )
+            logger.info("Loading checkpoint missing keys: {}".format(missing_keys))
+
+        logger.info("Freeze encoder")
+        if hasattr(self.config.RL, "Finetune"):
+            logger.info("Start Freeze encoder")
+            self.warm_up_critic = True
+            if self.config.RL.Finetune.freeze_encoders:
+                self.actor_critic.freeze_visual_encoders()
+
+            self.actor_finetuning_update = self.config.RL.Finetune.start_actor_finetuning_at
+            self.actor_lr_warmup_update = self.config.RL.Finetune.actor_lr_warmup_update
+            self.critic_lr_decay_update = self.config.RL.Finetune.critic_lr_decay_update
+            self.start_critic_warmup_at = self.config.RL.Finetune.start_critic_warmup_at
+
         self.agent = PPO(
             actor_critic=self.actor_critic,
             clip_param=ppo_cfg.clip_param,
@@ -89,6 +133,7 @@ class PPOTrainer(BaseRLTrainer):
             eps=ppo_cfg.eps,
             max_grad_norm=ppo_cfg.max_grad_norm,
             use_normalized_advantage=ppo_cfg.use_normalized_advantage,
+            finetune=self.warm_up_critic,
         )
 
     @profiling_wrapper.RangeContext("save_checkpoint")
@@ -169,7 +214,7 @@ class PPOTrainer(BaseRLTrainer):
 
     @profiling_wrapper.RangeContext("_collect_rollout_step")
     def _collect_rollout_step(
-        self, rollouts, current_episode_reward, running_episode_stats
+        self, rollouts, current_episode_reward, running_episode_stats, current_episode_values
     ):
         pth_time = 0.0
         env_time = 0.0
@@ -214,6 +259,12 @@ class PPOTrainer(BaseRLTrainer):
 
         t_update_stats = time.time()
         batch = batch_obs(observations, device=self.device)
+        if self.use_pred_semantic and self.current_update >= self.config.MODEL.SWITCH_TO_PRED_SEMANTICS_UPDATE:
+            batch["semantic"] = self.semantic_predictor(batch["rgb"], batch["depth"])
+            # Subtract 1 from class labels for THDA YCB categories
+            if self.config.MODEL.SEMANTIC_ENCODER.is_thda:
+                batch["semantic"] = batch["semantic"] - 1
+
         batch = apply_obs_transforms_batch(batch, self.obs_transforms)
 
         rewards = torch.tensor(
@@ -228,8 +279,10 @@ class PPOTrainer(BaseRLTrainer):
         )
 
         current_episode_reward += rewards
+        current_episode_values += values.to(current_episode_values.device)
         running_episode_stats["reward"] += (1 - masks) * current_episode_reward  # type: ignore
         running_episode_stats["count"] += 1 - masks  # type: ignore
+        running_episode_stats["values"] += (1 - masks) * current_episode_values  # type: ignore
         for k, v_k in self._extract_scalars_from_infos(infos).items():
             v = torch.tensor(
                 v_k, dtype=torch.float, device=current_episode_reward.device
@@ -242,6 +295,7 @@ class PPOTrainer(BaseRLTrainer):
             running_episode_stats[k] += (1 - masks) * v  # type: ignore
 
         current_episode_reward *= masks
+        current_episode_values *= masks
 
         if self._static_encoder:
             with torch.no_grad():
@@ -262,7 +316,7 @@ class PPOTrainer(BaseRLTrainer):
         return pth_time, env_time, self.envs.num_envs
 
     @profiling_wrapper.RangeContext("_update_agent")
-    def _update_agent(self, ppo_cfg, rollouts):
+    def _update_agent(self, ppo_cfg, rollouts, current_episode_gae, running_episode_stats):
         t_update_model = time.time()
         with torch.no_grad():
             last_observation = {
@@ -275,11 +329,31 @@ class PPOTrainer(BaseRLTrainer):
                 rollouts.masks[rollouts.step],
             ).detach()
 
-        rollouts.compute_returns(
+        values_gae = rollouts.compute_returns(
             next_value, ppo_cfg.use_gae, ppo_cfg.gamma, ppo_cfg.tau
         )
 
-        value_loss, action_loss, dist_entropy = self.agent.update(rollouts)
+        prev_i = 0
+        for i in range(len(values_gae)):
+            current_episode_gae["sum"] += values_gae[i]
+            current_episode_gae["steps"] += 1
+            current_episode_gae["max"].copy_(torch.maximum(values_gae[i], current_episode_gae["max"]))
+            current_episode_gae["min"].copy_(torch.minimum(values_gae[i], current_episode_gae["min"]))
+            running_episode_stats["values_gae"] += (1 - rollouts.masks[i]) * current_episode_gae["sum"] # type: ignore
+            running_episode_stats["values_mean"] += (1 - rollouts.masks[i]) * current_episode_gae["sum"] / current_episode_gae["steps"]  # type: ignore
+            running_episode_stats["values_min"] += (1 - rollouts.masks[i]) * current_episode_gae["min"] # type: ignore
+            running_episode_stats["values_max"] += (1 - rollouts.masks[i]) * current_episode_gae["max"]  # type: ignore
+            # if rollouts.masks[i] == 0 and (i - prev_i) > 0:
+            #     logger.info("i: {}".format(i))
+            #     logger.info("pred episode ends: {},  {}, {}".format(current_episode_gae["sum"] / current_episode_gae["steps"] , current_episode_gae["max"], current_episode_gae["min"]))
+            #     logger.info("episode ends: {},  {}, {}".format(sum(values_gae[prev_i:i]) / (i - prev_i +1), max(values_gae[prev_i:i]), min(values_gae[prev_i:i])))
+
+            current_episode_gae["sum"] *= rollouts.masks[i]
+            current_episode_gae["steps"] *= rollouts.masks[i]
+            current_episode_gae["max"][rollouts.masks[i] == 0] = -100.0
+            current_episode_gae["min"][rollouts.masks[i] == 0] = 100.0
+
+        value_loss, action_loss, dist_entropy, avg_grad_norm = self.agent.update(rollouts)
 
         rollouts.after_update()
 
@@ -288,6 +362,7 @@ class PPOTrainer(BaseRLTrainer):
             value_loss,
             action_loss,
             dist_entropy,
+            avg_grad_norm,
         )
 
     @profiling_wrapper.RangeContext("train")
@@ -321,6 +396,11 @@ class PPOTrainer(BaseRLTrainer):
                 sum(param.numel() for param in self.agent.parameters())
             )
         )
+        logger.info(
+            "trainable agent number of parameters: {}".format(
+                sum(param.numel() if param.requires_grad else 0 for param in self.agent.parameters())
+            )
+        )
         self.current_update = 0
 
         rollouts = RolloutStorage(
@@ -329,11 +409,17 @@ class PPOTrainer(BaseRLTrainer):
             self.obs_space,
             self.envs.action_spaces[0],
             ppo_cfg.hidden_size,
+            num_recurrent_layers=self.actor_critic.net.num_recurrent_layers
         )
         rollouts.to(self.device)
 
         observations = self.envs.reset()
         batch = batch_obs(observations, device=self.device)
+        if self.use_pred_semantic:
+            batch["semantic"] = self.semantic_predictor(batch["rgb"], batch["depth"])
+            # Subtract 1 from class labels for THDA YCB categories
+            if self.config.MODEL.SEMANTIC_ENCODER.is_thda:
+                batch["semantic"] = batch["semantic"] - 1
         batch = apply_obs_transforms_batch(batch, self.obs_transforms)
 
         for sensor in rollouts.observations:
@@ -346,9 +432,21 @@ class PPOTrainer(BaseRLTrainer):
         observations = None
 
         current_episode_reward = torch.zeros(self.envs.num_envs, 1)
+        current_episode_values = torch.zeros(self.envs.num_envs, 1)
+        current_episode_gae = dict(
+            steps=torch.zeros(self.envs.num_envs, 1, device=self.device),
+            sum=torch.zeros(self.envs.num_envs, 1, device=self.device),
+            min=torch.ones(self.envs.num_envs, 1, device=self.device) * 100.0,
+            max=torch.ones(self.envs.num_envs, 1, device=self.device) * -100.0,
+        )
         running_episode_stats = dict(
             count=torch.zeros(self.envs.num_envs, 1),
             reward=torch.zeros(self.envs.num_envs, 1),
+            values=torch.zeros(self.envs.num_envs, 1),
+            values_gae=torch.zeros(self.envs.num_envs, 1, device=self.device), 
+            values_mean=torch.zeros(self.envs.num_envs, 1, device=self.device),
+            values_min=torch.zeros(self.envs.num_envs, 1, device=self.device), 
+            values_max=torch.zeros(self.envs.num_envs, 1, device=self.device), 
         )
         window_episode_stats: DefaultDict[str, deque] = defaultdict(
             lambda: deque(maxlen=ppo_cfg.reward_window_size)
@@ -381,6 +479,23 @@ class PPOTrainer(BaseRLTrainer):
                         update, self.config.NUM_UPDATES
                     )
 
+                # Enable actor finetuning at update actor_finetuning_update
+                if self.current_update == self.actor_finetuning_update:
+                    for param in self.actor_critic.action_distribution.parameters():
+                        param.requires_grad_(True)
+                    for param in self.actor_critic.net.state_encoder.parameters():
+                        param.requires_grad_(True)
+                    logger.info("Start actor finetuning at: {}".format(self.current_update))
+
+                    logger.info(
+                        "updated agent number of parameters: {}".format(
+                            sum(param.numel() if param.requires_grad else 0 for param in self.agent.parameters())
+                        )
+                    )
+
+                if self.current_update > self.actor_finetuning_update:
+                    lr_scheduler.step()
+
                 profiling_wrapper.range_push("rollouts loop")
                 for _step in range(ppo_cfg.num_steps):
                     (
@@ -388,7 +503,8 @@ class PPOTrainer(BaseRLTrainer):
                         delta_env_time,
                         delta_steps,
                     ) = self._collect_rollout_step(
-                        rollouts, current_episode_reward, running_episode_stats
+                        rollouts, current_episode_reward,
+                        running_episode_stats, current_episode_values
                     )
                     pth_time += delta_pth_time
                     env_time += delta_env_time
@@ -400,7 +516,8 @@ class PPOTrainer(BaseRLTrainer):
                     value_loss,
                     action_loss,
                     dist_entropy,
-                ) = self._update_agent(ppo_cfg, rollouts)
+                    grad_norm,
+                ) = self._update_agent(ppo_cfg, rollouts, current_episode_gae, running_episode_stats)
                 pth_time += delta_pth_time
 
                 for k, v in running_episode_stats.items():
@@ -435,6 +552,14 @@ class PPOTrainer(BaseRLTrainer):
                     "losses",
                     {k: l for l, k in zip(losses, ["value", "policy"])},
                     count_steps,
+                )
+
+                writer.add_scalar(
+                    "entropy", dist_entropy, count_steps
+                )
+
+                writer.add_scalar(
+                    "grad_norm", grad_norm, count_steps
                 )
 
                 # log stats
@@ -516,6 +641,7 @@ class PPOTrainer(BaseRLTrainer):
 
         self.agent.load_state_dict(ckpt_dict["state_dict"])
         self.actor_critic = self.agent.actor_critic
+        logger.info("Eval policy initialized")
 
         observations = self.envs.reset()
         batch = batch_obs(observations, device=self.device)
@@ -562,6 +688,8 @@ class PPOTrainer(BaseRLTrainer):
 
         pbar = tqdm.tqdm(total=number_of_eval_episodes)
         self.actor_critic.eval()
+        logger.info("Start evaluation")
+        step = 0
         while (
             len(stats_episodes) < number_of_eval_episodes
             and self.envs.num_envs > 0
@@ -569,8 +697,9 @@ class PPOTrainer(BaseRLTrainer):
             current_episodes = self.envs.current_episodes()
 
             with torch.no_grad():
+                logger.info("setp")
                 (
-                    _,
+                    value,
                     actions,
                     _,
                     test_recurrent_hidden_states,
@@ -581,6 +710,12 @@ class PPOTrainer(BaseRLTrainer):
                     not_done_masks,
                     deterministic=False,
                 )
+                # writer.add_scalars(
+                #     "eval_values",
+                #     {"values_{}".format(current_episodes[0].episode_id): value},
+                #     step,
+                # )
+                step += 1
 
                 prev_actions.copy_(actions)  # type: ignore
 
@@ -648,6 +783,7 @@ class PPOTrainer(BaseRLTrainer):
                         )
 
                         rgb_frames[i] = []
+                    step = 0
 
                 # episode continues
                 elif len(self.config.VIDEO_OPTION) > 0:

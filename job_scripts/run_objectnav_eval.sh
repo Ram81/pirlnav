@@ -9,9 +9,9 @@
 #SBATCH --output=slurm_logs/eval/eval-%j.out
 #SBATCH --error=slurm_logs/eval/eval-%j.err
 
-source /srv/share3/rramrakhya6/miniconda3/etc/profile.d/conda.sh
+source /srv/flash1/rramrakhya6/miniconda3/etc/profile.d/conda.sh
 conda deactivate
-conda activate habitat-3
+conda activate il-rl
 
 export GLOG_minloglevel=2
 export MAGNUM_LOG=quiet
@@ -20,6 +20,9 @@ MASTER_ADDR=$(srun --ntasks=1 hostname 2>&1 | tail -n1)
 export MASTER_ADDR
 
 path=$1
+val_dataset_path=$2
+checkpoint=$3
+
 set -x
 
 echo "Evaluating..."
@@ -27,4 +30,7 @@ echo "Hab-Sim: ${PYTHONPATH}"
 
 srun python -u -m habitat_baselines.run \
 --exp-config  $path \
---run-type eval
+--run-type eval \
+TASK_CONFIG.DATASET.DATA_PATH "$val_dataset_path/{split}/{split}.json.gz" \
+EVAL_CKPT_PATH_DIR $checkpoint \
+TASK_CONFIG.TASK.SENSORS "['OBJECTGOAL_SENSOR', 'COMPASS_SENSOR', 'GPS_SENSOR']"
