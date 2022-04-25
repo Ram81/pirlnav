@@ -17,6 +17,14 @@ LOG_INTERVAL: 10
 CHECKPOINT_INTERVAL: 500
 EVAL:
   SPLIT: "val"
+WANDB:
+  GROUP_NAME: "rgbd"
+  PROJECT_NAME: "objectnav_il_rl"
+  JOB_TYPE: "train"
+  MODE: "online"
+  RESUME: "must"
+  TAGS: ["sparse_reward", "mlp_critic", "lr_decay"]
+  LOG_DIR: "wandb/"
 
 RL:
   SUCCESS_REWARD: 2.5

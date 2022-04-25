@@ -5,7 +5,6 @@
 # LICENSE file in the root directory of this source tree.
 
 import os
-import sys
 import time
 from collections import defaultdict, deque
 from typing import Any, DefaultDict, Dict, List, Optional
@@ -763,6 +762,7 @@ class PPOTrainer(BaseRLTrainer):
                         self._extract_scalars_from_info(infos[i])
                     )
                     current_episode_reward[i] = 0
+                    logger.info("Success: {}, SPL: {}".format(episode_stats["success"], episode_stats["spl"]))
                     # use scene_id + episode_id as unique id for storing stats
                     stats_episodes[
                         (

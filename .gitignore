@@ -98,3 +98,4 @@ slurm_logs/
 node_modules/
 tb_fair/
 *.zip
+wandb/

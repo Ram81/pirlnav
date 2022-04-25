@@ -8,6 +8,7 @@ import contextlib
 import os
 import random
 import time
+import wandb
 from collections import defaultdict, deque
 from typing import DefaultDict, Optional
 
@@ -144,6 +145,32 @@ class DDPPOTrainer(PPOTrainer):
             finetune=self.warm_up_critic,
         )
 
+    def init_wandb(self, is_resumed_job=False):
+        wandb_config = self.config.WANDB
+        wandb_id = wandb.util.generate_id()
+        wandb_filename = os.path.join(self.config.TENSORBOARD_DIR, "wandb_id.txt")
+        wandb_resume = None
+        # Reload job id if exists
+        if is_resumed_job:
+            with open(wandb_filename, "r") as file:
+                wandb_id = file.read().rstrip("\n")
+            wandb_resume = wandb_config.RESUME
+        # Initialize wandb
+        wandb.init(
+            id=wandb_id,
+            group=wandb_config.GROUP_NAME,
+            project=wandb_config.PROJECT_NAME,
+            config=self.config,
+            mode=wandb_config.MODE,
+            resume=wandb_resume,
+            tags=wandb_config.TAGS,
+            job_type=wandb_config.JOB_TYPE,
+            dir=wandb_config.LOG_DIR,
+        )
+        wandb.run.name = "{}_{}".format(wandb_config.GROUP_NAME, self.config.TASK_CONFIG.SEED)
+        wandb.run.save()
+
+
     @profiling_wrapper.RangeContext("train")
     def train(self) -> None:
         r"""Main method for DD-PPO.
@@ -160,6 +187,11 @@ class DDPPOTrainer(PPOTrainer):
             capture_start_step=self.config.PROFILING.CAPTURE_START_STEP,
             num_steps_to_capture=self.config.PROFILING.NUM_STEPS_TO_CAPTURE,
         )
+
+        interrupted_state = load_interrupted_state()
+        if interrupted_state is not None:
+            logger.info("Overriding current config with interrupted state config")
+            self.config = interrupted_state["config"]
 
         # Stores the number of workers that have finished their rollout
         num_rollouts_done_store = distrib.PrefixStore(
@@ -216,6 +248,8 @@ class DDPPOTrainer(PPOTrainer):
                     )
                 )
             )
+            self.init_wandb(interrupted_state is not None)
+
 
         observations = self.envs.reset()
         batch = batch_obs(observations, device=self.device)
@@ -277,7 +311,7 @@ class DDPPOTrainer(PPOTrainer):
         t_start = time.time()
         env_time = 0
         pth_time = 0
-        count_steps: float = 0
+        count_steps = 0
         count_checkpoints = 0
         start_update = 0
         prev_time = 0
@@ -291,7 +325,6 @@ class DDPPOTrainer(PPOTrainer):
             ]
         )
 
-        interrupted_state = load_interrupted_state()
         if interrupted_state is not None:
             self.agent.load_state_dict(interrupted_state["state_dict"])
             self.agent.optimizer.load_state_dict(
@@ -434,7 +467,7 @@ class DDPPOTrainer(PPOTrainer):
                     device=self.device,
                 )
                 distrib.all_reduce(stats)
-                count_steps += stats[2].item()
+                count_steps += stats[2].long().item()
 
                 if self.world_rank == 0:
                     num_rollouts_done_store.set("num_done", "0")
@@ -457,17 +490,8 @@ class DDPPOTrainer(PPOTrainer):
                     for i, param_group in enumerate(self.agent.optimizer.param_groups):
                         lrs["pg_{}".format(i)] = param_group["lr"]
 
-                    writer.add_scalar(
-                        "reward",
-                        deltas["reward"] / deltas["count"],
-                        count_steps,
-                    )
-
-                    writer.add_scalars(
-                        "learning_rate",
-                        lrs,
-                        count_steps,
-                    )
+                    wandb.log({ "reward": deltas["reward"] / deltas["count"]}, step=count_steps)
+                    wandb.log({ "learning_rate": lrs}, step=count_steps)
 
                     # Check to see if there are any metrics
                     # that haven't been logged yet
@@ -478,20 +502,15 @@ class DDPPOTrainer(PPOTrainer):
                     }
                     if len(metrics) > 0:
                         writer.add_scalars("metrics", metrics, count_steps)
+                        wandb.log(metrics, step=count_steps)
 
-                    writer.add_scalars(
-                        "losses",
-                        {k: l for l, k in zip(losses, ["value", "policy"])},
-                        count_steps,
-                    )
+                    losses = {k: l for l, k in zip(losses, ["value", "policy"])}
+                    wandb.log(losses, step=count_steps)
 
-                    writer.add_scalar(
-                        "entropy", stats[3].item() / self.world_size, count_steps
-                    )
-
-                    writer.add_scalar(
-                        "grad_norm", stats[4].item() / self.world_size, count_steps
-                    )
+                    wandb.log({
+                        "entropy": stats[3].item() / self.world_size,
+                        "grad_norm": stats[4].item() / self.world_size,
+                    }, step=count_steps)
 
                     # log stats
                     if update > 0 and update % self.config.LOG_INTERVAL == 0:

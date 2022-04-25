@@ -650,6 +650,7 @@ class ILEnvTrainer(BaseRLTrainer):
                     )
                     current_episode_reward[i] = 0
                     current_episode_steps[i] = 0
+                    logger.info("Success: {}, SPL: {}".format(episode_stats["success"], episode_stats["spl"]))
 
                     # use scene_id + episode_id as unique id for storing stats
                     stats_episodes[

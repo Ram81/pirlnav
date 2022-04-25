@@ -30,6 +30,11 @@ srun python -u -m habitat_baselines.run \
 --exp-config $config \
 --run-type eval \
 NUM_PROCESSES 1 \
-TENSORBOARD_DIR "tb/objectnav_il/overfitting/seed_1/ckpt_2/" \
-EVAL.SPLIT "single_episode" \
-EVAL_CKPT_PATH_DIR "data/new_checkpoints/objectnav_il/overfitting/seed_1/ckpt.2.pth"
+TENSORBOARD_DIR "tb/objectnav_il/objectnav_mp3d_35k/rgbd/seed_1/ckpt_14/" \
+TASK_CONFIG.TASK.SENSORS "['OBJECTGOAL_SENSOR', 'COMPASS_SENSOR', 'GPS_SENSOR']" \
+EVAL.SPLIT "val" \
+EVAL_CKPT_PATH_DIR "data/new_checkpoints/objectnav/objectnav_mp3d_35k/rgbd/seed_1/ckpt.14.pth" \
+MODEL.hm3d_goal "False" \
+MODEL.embed_sge "False" \
+MODEL.USE_SEMANTICS "False" \
+MODEL.USE_PRED_SEMANTICS "False" \

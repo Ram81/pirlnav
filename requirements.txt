@@ -12,3 +12,6 @@ pkgconfig>=1.5.5
 scipy>=1.0.0
 tqdm>=4.0.0
 numba>=0.44.0
+msgpack-numpy==0.4.7.1
+wandb==0.12.15
+lmdb==1.3.0

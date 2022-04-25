@@ -31,5 +31,8 @@ srun python -u -m habitat_baselines.run \
 --run-type train \
 TENSORBOARD_DIR "tb/objectnav_il/overfitting/seed_1/" \
 CHECKPOINT_FOLDER "data/new_checkpoints/objectnav_il/overfitting/seed_1/" \
-TASK_CONFIG.DATASET.SPLIT "single_episode" \
 NUM_UPDATES 500 \
+IL.BehaviorCloning.num_steps 64 \
+TASK_CONFIG.DATASET.SPLIT "train" \
+TASK_CONFIG.TASK.INFLECTION_WEIGHT_SENSOR.INFLECTION_COEF 3.477512060914205 \
+MODEL.hm3d_goal False \

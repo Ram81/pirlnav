@@ -50,7 +50,7 @@ The primary code contributions from the paper are located in:
 1. Install our custom build of `habitat-sim`, we highly recommend using the `habitat-sim` build from source for working with `habitat-web-baselines`. Use the following commands to set it up:
 
     ```bash
-    git clone --branch habitat-on-web git@github.com:Ram81/habitat-sim.git
+    git clone git@github.com:Ram81/habitat-sim.git
     cd habitat-sim
     ```
 

@@ -1,9 +1,9 @@
 #!/bin/bash
 #SBATCH --job-name=onav_ilrl
-#SBATCH --gres gpu:8
+#SBATCH --gres gpu:1
 #SBATCH --nodes 1
 #SBATCH --cpus-per-task 6
-#SBATCH --ntasks-per-node 8
+#SBATCH --ntasks-per-node 1
 #SBATCH --signal=USR1@300
 #SBATCH --partition=long,user-overcap
 #SBATCH --qos=ram-special
@@ -23,16 +23,22 @@ MASTER_ADDR=$(srun --ntasks=1 hostname 2>&1 | tail -n1)
 export MASTER_ADDR
 
 config=$1
+log_dir=$2
+ckpt_dir=$3
 set -x
 
-echo "In ObjectNav IL+RL DDP"
+echo "In ObjectNav IL+RL Debug"
 srun python -u -m habitat_baselines.run \
 --exp-config $config \
 --run-type train \
-TENSORBOARD_DIR "tb/objectnav_il_rl_ft/ddppo/rgbd/sparse_reward/policy_warmup_critic_decay_mlp/train_split/seed_1/" \
-CHECKPOINT_FOLDER "data/new_checkpoints/objectnav_il_rl_ft/ddppo/rgbd/sparse_reward/policy_warmup_critic_decay_mlp/train_split/seed_1/" \
+TENSORBOARD_DIR "$log_dir" \
+CHECKPOINT_FOLDER "$ckpt_dir" \
 RL.DDPPO.distrib_backend "GLOO" \
 RL.Finetune.start_actor_finetuning_at 1500 \
 RL.Finetune.actor_lr_warmup_update 3000 \
 RL.Finetune.start_critic_warmup_at 1000 \
 RL.Finetune.critic_lr_decay_update 2000 \
+WANDB.GROUP_NAME "RGBD" \
+WANDB.JOB_TYPE "train" \
+WANDB.TAGS "['sparse_rewad', 'mlp_critic', 'lr_decay']" \
+WANDB.LOG_DIR "$log_dir"

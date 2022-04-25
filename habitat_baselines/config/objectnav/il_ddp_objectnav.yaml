@@ -6,19 +6,19 @@ TRAINER_NAME: "ddp-il-trainer"
 ENV_NAME: NavRLEnv
 SIMULATOR_GPU_ID: 0
 TORCH_GPU_ID: 0
-VIDEO_OPTION: ["disk"]
+VIDEO_OPTION: []
 TENSORBOARD_DIR: "tb/objectnav/objectnav_il/overfitting/sem_seg_pred/seed_1/ckpt_20"
 VIDEO_DIR: "video_dir/objectnav/objectnav_il/overfitting/sem_seg_pred/seed_1/ckpt_20"
 # To evaluate on all episodes, set this to -1
 TEST_EPISODE_COUNT: -1
 EVAL_CKPT_PATH_DIR: "data/new_checkpoints/objectnav/objectnav_il/overfitting/sem_seg_pred/seed_1/ckpt.20.pth"
 SHOW_TOP_DOWN_MAP: False
-NUM_PROCESSES: 1
+NUM_PROCESSES: 8
 CHECKPOINT_FOLDER: "data/new_checkpoints/objectnav/objectnav_il/overfitting/sem_seg_pred/seed_1/"
 OUTPUT_LOG_DIR: data/objectnav/logs
 LOG_INTERVAL: 10
 LOG_METRICS: True
-CHECKPOINT_INTERVAL: 100
+CHECKPOINT_INTERVAL: 500
 SENSORS: ['RGB_SENSOR', 'SEMANTIC_SENSOR', 'DEPTH_SENSOR']
 RESULTS_DIR: "data/objectnav/results/objectnav_il/overfitting/sem_seg_pred/{split}/{type}"
 EVAL_RESUTLS_DIR: "data/objectnav/results/"
@@ -37,7 +37,7 @@ IL:
     lr: 0.001
     eps: 1.0e-5
     clip_param: 0.2
-    num_mini_batch: 1
+    num_mini_batch: 2
     max_grad_norm: 0.2
     num_steps: 128
     use_linear_clip_decay: False
