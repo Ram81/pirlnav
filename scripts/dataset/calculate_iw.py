@@ -1,7 +1,6 @@
 import argparse
-import gzip
 import glob
-import json
+import os
 
 from tqdm import tqdm
 from habitat.datasets.utils import VocabFromText
@@ -142,7 +141,7 @@ def calculate_inflection_weight_objectnav(path, stats_path):
             if len(reference_replay) <= 500:
                 ep_lt_than_500 += 1
 
-    save_meta_for_analysis(data_stats, stats_path)
+    save_meta_for_analysis(data_stats, os.path.join(path, "stats.json"))
 
     print("Total episodes: {} - {}".format(total_episodes, mx))
     print("Total episodes less than 1k and 0.5k: {} -- {}".format(ep_lt_than_1k, ep_lt_than_500))

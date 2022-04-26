@@ -39,7 +39,7 @@ IL:
     clip_param: 0.2
     num_mini_batch: 2
     max_grad_norm: 0.2
-    num_steps: 128
+    num_steps: 64
     use_linear_clip_decay: False
     use_linear_lr_decay: True
     reward_window_size: 50

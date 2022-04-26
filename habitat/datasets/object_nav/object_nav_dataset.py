@@ -6,7 +6,6 @@
 
 import json
 import os
-import random
 from typing import Any, Dict, List, Optional, Sequence
 
 from habitat.config import Config
@@ -182,6 +181,7 @@ class ObjectNavDatasetV2(PointNavDatasetV1):
     content_scenes_path: str = "{data_path}/content/{scene}.json.gz"
     goals_by_category: Dict[str, Sequence[ObjectGoal]]
     gibson_to_mp3d_category_map: Dict[str, str] = {'couch': 'sofa', 'toilet': 'toilet', 'bed': 'bed', 'tv': 'tv_monitor', 'potted plant': 'plant', 'chair': 'chair'}
+    max_episode_steps: int = 500
 
     @staticmethod
     def dedup_goals(dataset: Dict[str, Any]) -> Dict[str, Any]:
@@ -221,6 +221,8 @@ class ObjectNavDatasetV2(PointNavDatasetV1):
 
     def __init__(self, config: Optional[Config] = None) -> None:
         self.goals_by_category = {}
+        if config is not None:
+            self.max_episode_steps = config.MAX_EPISODE_STEPS
         super().__init__(config)
         self.episodes = list(self.episodes)
 
@@ -329,7 +331,7 @@ class ObjectNavDatasetV2(PointNavDatasetV1):
 
                         path[p_index] = ShortestPathPoint(**point)
             
-            if len(episode.reference_replay) > 501:
+            if len(episode.reference_replay) > self.max_episode_steps:
                 continue
 
             self.episodes.append(episode)  # type: ignore [attr-defined]
