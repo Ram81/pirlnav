@@ -6,6 +6,7 @@
 
 import os
 import time
+import wandb
 from collections import defaultdict, deque
 from typing import Any, DefaultDict, Dict, List, Optional
 
@@ -210,6 +211,35 @@ class PPOTrainer(BaseRLTrainer):
                 results[k].append(v)
 
         return results
+
+    def init_wandb(self, is_resumed_job=False):
+        wandb_config = self.config.WANDB
+        wandb_id = wandb.util.generate_id()
+        wandb_filename = os.path.join(self.config.TENSORBOARD_DIR, "wandb_id.txt")
+        wandb_resume = None
+        # Reload job id if exists
+        if is_resumed_job and os.path.exists(wandb_filename):
+            with open(wandb_filename, "r") as file:
+                wandb_id = file.read().rstrip("\n")
+            wandb_resume = wandb_config.RESUME
+        else:
+            wandb_id=wandb.util.generate_id()
+            with open(wandb_filename, 'w') as file:
+                file.write(wandb_id)
+        # Initialize wandb
+        wandb.init(
+            id=wandb_id,
+            group=wandb_config.GROUP_NAME,
+            project=wandb_config.PROJECT_NAME,
+            config=self.config,
+            mode=wandb_config.MODE,
+            resume=wandb_resume,
+            tags=wandb_config.TAGS,
+            job_type=wandb_config.JOB_TYPE,
+            dir=wandb_config.LOG_DIR,
+        )
+        wandb.run.name = "{}_{}".format(wandb_config.GROUP_NAME, self.config.TASK_CONFIG.SEED)
+        wandb.run.save()
 
     @profiling_wrapper.RangeContext("_collect_rollout_step")
     def _collect_rollout_step(
@@ -532,9 +562,16 @@ class PPOTrainer(BaseRLTrainer):
                 }
                 deltas["count"] = max(deltas["count"], 1.0)
 
+                lrs = {}
+                for i, param_group in enumerate(self.agent.optimizer.param_groups):
+                    lrs["pg_{}".format(i)] = param_group["lr"]
+
                 writer.add_scalar(
-                    "reward", deltas["reward"] / deltas["count"], count_steps
+                    "reward",
+                    deltas["reward"] / deltas["count"],
+                    count_steps,
                 )
+                writer.add_scalars("learning_rate", lrs, count_steps,)
 
                 # Check to see if there are any metrics
                 # that haven't been logged yet
@@ -547,19 +584,11 @@ class PPOTrainer(BaseRLTrainer):
                     writer.add_scalars("metrics", metrics, count_steps)
 
                 losses = [value_loss, action_loss]
-                writer.add_scalars(
-                    "losses",
-                    {k: l for l, k in zip(losses, ["value", "policy"])},
-                    count_steps,
-                )
+                losses = {k: l for l, k in zip(losses, ["value", "policy"])}
+                writer.add_scalars("losses", losses, count_steps)
 
-                writer.add_scalar(
-                    "entropy", dist_entropy, count_steps
-                )
-
-                writer.add_scalar(
-                    "grad_norm", grad_norm, count_steps
-                )
+                writer.add_scalar("entropy", dist_entropy, count_steps)
+                writer.add_scalar("grad_norm", grad_norm, count_steps)
 
                 # log stats
                 if update > 0 and update % self.config.LOG_INTERVAL == 0:
@@ -642,6 +671,8 @@ class PPOTrainer(BaseRLTrainer):
         self.actor_critic = self.agent.actor_critic
         logger.info("Eval policy initialized")
 
+        self.init_wandb(True)
+
         observations = self.envs.reset()
         batch = batch_obs(observations, device=self.device)
         batch = apply_obs_transforms_batch(batch, self.obs_transforms)
@@ -696,7 +727,11 @@ class PPOTrainer(BaseRLTrainer):
             current_episodes = self.envs.current_episodes()
 
             with torch.no_grad():
-                logger.info("setp")
+                if self.semantic_predictor is not None:
+                    batch["semantic"] = self.semantic_predictor(batch["rgb"], batch["depth"])
+                    # Subtract 1 from class labels for THDA YCB categories
+                    if self.config.MODEL.SEMANTIC_ENCODER.is_thda:
+                        batch["semantic"] = batch["semantic"] - 1
                 (
                     value,
                     actions,
@@ -827,14 +862,10 @@ class PPOTrainer(BaseRLTrainer):
         if "extra_state" in ckpt_dict and "step" in ckpt_dict["extra_state"]:
             step_id = ckpt_dict["extra_state"]["step"]
 
-        writer.add_scalars(
-            "eval_reward",
-            {"average reward": aggregated_stats["reward"]},
-            step_id,
-        )
+        wandb.log({"eval_reward": aggregated_stats["reward"]}, step=step_id)
 
         metrics = {k: v for k, v in aggregated_stats.items() if k != "reward"}
         if len(metrics) > 0:
-            writer.add_scalars("eval_metrics", metrics, step_id)
+            wandb.log({"eval_metrics": metrics}, step=step_id)
 
         self.envs.close()

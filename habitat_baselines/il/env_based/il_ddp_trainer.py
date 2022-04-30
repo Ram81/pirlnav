@@ -10,6 +10,7 @@ import random
 import time
 import numpy as np
 import torch
+import wandb
 
 from collections import defaultdict, deque
 from typing import DefaultDict, Optional
@@ -149,8 +150,10 @@ class ILEnvDDPTrainer(ILEnvTrainer):
             capture_start_step=self.config.PROFILING.CAPTURE_START_STEP,
             num_steps_to_capture=self.config.PROFILING.NUM_STEPS_TO_CAPTURE,
         )
+        SLURM_JOBID = os.environ.get("SLURM_JOB_ID", None)
+        interrupted_state_file = os.path.join(self.config.CHECKPOINT_FOLDER, "{}.pth".format(SLURM_JOBID))
 
-        interrupted_state = load_interrupted_state()
+        interrupted_state = load_interrupted_state(interrupted_state_file)
         if interrupted_state is not None:
             logger.info("Overriding current config with interrupted state config")
             self.config = interrupted_state["config"]
@@ -216,6 +219,7 @@ class ILEnvDDPTrainer(ILEnvTrainer):
                     )
                 )
             )
+            # self.init_wandb(interrupted_state is not None)
 
         observations = self.envs.reset()
         batch = batch_obs(observations, device=self.device)
@@ -263,7 +267,7 @@ class ILEnvDDPTrainer(ILEnvTrainer):
         t_start = time.time()
         env_time = 0
         pth_time = 0
-        count_steps: float = 0
+        count_steps: int = 0
         count_checkpoints = 0
         start_update = 0
         prev_time = 0
@@ -328,7 +332,8 @@ class ILEnvDDPTrainer(ILEnvTrainer):
                                 lr_sched_state=lr_scheduler.state_dict(),
                                 config=self.config,
                                 requeue_stats=requeue_stats,
-                            )
+                            ),
+                            interrupted_state_file
                         )
 
                     requeue_job()
@@ -383,7 +388,7 @@ class ILEnvDDPTrainer(ILEnvTrainer):
                     device=self.device,
                 )
                 distrib.all_reduce(stats)
-                count_steps += stats[1].item()
+                count_steps += int(stats[1].item())
 
                 if self.world_rank == 0:
                     num_rollouts_done_store.set("num_done", "0")

@@ -4,7 +4,7 @@ import os
 
 from tqdm import tqdm
 from habitat.datasets.utils import VocabFromText
-from psiturk_dataset.utils.utils import load_dataset, load_json_dataset, write_json, write_gzip, load_vocab
+from scripts.utils.utils import load_dataset, write_json, load_vocab
 
 
 VISITED_POINT_DICT = {}

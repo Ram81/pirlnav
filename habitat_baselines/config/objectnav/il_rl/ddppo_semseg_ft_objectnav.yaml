@@ -17,6 +17,14 @@ LOG_INTERVAL: 10
 CHECKPOINT_INTERVAL: 500
 EVAL:
   SPLIT: "val"
+WANDB:
+  GROUP_NAME: "rgbd"
+  PROJECT_NAME: "objectnav_il_rl"
+  JOB_TYPE: "train"
+  MODE: "online"
+  RESUME: "must"
+  TAGS: ["sparse_reward", "mlp_critic", "lr_decay"]
+  LOG_DIR: "wandb/"
 
 RL:
   SUCCESS_REWARD: 2.5
@@ -52,7 +60,7 @@ RL:
     # The PyTorch distributed backend to use
     distrib_backend: NCCL
     # Visual encoder backbone
-    pretrained_weights: data/new_checkpoints/objectnav/objectnav_mp3d_thda_70k/sem_seg_pred/seed_1/ckpt.21.pth
+    pretrained_weights: /srv/flash1/rramrakhya6/habitat-web/habitat-lab/data/new_checkpoints/objectnav/objectnav_hm3d_hd_20k_ft/sem_seg_pred/seed_2/ckpt.22.pth
     # Initialize with pretrained weights
     pretrained: True 
     # Initialize just the visual encoder backbone with pretrained weights

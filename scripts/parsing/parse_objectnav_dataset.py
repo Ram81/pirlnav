@@ -30,7 +30,7 @@ csv.field_size_limit(sys.maxsize)
 scene_dataset_path = {
     "mp3d": "data/datasets/objectnav/objectnav_mp3d/objectnav_mp3d_v1/{}/content/{}.json.gz",
     "gibson": "../Object-Goal-Navigation/data/datasets/objectnav/gibson/v1.1/train_generated/content/{}.json.gz",
-    "hm3d": "data/datasets/objectnav/objectnav_hm3d/objectnav_hm3d_v1/{}/content/{}.json.gz",
+    "hm3d": "data/datasets/objectnav/objectnav_hm3d/objectnav_hm3d_v1_fixed/{}/content/{}.json.gz",
     "mp3d_thda": "data/datasets/objectnav/objectnav_mp3d/objectnav_mp3d_thda/train/content/{}.json.gz",
 }
 
@@ -127,6 +127,8 @@ def remap_action(action):
         return "GRAB_RELEASE"
     elif action == "stepPhysics":
         return "NO_OP"
+    elif action == "pause":
+        return "PAUSE"
     return "STOP"
 
 
@@ -215,6 +217,7 @@ def handle_step(step, episode, unique_id, timestamp):
             episode["reference_replay"].append(replay_data)
         elif step["event"] == "handleValidation":
             tried_submitting = True
+
 
     elif step.get("type"):
         if step["type"] == "finishStep":
@@ -321,6 +324,7 @@ def replay_to_episode(
     print("Total duplicate episodes: {}".format(duplicates))
 
     objectnav_dataset_path = scene_dataset_path[scene_dataset]
+    print(len(scene_episode_map.keys()))
 
     for scene, episodes in scene_episode_map.items():
         scene = scene.split("/")[-1].split(".")[0]
@@ -336,6 +340,7 @@ def replay_to_episode(
         episode_data["episodes"] = episodes
 
         path = os.path.join(output_path, "{}.json".format(scene))
+        print(path)
 
         if append_dataset:
             existing_episodes = load_dataset(path + ".gz")

@@ -4,9 +4,9 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-import copy
 import os
 import time
+import wandb
 
 from collections import defaultdict, deque
 from typing import Any, DefaultDict, Dict, List, Optional
@@ -200,6 +200,37 @@ class ILEnvTrainer(BaseRLTrainer):
                 results[k].append(v)
 
         return results
+    
+    def init_wandb(self, is_resumed_job=False):
+        wandb_config = self.config.WANDB
+        wandb_id = wandb.util.generate_id()
+        wandb_filename = os.path.join(self.config.TENSORBOARD_DIR, "wandb_id.txt")
+        wandb_resume = None
+        # Reload job id if exists
+        if is_resumed_job and os.path.exists(wandb_filename):
+            with open(wandb_filename, "r") as file:
+                wandb_id = file.read().rstrip("\n")
+            wandb_resume = wandb_config.RESUME
+        else:
+            logger.info("Setting up wandb once")
+            wandb_id=wandb.util.generate_id()
+            with open(wandb_filename, 'w') as file:
+                file.write(wandb_id)
+        logger.info("Wandb resume: {}".format(wandb_resume))
+        # Initialize wandb
+        wandb.init(
+            id=wandb_id,
+            group=wandb_config.GROUP_NAME,
+            project=wandb_config.PROJECT_NAME,
+            config=self.config,
+            mode=wandb_config.MODE,
+            resume=wandb_resume,
+            tags=wandb_config.TAGS,
+            job_type=wandb_config.JOB_TYPE,
+            dir=wandb_config.LOG_DIR,
+        )
+        wandb.run.name = "{}_{}".format(wandb_config.GROUP_NAME, self.config.TASK_CONFIG.SEED)
+        wandb.run.save()
 
     @profiling_wrapper.RangeContext("_collect_rollout_step")
     def _collect_rollout_step(
@@ -362,7 +393,7 @@ class ILEnvTrainer(BaseRLTrainer):
         t_start = time.time()
         env_time = 0
         pth_time = 0
-        count_steps = 0
+        count_steps: int = 0
         count_checkpoints = 0
 
         lr_scheduler = LambdaLR(
@@ -436,11 +467,8 @@ class ILEnvTrainer(BaseRLTrainer):
                     writer.add_scalars("metrics", metrics, count_steps)
 
                 losses = [total_loss]
-                writer.add_scalars(
-                    "losses",
-                    {k: l for l, k in zip(losses, ["action"])},
-                    count_steps,
-                )
+                losses = {k: l for l, k in zip(losses, ["action"])}
+                writer.add_scalars("losses", losses, count_steps)
 
                 # log stats
                 if update % self.config.LOG_INTERVAL == 0:
@@ -711,9 +739,9 @@ class ILEnvTrainer(BaseRLTrainer):
         for k, v in aggregated_stats.items():
             logger.info(f"Average episode {k}: {v:.4f}")
 
-        step_id = checkpoint_index
+        step_id = int(checkpoint_index)
         if "extra_state" in ckpt_dict and "step" in ckpt_dict["extra_state"]:
-            step_id = ckpt_dict["extra_state"]["step"]
+            step_id = int(ckpt_dict["extra_state"]["step"])
 
         writer.add_scalars(
             "eval_reward",
@@ -721,7 +749,7 @@ class ILEnvTrainer(BaseRLTrainer):
             step_id,
         )
 
-        metrics = {k: v for k, v in aggregated_stats.items() if k not in ["reward", "pred_reward"]}
+        metrics = {k: v for k, v in aggregated_stats.items() if k != "reward"}
         if len(metrics) > 0:
             writer.add_scalars("eval_metrics", metrics, step_id)
 

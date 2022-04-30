@@ -5,7 +5,7 @@
 #SBATCH --cpus-per-task 6
 #SBATCH --ntasks-per-node 1
 #SBATCH --signal=USR1@1000
-#SBATCH --partition=long
+#SBATCH --partition=debug,user-overcap
 #SBATCH --qos=ram-special
 #SBATCH --constraint=rtx_6000
 #SBATCH --output=slurm_logs/ddpil-%j.out
@@ -24,8 +24,8 @@ export MASTER_ADDR
 
 config=$1
 
-DATA_PATH="data/datasets/objectnav/objectnav_hm3d/objectnav_hm3d_35k"
-TENSORBOARD_DIR="tb/objectnav_il/overfitting/seed_1/"
+DATA_PATH="data/datasets/objectnav/objectnav_hm3d/objectnav_hm3d_77k"
+TENSORBOARD_DIR="wandb/objectnav_il/overfitting/seed_1/"
 CHECKPOINT_DIR="data/new_checkpoints/objectnav_il/overfitting/seed_1/"
 INFLECTION_COEF=3.1902439975324186
 set -x
@@ -37,7 +37,7 @@ srun python -u -m habitat_baselines.run \
 TENSORBOARD_DIR $TENSORBOARD_DIR \
 CHECKPOINT_FOLDER $CHECKPOINT_DIR \
 CHECKPOINT_INTERVAL 500 \
-NUM_UPDATES 20000 \
+NUM_UPDATES 5000 \
 NUM_PROCESSES 8 \
 IL.BehaviorCloning.num_steps 64 \
 TASK_CONFIG.TASK.INFLECTION_WEIGHT_SENSOR.INFLECTION_COEF $INFLECTION_COEF \

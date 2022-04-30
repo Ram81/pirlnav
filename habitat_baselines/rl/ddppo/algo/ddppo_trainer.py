@@ -145,32 +145,6 @@ class DDPPOTrainer(PPOTrainer):
             finetune=self.warm_up_critic,
         )
 
-    def init_wandb(self, is_resumed_job=False):
-        wandb_config = self.config.WANDB
-        wandb_id = wandb.util.generate_id()
-        wandb_filename = os.path.join(self.config.TENSORBOARD_DIR, "wandb_id.txt")
-        wandb_resume = None
-        # Reload job id if exists
-        if is_resumed_job:
-            with open(wandb_filename, "r") as file:
-                wandb_id = file.read().rstrip("\n")
-            wandb_resume = wandb_config.RESUME
-        # Initialize wandb
-        wandb.init(
-            id=wandb_id,
-            group=wandb_config.GROUP_NAME,
-            project=wandb_config.PROJECT_NAME,
-            config=self.config,
-            mode=wandb_config.MODE,
-            resume=wandb_resume,
-            tags=wandb_config.TAGS,
-            job_type=wandb_config.JOB_TYPE,
-            dir=wandb_config.LOG_DIR,
-        )
-        wandb.run.name = "{}_{}".format(wandb_config.GROUP_NAME, self.config.TASK_CONFIG.SEED)
-        wandb.run.save()
-
-
     @profiling_wrapper.RangeContext("train")
     def train(self) -> None:
         r"""Main method for DD-PPO.
@@ -490,8 +464,12 @@ class DDPPOTrainer(PPOTrainer):
                     for i, param_group in enumerate(self.agent.optimizer.param_groups):
                         lrs["pg_{}".format(i)] = param_group["lr"]
 
-                    wandb.log({ "reward": deltas["reward"] / deltas["count"]}, step=count_steps)
-                    wandb.log({ "learning_rate": lrs}, step=count_steps)
+                    writer.add_scalar(
+                        "reward",
+                        deltas["reward"] / deltas["count"],
+                        count_steps,
+                    )
+                    writer.add_scalars("learning_rate", lrs, count_steps)
 
                     # Check to see if there are any metrics
                     # that haven't been logged yet
@@ -502,15 +480,12 @@ class DDPPOTrainer(PPOTrainer):
                     }
                     if len(metrics) > 0:
                         writer.add_scalars("metrics", metrics, count_steps)
-                        wandb.log(metrics, step=count_steps)
 
                     losses = {k: l for l, k in zip(losses, ["value", "policy"])}
-                    wandb.log(losses, step=count_steps)
+                    writer.add_scalars("losses", losses, count_steps)
 
-                    wandb.log({
-                        "entropy": stats[3].item() / self.world_size,
-                        "grad_norm": stats[4].item() / self.world_size,
-                    }, step=count_steps)
+                    writer.add_scalar("entropy", stats[3].item() / self.world_size, count_steps)
+                    writer.add_scalar("grad_norm", stats[4].item() / self.world_size, count_steps)                    
 
                     # log stats
                     if update > 0 and update % self.config.LOG_INTERVAL == 0:

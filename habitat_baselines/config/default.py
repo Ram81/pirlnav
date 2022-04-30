@@ -39,6 +39,17 @@ _C.LOG_FILE = "train.log"
 _C.CHECKPOINT_INTERVAL = 50
 _C.FORCE_BLIND_POLICY = False
 # -----------------------------------------------------------------------------
+# WANDB CONFIG
+# -----------------------------------------------------------------------------
+_C.WANDB = CN()
+_C.WANDB.GROUP_NAME = "rgbd"
+_C.WANDB.PROJECT_NAME = "objectnav_il_rl"
+_C.WANDB.JOB_TYPE = "train"
+_C.WANDB.MODE = "online"
+_C.WANDB.RESUME = "must"
+_C.WANDB.TAGS = ["sparse_reward", "mlp_critic", "lr_decay"]
+_C.WANDB.LOG_DIR = "wandb/"
+# -----------------------------------------------------------------------------
 # EVAL CONFIG
 # -----------------------------------------------------------------------------
 _C.EVAL = CN()

@@ -27,6 +27,14 @@ EVAL_SAVE_RESULTS_INTERVAL: 50
 EVAL:
   SPLIT: "val"
 NUM_UPDATES: 16000
+WANDB:
+  GROUP_NAME: "SemSeg"
+  PROJECT_NAME: "objectnav_il"
+  JOB_TYPE: "train"
+  MODE: "online"
+  RESUME: "must"
+  TAGS: ["cross_entropy"]
+  LOG_DIR: "wandb/"
 
 IL:
   POLICY:

@@ -36,6 +36,3 @@ RL.Finetune.start_actor_finetuning_at 1500 \
 RL.Finetune.actor_lr_warmup_update 3000 \
 RL.Finetune.start_critic_warmup_at 1000 \
 RL.Finetune.critic_lr_decay_update 2000 \
-WANDB.GROUP_NAME "RGBD" \
-WANDB.JOB_TYPE "train" \
-WANDB.TAGS "['sparse_rewad', 'mlp_critic', 'lr_decay']"
