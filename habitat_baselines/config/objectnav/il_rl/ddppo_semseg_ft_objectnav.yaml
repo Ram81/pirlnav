@@ -17,6 +17,7 @@ LOG_INTERVAL: 10
 CHECKPOINT_INTERVAL: 500
 EVAL:
   SPLIT: "val"
+  meta_file: "tb/objectnav_il_rl_ft/overfitting/seed_1/evaluation_meta.json"
 WANDB:
   GROUP_NAME: "rgbd"
   PROJECT_NAME: "objectnav_il_rl"

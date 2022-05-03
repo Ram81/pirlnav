@@ -148,6 +148,11 @@ _C.TASK.SPL.TYPE = "SPL"
 _C.TASK.SOFT_SPL = CN()
 _C.TASK.SOFT_SPL.TYPE = "SoftSPL"
 # -----------------------------------------------------------------------------
+# MIN-DTG MEASUREMENT
+# -----------------------------------------------------------------------------
+_C.TASK.MIN_DISTANCE_TO_GOAL = CN()
+_C.TASK.MIN_DISTANCE_TO_GOAL.TYPE = "MinDistanceToGoal"
+# -----------------------------------------------------------------------------
 # TopDownMap MEASUREMENT
 # -----------------------------------------------------------------------------
 _C.TASK.TOP_DOWN_MAP = CN()

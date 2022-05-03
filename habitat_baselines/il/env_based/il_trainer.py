@@ -38,6 +38,7 @@ from habitat_baselines.utils.common import (
 )
 from habitat_baselines.utils.env_utils import construct_envs
 from habitat_baselines.il.env_based.policy.rednet import load_rednet
+from scripts.utils.utils import write_json
 
 
 @baseline_registry.register_trainer(name="il-trainer")
@@ -608,6 +609,7 @@ class ILEnvTrainer(BaseRLTrainer):
                 number_of_eval_episodes = total_num_eps
 
         pbar = tqdm.tqdm(total=number_of_eval_episodes)
+        episode_meta = []
         while (
             len(stats_episodes) < number_of_eval_episodes
             and self.envs.num_envs > 0
@@ -679,6 +681,11 @@ class ILEnvTrainer(BaseRLTrainer):
                     current_episode_reward[i] = 0
                     current_episode_steps[i] = 0
                     logger.info("Success: {}, SPL: {}".format(episode_stats["success"], episode_stats["spl"]))
+                    episode_meta.append({
+                        "scene_id": current_episodes[i].scene_id,
+                        "episode_id": current_episodes[i].episode_id,
+                        "metrics": episode_stats
+                    })
 
                     # use scene_id + episode_id as unique id for storing stats
                     stats_episodes[
@@ -752,5 +759,7 @@ class ILEnvTrainer(BaseRLTrainer):
         metrics = {k: v for k, v in aggregated_stats.items() if k != "reward"}
         if len(metrics) > 0:
             writer.add_scalars("eval_metrics", metrics, step_id)
+        
+        write_json(episode_meta, self.config.EVAL.meta_file)
 
         self.envs.close()

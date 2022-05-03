@@ -26,6 +26,7 @@ EVAL_SAVE_RESULTS: True
 EVAL_SAVE_RESULTS_INTERVAL: 50
 EVAL:
   SPLIT: "val"
+  meta_file: "tb/objectnav/objectnav_il/overfitting/sem_seg_pred/seed_1/ckpt_20/evaluation_meta.json"
 NUM_UPDATES: 16000
 WANDB:
   GROUP_NAME: "SemSeg"

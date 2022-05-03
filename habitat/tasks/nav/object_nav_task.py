@@ -12,14 +12,19 @@ from gym import spaces
 
 from habitat.config import Config
 from habitat.core.dataset import SceneState
+from habitat.core.embodied_task import (
+    EmbodiedTask,
+    Measure,
+)
 from habitat.core.logging import logger
 from habitat.core.registry import registry
-from habitat.core.simulator import AgentState, Sensor, SensorTypes
+from habitat.core.simulator import AgentState, Sensor, SensorTypes, Simulator
 from habitat.core.utils import not_none_validator
 from habitat.tasks.nav.nav import (
     NavigationEpisode,
     NavigationGoal,
-    NavigationTask
+    NavigationTask,
+    DistanceToGoal
 )
 
 try:
@@ -300,3 +305,41 @@ class ObjectNavigationTask(NavigationTask):
 
     def _check_episode_is_active(self,  action, *args: Any, **kwargs: Any) -> bool:
         return not getattr(self, "is_stop_called", False)
+
+
+@registry.register_measure
+class MinDistanceToGoal(Measure):
+    r"""Whether or not the agent succeeded at its task
+
+    This measure depends on DistanceToGoal measure.
+    """
+
+    cls_uuid: str = "min_distance_to_goal"
+
+    def __init__(
+        self, sim: Simulator, config: Config, *args: Any, **kwargs: Any
+    ):
+        self._sim = sim
+        self._config = config
+        self._min_distance_to_goal = 100
+
+        super().__init__()
+
+    def _get_uuid(self, *args: Any, **kwargs: Any) -> str:
+        return self.cls_uuid
+
+    def reset_metric(self, episode, task, *args: Any, **kwargs: Any):
+        task.measurements.check_measure_dependencies(
+            self.uuid, [DistanceToGoal.cls_uuid]
+        )
+        self.update_metric(episode=episode, task=task, *args, **kwargs)  # type: ignore
+
+    def update_metric(
+        self, episode, task: EmbodiedTask, *args: Any, **kwargs: Any
+    ):
+        distance_to_target = task.measurements.measures[
+            DistanceToGoal.cls_uuid
+        ].get_metric()
+
+        self._metric = min(self._min_distance_to_goal, distance_to_target)
+        self._min_distance_to_goal = self._metric

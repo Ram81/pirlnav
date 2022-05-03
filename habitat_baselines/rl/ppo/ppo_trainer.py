@@ -37,6 +37,7 @@ from habitat_baselines.utils.common import (
 )
 from habitat_baselines.utils.env_utils import construct_envs
 from habitat_baselines.il.env_based.policy.rednet import load_rednet
+from scripts.utils.utils import write_json
 
 
 @baseline_registry.register_trainer(name="ppo")
@@ -671,7 +672,6 @@ class PPOTrainer(BaseRLTrainer):
         self.actor_critic = self.agent.actor_critic
         logger.info("Eval policy initialized")
 
-        self.init_wandb(True)
 
         observations = self.envs.reset()
         batch = batch_obs(observations, device=self.device)
@@ -720,6 +720,7 @@ class PPOTrainer(BaseRLTrainer):
         self.actor_critic.eval()
         logger.info("Start evaluation")
         step = 0
+        episode_meta = []
         while (
             len(stats_episodes) < number_of_eval_episodes
             and self.envs.num_envs > 0
@@ -798,6 +799,11 @@ class PPOTrainer(BaseRLTrainer):
                     )
                     current_episode_reward[i] = 0
                     logger.info("Success: {}, SPL: {}".format(episode_stats["success"], episode_stats["spl"]))
+                    episode_meta.append({
+                        "scene_id": current_episodes[i].scene_id,
+                        "episode_id": current_episodes[i].episode_id,
+                        "metrics": episode_stats
+                    })
                     # use scene_id + episode_id as unique id for storing stats
                     stats_episodes[
                         (
@@ -862,10 +868,16 @@ class PPOTrainer(BaseRLTrainer):
         if "extra_state" in ckpt_dict and "step" in ckpt_dict["extra_state"]:
             step_id = ckpt_dict["extra_state"]["step"]
 
-        wandb.log({"eval_reward": aggregated_stats["reward"]}, step=step_id)
+        writer.add_scalars(
+            "eval_reward",
+            {"average reward": aggregated_stats["reward"]},
+            step_id,
+        )
 
         metrics = {k: v for k, v in aggregated_stats.items() if k != "reward"}
         if len(metrics) > 0:
-            wandb.log({"eval_metrics": metrics}, step=step_id)
+            writer.add_scalars("eval_metrics", metrics, step_id)
+
+        write_json(episode_meta, self.config.EVAL.meta_file)
 
         self.envs.close()
