@@ -1,13 +1,13 @@
 #!/bin/bash
 #SBATCH --job-name=onav_il
-#SBATCH --gres gpu:1
+#SBATCH --gres gpu:8
 #SBATCH --nodes 1
 #SBATCH --cpus-per-task 6
-#SBATCH --ntasks-per-node 1
+#SBATCH --ntasks-per-node 8
 #SBATCH --signal=USR1@1000
 #SBATCH --partition=long
 #SBATCH --qos=ram-special
-#SBATCH --constraint=rtx_6000
+#SBATCH --constraint=a40
 #SBATCH --output=slurm_logs/ddpil-%j.out
 #SBATCH --error=slurm_logs/ddpil-%j.err
 #SBATCH --requeue
@@ -24,10 +24,10 @@ export MASTER_ADDR
 
 config=$1
 
-DATA_PATH="data/datasets/objectnav/objectnav_hm3d/objectnav_hm3d_35k"
-TENSORBOARD_DIR="tb/objectnav_il/overfitting/seed_1/"
-CHECKPOINT_DIR="data/new_checkpoints/objectnav_il/overfitting/seed_1/"
-INFLECTION_COEF=3.1902439975324186
+DATA_PATH="data/datasets/objectnav/objectnav_gibson/objectnav_gibson_10k"
+TENSORBOARD_DIR="tb/objectnav_il/objectnav_gibson/objectnav_gibson_10k/seed_1/"
+CHECKPOINT_DIR="data/new_checkpoints/objectnav_il/objectnav_gibson/objectnav_gibson_10k/seed_1/"
+INFLECTION_COEF=3.551858652007388
 set -x
 
 echo "In ObjectNav IL DDP"
@@ -43,4 +43,4 @@ IL.BehaviorCloning.num_steps 64 \
 TASK_CONFIG.TASK.INFLECTION_WEIGHT_SENSOR.INFLECTION_COEF $INFLECTION_COEF \
 TASK_CONFIG.DATASET.SPLIT "train" \
 TASK_CONFIG.DATASET.DATA_PATH "$DATA_PATH/{split}/{split}.json.gz" \
-MODEL.hm3d_goal True \
+MODEL.hm3d_goal False \

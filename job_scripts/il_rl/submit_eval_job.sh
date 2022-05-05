@@ -24,8 +24,8 @@ export MASTER_ADDR
 
 config=$1
 DATA_PATH="data/datasets/objectnav/objectnav_hm3d/objectnav_hm3d_v1"
-TENSORBOARD_DIR="tb/objectnav_il_rl_ft/ddppo_hm3d/sem_seg_pred/sparse_reward/policy_warmup_critic_decay_mlp/train_split/seed_3/ckpt_22_metrics/"
-EVAL_CKPT_PATH_DIR="data/new_checkpoints/objectnav_il_rl_ft/ddppo_hm3d/sem_seg_pred/sparse_reward/policy_warmup_critic_decay_mlp/train_split/seed_3/ckpt.22.pth"
+TENSORBOARD_DIR="tb/objectnav_il_rl_ft/ddppo_hm3d/sem_seg_pred/sparse_reward/policy_warmup_critic_decay_mlp/train_split/seed_3/ckpt_36_metrics/"
+EVAL_CKPT_PATH_DIR="data/new_checkpoints/objectnav_il_rl_ft/ddppo_hm3d/sem_seg_pred/sparse_reward/policy_warmup_critic_decay_mlp/train_split/seed_3/ckpt.36.pth"
 set -x
 
 echo "In ObjectNav IL+RL DDP"
