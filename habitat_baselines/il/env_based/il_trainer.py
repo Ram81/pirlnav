@@ -37,7 +37,8 @@ from habitat_baselines.utils.common import (
     linear_decay,
 )
 from habitat_baselines.utils.env_utils import construct_envs
-from habitat_baselines.il.env_based.policy.rednet import load_rednet
+# from habitat_baselines.il.env_based.policy.rednet import load_rednet
+from habitat_baselines.il.env_based.policy.semantic_predictor import SemanticPredictor
 from scripts.utils.utils import write_json
 
 
@@ -109,12 +110,13 @@ class ILEnvTrainer(BaseRLTrainer):
 
         self.semantic_predictor = None
         if model_config.USE_PRED_SEMANTICS:
-            self.semantic_predictor = load_rednet(
-                self.device,
-                ckpt=model_config.SEMANTIC_ENCODER.rednet_ckpt,
-                resize=True, # since we train on half-vision
-                num_classes=model_config.SEMANTIC_ENCODER.num_classes
-            )
+            # self.semantic_predictor = load_rednet(
+            #     self.device,
+            #     ckpt=model_config.SEMANTIC_ENCODER.rednet_ckpt,
+            #     resize=True, # since we train on half-vision
+            #     num_classes=model_config.SEMANTIC_ENCODER.num_classes
+            # )
+            self.semantic_predictor = SemanticPredictor(model_config, self.device)
             self.semantic_predictor.eval()
 
         self.agent = ILAgent(
@@ -262,7 +264,7 @@ class ILEnvTrainer(BaseRLTrainer):
         t_update_stats = time.time()
         batch = batch_obs(observations, device=self.device)
         if self.config.MODEL.USE_PRED_SEMANTICS and self.current_update >= self.config.MODEL.SWITCH_TO_PRED_SEMANTICS_UPDATE:
-            batch["semantic"] = self.semantic_predictor(batch["rgb"], batch["depth"])
+            batch["semantic"] = self.semantic_predictor(batch) # ["rgb"], batch["depth"])
             # Subtract 1 from class labels for THDA YCB categories
             if self.config.MODEL.SEMANTIC_ENCODER.is_thda:
                 batch["semantic"] = batch["semantic"] - 1
@@ -370,7 +372,7 @@ class ILEnvTrainer(BaseRLTrainer):
             rollouts.observations[sensor][0].copy_(batch[sensor])
             # Use first semantic observations from RedNet predictor as well
             if sensor == "semantic" and self.config.MODEL.USE_PRED_SEMANTICS:
-                semantic_obs = self.semantic_predictor(batch["rgb"], batch["depth"])
+                semantic_obs = self.semantic_predictor(batch) #["rgb"], batch["depth"])
                 # Subtract 1 from class labels for THDA YCB categories
                 if self.config.MODEL.SEMANTIC_ENCODER.is_thda:
                     semantic_obs = semantic_obs - 1
@@ -570,16 +572,16 @@ class ILEnvTrainer(BaseRLTrainer):
         )
 
         test_recurrent_hidden_states = torch.zeros(
-            self.config.MODEL.STATE_ENCODER.num_recurrent_layers,
-            self.config.NUM_PROCESSES,
+            config.MODEL.STATE_ENCODER.num_recurrent_layers,
+            config.NUM_PROCESSES,
             config.MODEL.STATE_ENCODER.hidden_size,
             device=self.device,
         )
         prev_actions = torch.zeros(
-            self.config.NUM_PROCESSES, 1, device=self.device, dtype=torch.long
+            config.NUM_PROCESSES, 1, device=self.device, dtype=torch.long
         )
         not_done_masks = torch.zeros(
-            self.config.NUM_PROCESSES, 1, device=self.device
+            config.NUM_PROCESSES, 1, device=self.device
         )
         stats_episodes: Dict[
             Any, Any
@@ -590,12 +592,12 @@ class ILEnvTrainer(BaseRLTrainer):
         )
 
         rgb_frames = [
-            [] for _ in range(self.config.NUM_PROCESSES)
+            [] for _ in range(config.NUM_PROCESSES)
         ]  # type: List[List[np.ndarray]]
-        if len(self.config.VIDEO_OPTION) > 0:
-            os.makedirs(self.config.VIDEO_DIR, exist_ok=True)
+        if len(config.VIDEO_OPTION) > 0:
+            os.makedirs(config.VIDEO_DIR, exist_ok=True)
 
-        number_of_eval_episodes = self.config.TEST_EPISODE_COUNT
+        number_of_eval_episodes = config.TEST_EPISODE_COUNT
         if number_of_eval_episodes == -1:
             number_of_eval_episodes = sum(self.envs.number_of_episodes)
         else:
@@ -618,7 +620,7 @@ class ILEnvTrainer(BaseRLTrainer):
 
             with torch.no_grad():
                 if self.semantic_predictor is not None:
-                    batch["semantic"] = self.semantic_predictor(batch["rgb"], batch["depth"])
+                    batch["semantic"] = self.semantic_predictor(batch)
                     if self.config.MODEL.SEMANTIC_ENCODER.is_thda:
                         batch["semantic"] = batch["semantic"] - 1
                 (
@@ -686,6 +688,7 @@ class ILEnvTrainer(BaseRLTrainer):
                         "episode_id": current_episodes[i].episode_id,
                         "metrics": episode_stats
                     })
+                    write_json(episode_meta, self.config.EVAL.meta_file)
 
                     # use scene_id + episode_id as unique id for storing stats
                     stats_episodes[

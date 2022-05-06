@@ -99,3 +99,4 @@ node_modules/
 tb_fair/
 *.zip
 wandb/
+datasets

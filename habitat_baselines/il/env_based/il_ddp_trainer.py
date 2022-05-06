@@ -43,7 +43,8 @@ from habitat_baselines.utils.common import batch_obs, linear_decay
 from habitat_baselines.utils.env_utils import construct_envs
 from habitat_baselines.il.env_based.algos.agent import DDPILAgent
 from habitat_baselines.il.env_based.il_trainer import ILEnvTrainer
-from habitat_baselines.il.env_based.policy.rednet import load_rednet
+# from habitat_baselines.il.env_based.policy.rednet import load_rednet
+from habitat_baselines.il.env_based.policy.semantic_predictor import SemanticPredictor
 
 
 @baseline_registry.register_trainer(name="ddp-il-trainer")
@@ -117,12 +118,13 @@ class ILEnvDDPTrainer(ILEnvTrainer):
 
         self.semantic_predictor = None
         if model_config.USE_PRED_SEMANTICS:
-            self.semantic_predictor = load_rednet(
-                self.device,
-                ckpt=model_config.SEMANTIC_ENCODER.rednet_ckpt,
-                resize=True, # since we train on half-vision
-                num_classes=model_config.SEMANTIC_ENCODER.num_classes
-            )
+            # self.semantic_predictor = load_rednet(
+            #     self.device,
+            #     ckpt=model_config.SEMANTIC_ENCODER.rednet_ckpt,
+            #     resize=True, # since we train on half-vision
+            #     num_classes=model_config.SEMANTIC_ENCODER.num_classes
+            # )
+            self.semantic_predictor = SemanticPredictor(model_config, self.device)
             self.semantic_predictor.eval()
 
         self.agent = DDPILAgent(
@@ -241,7 +243,7 @@ class ILEnvDDPTrainer(ILEnvTrainer):
             rollouts.observations[sensor][0].copy_(batch[sensor])
             # Use first semantic observations from RedNet predictor as well
             if sensor == "semantic" and self.config.MODEL.USE_PRED_SEMANTICS:
-                semantic_obs = self.semantic_predictor(batch["rgb"], batch["depth"])
+                semantic_obs = self.semantic_predictor(batch) #["rgb"], batch["depth"])
                 # Subtract 1 from class labels for THDA YCB categories
                 if self.config.MODEL.SEMANTIC_ENCODER.is_thda:
                     semantic_obs = semantic_obs - 1
@@ -316,7 +318,7 @@ class ILEnvDDPTrainer(ILEnvTrainer):
 
                     self.envs.close()
 
-                    if REQUEUE.is_set() and self.world_rank == 0:
+                    if self.world_rank == 0:
                         requeue_stats = dict(
                             env_time=env_time,
                             pth_time=pth_time,

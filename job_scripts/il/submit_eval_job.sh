@@ -7,7 +7,7 @@
 #SBATCH --signal=USR1@300
 #SBATCH --partition=short
 #SBATCH --qos=ram-special
-#SBATCH --constraint=rtx_6000
+#SBATCH --constraint=a40
 #SBATCH --output=slurm_logs/eval/ddpil-%j.out
 #SBATCH --error=slurm_logs/eval/ddpil-%j.err
 #SBATCH --requeue
@@ -23,10 +23,10 @@ MASTER_ADDR=$(srun --ntasks=1 hostname 2>&1 | tail -n1)
 export MASTER_ADDR
 
 config=$1
-DATA_PATH="data/datasets/objectnav/objectnav_hm3d/objectnav_hm3d_v1_fixed"
-TENSORBOARD_DIR="tb/objectnav_il/objectnav_hm3d/objectnav_hm3d_20k_scratch/seed_2/ckpt_31_fixed"
-EVAL_CKPT_PATH_DIR="data/new_checkpoints/objectnav_il/objectnav_hm3d/objectnav_hm3d_hd_20k/sem_seg_pred/seed_2/ckpt.31.pth"
-# EVAL_CKPT_PATH_DIR="/srv/flash1/rramrakhya6/habitat-web/habitat-lab/data/new_checkpoints/objectnav/objectnav_hm3d_hd_10k/sem_seg_pred/seed_2/ckpt.30.pth"
+DATA_PATH="data/datasets/objectnav/objectnav_hm3d/objectnav_hm3d_v1"
+TENSORBOARD_DIR="tb/objectnav_il/objectnav_hm3d/objectnav_hm3d_20k_ft/seed_2/ckpt_22_metrics/"
+# EVAL_CKPT_PATH_DIR="data/new_checkpoints/objectnav_il/objectnav_hm3d/objectnav_hm3d_hd_20k/sem_seg_pred/seed_2/ckpt.31.pth"
+EVAL_CKPT_PATH_DIR="/srv/flash1/rramrakhya6/habitat-web/habitat-lab/data/new_checkpoints/objectnav/objectnav_hm3d_hd_20k_ft/sem_seg_pred/seed_2/ckpt.22.pth"
 set -x
 
 echo "In ObjectNav IL DDP"

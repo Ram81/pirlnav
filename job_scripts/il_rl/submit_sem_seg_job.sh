@@ -37,6 +37,7 @@ srun python -u -m habitat_baselines.run \
 SENSORS "['RGB_SENSOR', 'DEPTH_SENSOR', 'SEMANTIC_SENSOR']" \
 TENSORBOARD_DIR $TENSORBOARD_DIR \
 CHECKPOINT_FOLDER $CHECKPOINT_DIR \
+NUM_UPDATES 50000 \
 RL.DDPPO.pretrained_weights $PRETRAINED_WEIGHTS \
 RL.DDPPO.distrib_backend "GLOO" \
 RL.Finetune.start_actor_finetuning_at 1500 \

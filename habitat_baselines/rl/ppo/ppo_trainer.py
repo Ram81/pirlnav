@@ -804,6 +804,7 @@ class PPOTrainer(BaseRLTrainer):
                         "episode_id": current_episodes[i].episode_id,
                         "metrics": episode_stats
                     })
+                    write_json(episode_meta, self.config.EVAL.meta_file)
                     # use scene_id + episode_id as unique id for storing stats
                     stats_episodes[
                         (

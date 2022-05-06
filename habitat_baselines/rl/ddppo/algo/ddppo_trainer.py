@@ -37,6 +37,7 @@ from habitat_baselines.rl.ddppo.algo.ddp_utils import (
     load_interrupted_state,
     requeue_job,
     save_interrupted_state,
+    SLURM_JOBID,
 )
 from habitat_baselines.rl.ddppo.algo.ddppo import DDPPO
 from habitat_baselines.rl.ppo.ppo_trainer import PPOTrainer
@@ -161,8 +162,9 @@ class DDPPOTrainer(PPOTrainer):
             capture_start_step=self.config.PROFILING.CAPTURE_START_STEP,
             num_steps_to_capture=self.config.PROFILING.NUM_STEPS_TO_CAPTURE,
         )
+        interrupted_state_file = os.path.join(self.config.CHECKPOINT_FOLDER, "{}.pth".format(SLURM_JOBID))
 
-        interrupted_state = load_interrupted_state()
+        interrupted_state = load_interrupted_state(interrupted_state_file)
         if interrupted_state is not None:
             logger.info("Overriding current config with interrupted state config")
             self.config = interrupted_state["config"]
@@ -222,7 +224,7 @@ class DDPPOTrainer(PPOTrainer):
                     )
                 )
             )
-            self.init_wandb(interrupted_state is not None)
+            # self.init_wandb(interrupted_state is not None)
 
 
         observations = self.envs.reset()
@@ -313,6 +315,14 @@ class DDPPOTrainer(PPOTrainer):
             count_checkpoints = requeue_stats["count_checkpoints"]
             start_update = requeue_stats["start_update"]
             prev_time = requeue_stats["prev_time"]
+            self.current_update = start_update
+
+            if self.current_update >= self.actor_finetuning_update:
+                for param in self.actor_critic.action_distribution.parameters():
+                    param.requires_grad_(True)
+                for param in self.actor_critic.net.state_encoder.parameters():
+                    param.requires_grad_(True)      
+                logger.info("unfreezing params")
 
         with (
             TensorboardWriter(
@@ -339,7 +349,7 @@ class DDPPOTrainer(PPOTrainer):
 
                     self.envs.close()
 
-                    if REQUEUE.is_set() and self.world_rank == 0:
+                    if self.world_rank == 0:
                         requeue_stats = dict(
                             env_time=env_time,
                             pth_time=pth_time,
@@ -348,6 +358,7 @@ class DDPPOTrainer(PPOTrainer):
                             start_update=update,
                             prev_time=(time.time() - t_start) + prev_time,
                         )
+                        logger.info("save interrupted state at: {}".format(interrupted_state_file))
                         save_interrupted_state(
                             dict(
                                 state_dict=self.agent.state_dict(),
@@ -355,7 +366,8 @@ class DDPPOTrainer(PPOTrainer):
                                 lr_sched_state=lr_scheduler.state_dict(),
                                 config=self.config,
                                 requeue_stats=requeue_stats,
-                            )
+                            ),
+                            interrupted_state_file
                         )
 
                     requeue_job()
@@ -532,3 +544,27 @@ class DDPPOTrainer(PPOTrainer):
                 profiling_wrapper.range_pop()  # train update
 
             self.envs.close()
+
+            if self.world_rank == 0:
+                requeue_stats = dict(
+                    env_time=env_time,
+                    pth_time=pth_time,
+                    count_steps=count_steps,
+                    count_checkpoints=count_checkpoints,
+                    start_update=update,
+                    prev_time=(time.time() - t_start) + prev_time,
+                )
+                logger.info("save interrupted state at end: {}".format(interrupted_state_file))
+                save_interrupted_state(
+                    dict(
+                        state_dict=self.agent.state_dict(),
+                        optim_state=self.agent.optimizer.state_dict(),
+                        lr_sched_state=lr_scheduler.state_dict(),
+                        config=self.config,
+                        requeue_stats=requeue_stats,
+                    ),
+                    interrupted_state_file
+                )
+
+            requeue_job()
+            return

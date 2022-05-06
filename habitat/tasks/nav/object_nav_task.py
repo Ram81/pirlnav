@@ -332,6 +332,7 @@ class MinDistanceToGoal(Measure):
         task.measurements.check_measure_dependencies(
             self.uuid, [DistanceToGoal.cls_uuid]
         )
+        self._min_distance_to_goal = 100
         self.update_metric(episode=episode, task=task, *args, **kwargs)  # type: ignore
 
     def update_metric(
@@ -343,3 +344,85 @@ class MinDistanceToGoal(Measure):
 
         self._metric = min(self._min_distance_to_goal, distance_to_target)
         self._min_distance_to_goal = self._metric
+
+
+
+@registry.register_sensor
+class ObjectGoalPromptSensor(Sensor):
+    r"""A sensor for Object Goal specification as observations which is used in
+    ObjectGoal Navigation. The goal is expected to be specified by object_id or
+    semantic category id.
+    For the agent in simulator the forward direction is along negative-z.
+    In polar coordinate format the angle returned is azimuth to the goal.
+    Args:
+        sim: a reference to the simulator for calculating task observations.
+        config: a config for the ObjectGoalSensor sensor. Can contain field
+            GOAL_SPEC that specifies which id use for goal specification,
+            GOAL_SPEC_MAX_VAL the maximum object_id possible used for
+            observation space definition.
+        dataset: a Object Goal navigation dataset that contains dictionaries
+        of categories id to text mapping.
+    """
+    cls_uuid: str = "objectgoal_prompt"
+
+    def __init__(
+        self,
+        sim,
+        config: Config,
+        dataset: "ObjectNavDatasetV1",
+        *args: Any,
+        **kwargs: Any,
+    ):
+        self._sim = sim
+        self._dataset = dataset
+        super().__init__(config=config)
+
+    def _get_uuid(self, *args: Any, **kwargs: Any) -> str:
+        return self.cls_uuid
+
+    def _get_sensor_type(self, *args: Any, **kwargs: Any):
+        return SensorTypes.SEMANTIC
+
+    def _get_observation_space(self, *args: Any, **kwargs: Any):
+        sensor_shape = (1,)
+        max_value = self.config.GOAL_SPEC_MAX_VAL - 1
+        if self.config.GOAL_SPEC == "TASK_CATEGORY_ID":
+            max_value = max(
+                self._dataset.category_to_task_category_id.values()
+            )
+            logger.info("max object cat: {}".format(max_value))
+            logger.info("cats: {}".format(self._dataset.category_to_task_category_id.values()))
+
+        return spaces.Box(
+            low=0, high=max_value, shape=sensor_shape, dtype=np.int64
+        )
+
+    def get_observation(
+        self,
+        observations,
+        *args: Any,
+        episode: ObjectGoalNavEpisode,
+        **kwargs: Any,
+    ) -> Optional[int]:
+
+        if len(episode.goals) == 0:
+            logger.error(
+                f"No goal specified for episode {episode.episode_id}."
+            )
+            return None
+        if not isinstance(episode.goals[0], ObjectGoal):
+            logger.error(
+                f"First goal should be ObjectGoal, episode {episode.episode_id}."
+            )
+            return None
+        category_name = episode.object_category
+        if self.config.GOAL_SPEC == "TASK_CATEGORY_ID":
+            return "a {}".format(category_name)
+        elif self.config.GOAL_SPEC == "OBJECT_ID":
+            obj_goal = episode.goals[0]
+            assert isinstance(obj_goal, ObjectGoal)  # for type checking
+            return np.array([obj_goal.object_name_id], dtype=np.int64)
+        else:
+            raise RuntimeError(
+                "Wrong GOAL_SPEC specified for ObjectGoalSensor."
+            )

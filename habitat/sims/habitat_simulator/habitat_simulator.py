@@ -286,8 +286,11 @@ class HabitatSim(habitat_sim.Simulator, Simulator):
         for agent_id, _ in enumerate(self.habitat_config.AGENTS):
             agent_cfg = self._get_agent_config(agent_id)
             if agent_cfg.IS_SET_START_STATE:
+                agent_pos = agent_cfg.START_POSITION
+                if isinstance(agent_pos, list):
+                    agent_pos = np.array(agent_cfg.START_POSITION)
                 self.set_agent_state(
-                    agent_cfg.START_POSITION,
+                    agent_pos,
                     agent_cfg.START_ROTATION,
                     agent_id,
                 )

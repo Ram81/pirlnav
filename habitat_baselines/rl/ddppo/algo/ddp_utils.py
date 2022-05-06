@@ -128,6 +128,7 @@ def save_interrupted_state(state: Any, filename: str = None):
     :param state: The state to save
     :param filename: The filename.  Defaults to "${HOME}/.interrupted_states/${SLURM_JOBID}.pth"
     """
+    logger.info("save state: slurm: {}, filename: {}".format(SLURM_JOBID, filename))
     if SLURM_JOBID is None and filename is None:
         logger.warn("SLURM_JOBID is none, not saving interrupted state")
         return
