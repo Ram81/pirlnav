@@ -98,7 +98,7 @@ def linear_warmup(epoch: int, start_update: int, max_updates: int, start_lr: int
     Returns:
         multiplicative factor that decreases param value linearly
     """
-    logger.info("policy: {}, {}, {}, {}, {}".format(epoch, start_update, max_updates, start_lr, end_lr))
+    # logger.info("policy: {}, {}, {}, {}, {}".format(epoch, start_update, max_updates, start_lr, end_lr))
     if epoch  < start_update:
         return 1.0
     
@@ -123,7 +123,7 @@ def critic_linear_decay(epoch: int, start_update: int, max_updates: int, start_l
     Returns:
         multiplicative factor that decreases param value linearly
     """
-    logger.info("critic lr: {}, {}, {}, {}, {}".format(epoch, start_update, max_updates, start_lr, end_lr))
+    # logger.info("critic lr: {}, {}, {}, {}, {}".format(epoch, start_update, max_updates, start_lr, end_lr))
     if epoch <= start_update:
         return 1
     
