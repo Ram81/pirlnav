@@ -24,10 +24,10 @@ export MASTER_ADDR
 
 config=$1
 
-TENSORBOARD_DIR="tb/objectnav_il_rl_ft/ddppo_hm3d/sem_seg_pred/sparse_reward/policy_warmup_critic_decay_mlp/train_split/seed_3/"
-CHECKPOINT_DIR="data/new_checkpoints/objectnav_il_rl_ft/ddppo_hm3d/sem_seg_pred/sparse_reward/policy_warmup_critic_decay_mlp/train_split/seed_3/"
+TENSORBOARD_DIR="tb/objectnav_il_rl_ft/ddppo_hm3d/sem_seg_20k_scratch/sparse_reward/policy_warmup_critic_decay_mlp/train_split/seed_3/"
+CHECKPOINT_DIR="data/new_checkpoints/objectnav_il_rl_ft/ddppo_hm3d/sem_seg_20k_scratch/sparse_reward/policy_warmup_critic_decay_mlp/train_split/seed_3/"
 DATA_PATH="data/datasets/objectnav/objectnav_hm3d/objectnav_hm3d_v1_fixed/"
-PRETRAINED_WEIGHTS="/srv/flash1/rramrakhya6/habitat-web/habitat-lab/data/new_checkpoints/objectnav/objectnav_hm3d_hd_20k_ft/sem_seg_pred/seed_2/ckpt.22.pth"
+PRETRAINED_WEIGHTS="/srv/flash1/rramrakhya6/habitat-web/habitat-lab/data/new_checkpoints/objectnav/objectnav_hm3d_hd_20k_ft/sem_seg_20k_scratch/seed_2/ckpt.22.pth"
 set -x
 
 echo "In ObjectNav IL+RL DDP"

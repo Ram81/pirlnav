@@ -266,7 +266,7 @@ class ILEnvTrainer(BaseRLTrainer):
         if self.config.MODEL.USE_PRED_SEMANTICS and self.current_update >= self.config.MODEL.SWITCH_TO_PRED_SEMANTICS_UPDATE:
             batch["semantic"] = self.semantic_predictor(batch) # ["rgb"], batch["depth"])
             # Subtract 1 from class labels for THDA YCB categories
-            if self.config.MODEL.SEMANTIC_ENCODER.is_thda:
+            if self.config.MODEL.SEMANTIC_ENCODER.is_thda and self.config.MODEL.SEMANTIC_PREDICTOR.name == "rednet":
                 batch["semantic"] = batch["semantic"] - 1
         batch = apply_obs_transforms_batch(batch, self.obs_transforms)
 
@@ -373,8 +373,9 @@ class ILEnvTrainer(BaseRLTrainer):
             # Use first semantic observations from RedNet predictor as well
             if sensor == "semantic" and self.config.MODEL.USE_PRED_SEMANTICS:
                 semantic_obs = self.semantic_predictor(batch) #["rgb"], batch["depth"])
+                print(semantic_obs.shape)
                 # Subtract 1 from class labels for THDA YCB categories
-                if self.config.MODEL.SEMANTIC_ENCODER.is_thda:
+                if self.config.MODEL.SEMANTIC_ENCODER.is_thda and self.config.MODEL.SEMANTIC_PREDICTOR.name == "rednet":
                     semantic_obs = semantic_obs - 1
                 rollouts.observations[sensor][0].copy_(semantic_obs)
 
@@ -616,7 +617,7 @@ class ILEnvTrainer(BaseRLTrainer):
             len(stats_episodes) < number_of_eval_episodes
             and self.envs.num_envs > 0
         ):
-            current_episodes = self.envs.current_episodes()
+            current_episodes = self.envs.current_episodes_info()
 
             with torch.no_grad():
                 if self.semantic_predictor is not None:
@@ -662,7 +663,7 @@ class ILEnvTrainer(BaseRLTrainer):
                 rewards_l, dtype=torch.float, device=self.device
             ).unsqueeze(1)
             current_episode_reward += rewards
-            next_episodes = self.envs.current_episodes()
+            next_episodes = self.envs.current_episodes_info()
             envs_to_pause = []
             n_envs = self.envs.num_envs
             for i in range(n_envs):

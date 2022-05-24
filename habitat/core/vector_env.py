@@ -55,6 +55,7 @@ ACTION_SPACE_COMMAND = "action_space"
 NUMBER_OF_EPISODES_COMMAND = "number_of_episodes"
 CALL_COMMAND = "call"
 EPISODE_COMMAND = "current_episode"
+CURRENT_EPISODE_INFO_NAME = "current_episode_info"
 COUNT_EPISODES_COMMAND = "count_episodes"
 EPISODE_OVER = "episode_over"
 GET_METRICS = "get_metrics"
@@ -342,6 +343,14 @@ class VectorEnv:
         for read_fn in self._connection_read_fns:
             results.append(read_fn())
         self._is_waiting = False
+        return results
+
+    def current_episodes_info(self):
+        for write_fn in self._connection_write_fns:
+            write_fn((CALL_COMMAND, (CURRENT_EPISODE_INFO_NAME, None)))
+        results = []
+        for read_fn in self._connection_read_fns:
+            results.append(read_fn())
         return results
 
     def count_episodes(self):

@@ -245,7 +245,7 @@ class ILEnvDDPTrainer(ILEnvTrainer):
             if sensor == "semantic" and self.config.MODEL.USE_PRED_SEMANTICS:
                 semantic_obs = self.semantic_predictor(batch) #["rgb"], batch["depth"])
                 # Subtract 1 from class labels for THDA YCB categories
-                if self.config.MODEL.SEMANTIC_ENCODER.is_thda:
+                if self.config.MODEL.SEMANTIC_ENCODER.is_thda and self.config.MODEL.SEMANTIC_PREDICTOR.name == "rednet":
                     semantic_obs = semantic_obs - 1
                 rollouts.observations[sensor][0].copy_(semantic_obs)
 

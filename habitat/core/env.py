@@ -14,7 +14,7 @@ import numpy as np
 from gym import spaces
 
 from habitat.config import Config
-from habitat.core.dataset import Dataset, Episode, EpisodeIterator
+from habitat.core.dataset import Dataset, Episode, EpisodeInfo, EpisodeIterator
 from habitat.core.embodied_task import EmbodiedTask, Metrics
 from habitat.core.simulator import Observations, Simulator
 from habitat.datasets import make_dataset
@@ -321,6 +321,14 @@ class Env:
 
         return observations
 
+    def current_episode_info(self) -> EpisodeInfo:
+        assert self._current_episode is not None
+        return EpisodeInfo(
+            episode_id=self._current_episode.episode_id,
+            scene_id=self._current_episode.scene_id,
+            object_category=self._env._current_episode.object_category,
+        )
+
     @staticmethod
     @numba.njit
     def _seed_numba(seed: int):
@@ -456,6 +464,13 @@ class RLEnv(gym.Env):
         info = self.get_info(observations)
 
         return observations, reward, done, info
+
+    def current_episode_info(self) -> EpisodeInfo:
+        return EpisodeInfo(
+            episode_id=self._env._current_episode.episode_id,
+            scene_id=self._env._current_episode.scene_id,
+            object_category=self._env._current_episode.object_category,
+        )
 
     def seed(self, seed: Optional[int] = None) -> None:
         self._env.seed(seed)

@@ -5,16 +5,16 @@
 #SBATCH --cpus-per-task 6
 #SBATCH --ntasks-per-node 1
 #SBATCH --signal=USR1@300
-#SBATCH --partition=debug
+#SBATCH --partition=short
 #SBATCH --qos=ram-special
-#SBATCH --constraint=rtx_6000
+#SBATCH --constraint=a40
 #SBATCH --output=slurm_logs/eval/ddp-il-rl-%j.out
 #SBATCH --error=slurm_logs/eval/ddp-il-rl-%j.err
 #SBATCH --requeue
 
 source /srv/flash1/rramrakhya6/miniconda3/etc/profile.d/conda.sh
 conda deactivate
-conda activate il-rl
+conda activate habitat-web
 
 export GLOG_minloglevel=2
 export MAGNUM_LOG=quiet
@@ -24,17 +24,19 @@ export MASTER_ADDR
 
 config=$1
 DATA_PATH="data/datasets/objectnav/objectnav_hm3d/objectnav_hm3d_v1"
-TENSORBOARD_DIR="tb/objectnav_il_rl_ft/ddppo_hm3d/sem_seg_pred/sparse_reward/policy_warmup_critic_decay_mlp/train_split/seed_3/ckpt_22_metrics_v3/"
-EVAL_CKPT_PATH_DIR="data/new_checkpoints/objectnav_il_rl_ft/ddppo_hm3d/sem_seg_pred/sparse_reward/policy_warmup_critic_decay_mlp/train_split/seed_3/ckpt.22.pth"
+TENSORBOARD_DIR="tb/objectnav_il_rl_ft/ddppo_hm3d_pt_77k/sem_seg_pred/sparse_reward/train_split/seed_1_4node/ckpt_86/"
+EVAL_CKPT_PATH_DIR="data/new_checkpoints/objectnav_il_rl_ft/ddppo_hm3d_pt_77k/sem_seg_pred/sparse_reward/train_split/seed_1_4node/ckpt.86.pth"
+VIDEO_DIR="video_dir/objectnav_il_rl_ft/ddppo_hm3d_pt_77k/sem_seg_pred/sparse_reward/train_split/seed_1_4node/ckpt_86/"
 set -x
 
 echo "In ObjectNav IL+RL DDP"
 srun python -u -m habitat_baselines.run \
 --exp-config $config \
 --run-type eval \
-NUM_PROCESSES 8 \
+NUM_PROCESSES 20 \
 TENSORBOARD_DIR $TENSORBOARD_DIR \
 TEST_EPISODE_COUNT -1 \
+VIDEO_DIR $VIDEO_DIR \
 EVAL.SPLIT "val" \
 EVAL.meta_file "$TENSORBOARD_DIR/evaluation_meta.json" \
 EVAL_CKPT_PATH_DIR $EVAL_CKPT_PATH_DIR \

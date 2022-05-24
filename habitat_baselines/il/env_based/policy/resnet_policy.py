@@ -82,11 +82,13 @@ class ObjectNavILNet(Net):
         sem_seg_output_size = 0
         self.semantic_predictor = None
         self.is_thda = False
+        self.is_hm3d = False
         if model_config.USE_SEMANTICS:
             logger.info("\n\nSetting up semantic sensor")
             sem_embedding_size = model_config.SEMANTIC_ENCODER.embedding_size
 
             self.is_thda = model_config.SEMANTIC_ENCODER.is_thda
+            self.is_hm3d = model_config.SEMANTIC_ENCODER.is_hm3d
             rgb_shape = observation_space.spaces["rgb"].shape
             spaces = {
                 "semantic": Box(
@@ -202,9 +204,9 @@ class ObjectNavILNet(Net):
                     -1, observations["objectgoal"].size(2)
                 )
 
-            idx = self.task_cat2mpcat40[
-                observations["objectgoal"].long()
-            ]
+            idx = observations["objectgoal"].long()
+            if not self.is_hm3d:
+                idx = self.task_cat2mpcat40[idx]
             if self.is_thda:
                 idx = self.mapping_mpcat40_to_goal[idx].long()
             idx = idx.to(obj_semantic.device)

@@ -29,7 +29,7 @@ csv.field_size_limit(sys.maxsize)
 
 scene_dataset_path = {
     "mp3d": "data/datasets/objectnav/objectnav_mp3d/objectnav_mp3d_v1/{}/content/{}.json.gz",
-    "gibson": "../Object-Goal-Navigation/data/datasets/objectnav/gibson/v1.1/train_generated/content/{}.json.gz",
+    "gibson": "data/datasets/objectnav/objectnav_gibson/objectnav_gibson_v2/{}/content/{}.json.gz",
     "hm3d": "data/datasets/objectnav/objectnav_hm3d/objectnav_hm3d_v1_fixed/{}/content/{}.json.gz",
     "mp3d_thda": "data/datasets/objectnav/objectnav_mp3d/objectnav_mp3d_thda/train/content/{}.json.gz",
 }

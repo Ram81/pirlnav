@@ -28,12 +28,17 @@ from typing import (
 
 import attr
 import numpy as np
+
+from collections import namedtuple
 from numpy import ndarray
 
 from habitat.config import Config
 from habitat.core.utils import not_none_validator
 
 ALL_SCENES_MASK = "*"
+
+
+EpisodeInfo = namedtuple("EpisodeInfo", ["episode_id", "scene_id", "object_category"])
 
 
 @attr.s(auto_attribs=True, kw_only=True)

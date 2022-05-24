@@ -73,11 +73,12 @@ MODEL:
   SEMANTIC_PREDICTOR:
     name: "rednet"
     REDNET:
-      pretrained_weights: "data/rednet-models/rednet_semmap_mp3d_40_v2_vince.pth"
-      num_classes: 29
+      #pretrained_weights: "data/rednet-models/rednet_semmap_mp3d_40_v2_vince.pth"
+      pretrained_weights: "data/rednet-models/rednet_semmap_hm3d_6.pth"
+      num_classes: 7
     DETIC:
-      pretrained_weights: "Detic/models/Detic_LCOCOI21k_CLIP_SwinB_896b32_4x_ft4x_max-size.pth"
-      config: "Detic/configs/Detic_LCOCOI21k_CLIP_SwinB_896b32_4x_ft4x_max-size.yaml"
+      pretrained_weights: "Detic/models/Detic_LbaseI_CLIP_R5021k_640b64_4x_ft4x_max-size.pth"
+      config: "Detic/configs/Detic_LbaseI_CLIP_R5021k_640b64_4x_ft4x_max-size.yaml"
       score_threshold: 0.3
   SEMANTIC_ENCODER:
     cnn_type: "ResnetSemSegEncoder"
@@ -85,7 +86,8 @@ MODEL:
     backbone: "resnet18"
     train_encoder: True
     embedding_size: 4
-    is_thda: True
+    is_hm3d: True
+    is_thda: False
   RGB_ENCODER:
     cnn_type: "ResnetRGBEncoder"
     output_size: 256

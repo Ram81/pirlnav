@@ -24,7 +24,7 @@ export MASTER_ADDR
 
 config=$1
 
-DATA_PATH="data/datasets/objectnav/objectnav_gibson/objectnav_gibson_10k"
+DATA_PATH="data/datasets/objectnav/objectnav_hm3d/objectnav_hm3d_10k"
 TENSORBOARD_DIR="wandb/objectnav_il/overfitting/seed_1/"
 CHECKPOINT_DIR="data/new_checkpoints/objectnav_il/overfitting/seed_1/"
 INFLECTION_COEF=3.3418657117278423
@@ -41,6 +41,10 @@ NUM_UPDATES 5000 \
 NUM_PROCESSES 8 \
 IL.BehaviorCloning.num_steps 64 \
 TASK_CONFIG.TASK.INFLECTION_WEIGHT_SENSOR.INFLECTION_COEF $INFLECTION_COEF \
-TASK_CONFIG.DATASET.SPLIT "sample" \
+TASK_CONFIG.DATASET.SPLIT "train" \
 TASK_CONFIG.DATASET.DATA_PATH "$DATA_PATH/{split}/{split}.json.gz" \
-MODEL.hm3d_goal False \
+MODEL.hm3d_goal True \
+MODEL.SEMANTIC_PREDICTOR.REDNET.pretrained_weights "data/rednet-models/rednet_semmap_hm3d_6_8gpu.pth" \
+MODEL.SEMANTIC_PREDICTOR.REDNET.num_classes 7 \
+MODEL.SEMANTIC_ENCODER.is_hm3d True \
+MODEL.SEMANTIC_ENCODER.is_thda False \
