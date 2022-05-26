@@ -207,6 +207,8 @@ class ObjectNavILNet(Net):
             idx = observations["objectgoal"].long()
             if not self.is_hm3d:
                 idx = self.task_cat2mpcat40[idx]
+            else:
+                idx += 1
             if self.is_thda:
                 idx = self.mapping_mpcat40_to_goal[idx].long()
             idx = idx.to(obj_semantic.device)
