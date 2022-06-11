@@ -2,6 +2,7 @@ import argparse
 import attr
 import habitat
 import numpy as np
+import os
 
 from habitat import logger
 from habitat.tasks.nav.shortest_path_follower import ShortestPathFollower
@@ -59,6 +60,7 @@ def get_action_data(action, sim):
 def get_episode_json(episode, reference_replay):
     episode.reference_replay = reference_replay
     episode.scene_id = episode.scene_id
+    episode.attempts = 1
     ep_json = attr.asdict(episode)
     del ep_json["_shortest_path_cache"]
     return ep_json
@@ -81,7 +83,7 @@ def get_closest_goal(episode, sim):
     return goal_location
 
 
-def generate_trajectories(cfg, episode_path, output_path=""):
+def generate_trajectories(cfg, episode_path, output_path="", num_episodes=100):
     with habitat.Env(cfg) as env:
         goal_radius = 0.1
         spl = 0
@@ -92,8 +94,9 @@ def generate_trajectories(cfg, episode_path, output_path=""):
 
         dataset["episodes"] = []
 
-        logger.info("Total episodes: {}".format(len(env.episodes)))
-        for _ in range(len(env.episodes)):
+        logger.info("Total episodes: {}/{}".format(num_episodes, len(env.episodes)))
+        num_episodes = min(num_episodes, len(env.episodes))
+        for _ in range(num_episodes):
             follower = ShortestPathFollower(
                 env._sim, goal_radius, False
             )
@@ -128,7 +131,8 @@ def generate_trajectories(cfg, episode_path, output_path=""):
             spl += info["spl"]
             total_episodes += 1
 
-            dataset["episodes"].append(ep_data)
+            if success:
+                dataset["episodes"].append(ep_data)
         
         print("Total episodes: {}".format(total_episodes))
 
@@ -139,21 +143,46 @@ def generate_trajectories(cfg, episode_path, output_path=""):
         write_gzip(output_path, output_path)
 
 
+def generate_trajectories_for_scenes(cfg, content_scenes, input_path, output_path, num_episodes_per_env):
+    for scene_id in content_scenes:
+        # input_path_dir = os.path.join("/".join(input_path.split("/")[:-1]), "content")
+        episode_input_path = os.path.join(input_path, "{}.json.gz".format(scene_id))
+        episode_output_path = os.path.join(output_path, "{}.json".format(scene_id))
+
+        cfg.defrost()
+        cfg.DATASET.DATA_PATH = episode_input_path
+        cfg.freeze()
+        print("\n\nGenerating episodes for: {}".format(scene_id))
+
+        generate_trajectories(cfg, episode_input_path, episode_output_path, num_episodes_per_env)
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--episodes", type=str, default="data/episodes/sampled.json.gz"
+        "--input-path", type=str, default="data/episodes/sampled.json.gz"
     )
     parser.add_argument(
         "--output-path", type=str, default="data/episodes/shortest_paths.json"
     )
+    parser.add_argument(
+        "--scenes", type=str, default="scene_id_1,scene_id_2"
+    )
+    parser.add_argument(
+        "--num-episodes", type=int, default=100
+    )
+    parser.add_argument(
+        "--split", type=str, default="train"
+    )
     args = parser.parse_args()
     cfg = config
     cfg.defrost()
-    cfg.DATASET.DATA_PATH = args.episodes
+    cfg.DATASET.SPLIT = args.split
     cfg.freeze()
+    content_scenes = args.scenes.split(",")
 
-    generate_trajectories(cfg, args.episodes, output_path=args.output_path)
+    generate_trajectories_for_scenes(cfg, content_scenes, args.input_path, args.output_path, args.num_episodes)
+
 
 if __name__ == "__main__":
     main()

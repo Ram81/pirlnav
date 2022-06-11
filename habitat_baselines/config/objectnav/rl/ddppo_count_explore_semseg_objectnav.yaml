@@ -1,6 +1,6 @@
 BASE_TASK_CONFIG_PATH: "configs/tasks/objectnav_mp3d_il_rl_ft.yaml"
 CMD_TRAILING_OPTS: ["TASK_CONFIG.ENVIRONMENT.ITERATOR_OPTIONS.MAX_SCENE_REPEAT_STEPS", "50000"]
-ENV_NAME: "ObjectNavRLEnv"
+ENV_NAME: "ExploreNavRLEnv"
 SIMULATOR_GPU_ID: 0
 TORCH_GPU_ID: 0
 VIDEO_OPTION: []
@@ -29,7 +29,7 @@ WANDB:
 
 RL:
   SUCCESS_REWARD: 2.5
-  SLACK_REWARD: -1e-3
+  SLACK_REWARD: -1e-4
 
   POLICY:
     name: "ObjectNavILPolicy"
@@ -49,7 +49,7 @@ RL:
     gamma: 0.99
     tau: 0.95
     use_linear_clip_decay: False
-    use_linear_lr_decay: True
+    use_linear_lr_decay: False
     reward_window_size: 50
 
     use_normalized_advantage: False
@@ -61,9 +61,9 @@ RL:
     # The PyTorch distributed backend to use
     distrib_backend: NCCL
     # Visual encoder backbone
-    pretrained_weights: /srv/flash1/rramrakhya6/habitat-web/habitat-lab/data/new_checkpoints/objectnav/objectnav_hm3d_hd_20k_ft/sem_seg_pred/seed_2/ckpt.22.pth
+    pretrained_weights: None
     # Initialize with pretrained weights
-    pretrained: True 
+    pretrained: False 
     # Initialize just the visual encoder backbone with pretrained weights
     pretrained_encoder: False
     # Whether or not the visual encoder backbone will be trained.
@@ -78,8 +78,8 @@ RL:
     num_recurrent_layers: 2
 
   Finetune:
-    finetune: True
-    freeze_encoders: True
+    finetune: False
+    freeze_encoders: False
 
     policy_ft_lr: 1.5e-5
 

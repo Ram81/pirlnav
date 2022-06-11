@@ -1,11 +1,12 @@
 #!/bin/bash
 #SBATCH --job-name=onav_il
-#SBATCH --gres gpu:8
+#SBATCH --gres gpu:1
 #SBATCH --nodes 1
 #SBATCH --cpus-per-task 6
-#SBATCH --ntasks-per-node 8
+#SBATCH --ntasks-per-node 1
 #SBATCH --signal=USR1@1000
-#SBATCH --partition=long
+#SBATCH --mem=160
+#SBATCH --partition=debug,user-overcap
 #SBATCH --qos=ram-special
 #SBATCH --constraint=a40
 #SBATCH --output=slurm_logs/ddpil-%j.out
@@ -24,10 +25,10 @@ export MASTER_ADDR
 
 config=$1
 
-DATA_PATH="data/datasets/objectnav/objectnav_hm3d/objectnav_hm3d_35k"
-TENSORBOARD_DIR="tb/objectnav_il/objectnav_hm3d/objectnav_hm3d_35k/seed_1/"
-CHECKPOINT_DIR="data/new_checkpoints/objectnav_il/objectnav_hm3d/objectnav_hm3d_35k/seed_1/"
-INFLECTION_COEF=3.551858652007388
+DATA_PATH="data/datasets/objectnav/objectnav_hm3d/objectnav_hm3d_s_path"
+TENSORBOARD_DIR="tb/objectnav_il/objectnav_hm3d/objectnav_hm3d_s_path/sem_seg_pred/seed_1/"
+CHECKPOINT_DIR="data/new_checkpoints/objectnav_il/objectnav_hm3d/objectnav_hm3d_s_path/sem_seg_pred/seed_1/"
+INFLECTION_COEF=3.234951275740812
 set -x
 
 echo "In ObjectNav IL DDP"
@@ -44,7 +45,9 @@ TASK_CONFIG.TASK.INFLECTION_WEIGHT_SENSOR.INFLECTION_COEF $INFLECTION_COEF \
 TASK_CONFIG.DATASET.SPLIT "train" \
 TASK_CONFIG.DATASET.DATA_PATH "$DATA_PATH/{split}/{split}.json.gz" \
 MODEL.hm3d_goal True \
-MODEL.SEMANTIC_PREDICTOR.REDNET.pretrained_weights "data/rednet-models/rednet_semmap_hm3d_6_8gpu.pth" \
-MODEL.SEMANTIC_PREDICTOR.REDNET.num_classes 7 \
-MODEL.SEMANTIC_ENCODER.is_hm3d True \
-MODEL.SEMANTIC_ENCODER.is_thda False \
+MODEL.USE_SEMANTICS True \
+MODEL.USE_PRED_SEMANTICS True \
+MODEL.SEMANTIC_PREDICTOR.REDNET.pretrained_weights "data/rednet-models/rednet_semmap_mp3d_40_v2_vince.pth" \
+MODEL.SEMANTIC_PREDICTOR.REDNET.num_classes 29 \
+MODEL.SEMANTIC_ENCODER.is_hm3d False \
+MODEL.SEMANTIC_ENCODER.is_thda True \

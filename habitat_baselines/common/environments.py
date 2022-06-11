@@ -150,8 +150,8 @@ class RearrangementRLEnv(habitat.RLEnv):
         return self.habitat_env.get_metrics()
 
 
-@baseline_registry.register_env(name="ExploreThenNavRLEnv")
-class ExploreThenNavRLEnv(NavRLEnv):
+@baseline_registry.register_env(name="ExploreNavRLEnv")
+class ExploreNavRLEnv(NavRLEnv):
     r"""
         We want to train an agent that overfits less. We provide an exploration reward and a delayed gratification success reward.
         This is to avoid weird shaping loss.
@@ -160,9 +160,6 @@ class ExploreThenNavRLEnv(NavRLEnv):
     def __init__(self, config, dataset=None): # add coverage to the metrics
         super().__init__(config, dataset)
         self.step_penalty = 1
-        self._goal_was_seen = False # Switch for turning off coverage, turning on success shaping
-        self.visit_bonus = 0
-        self._previous_view = 0
 
     def step(self, *args, **kwargs):
         self.step_penalty *= self._rl_config.COVERAGE_ATTENUATION
@@ -170,8 +167,6 @@ class ExploreThenNavRLEnv(NavRLEnv):
 
     def reset(self):
         self.step_penalty = 1
-        self._goal_was_seen = False
-        self._previous_view = 0
         return super().reset()
 
     def get_reward_range(self):
@@ -179,34 +174,12 @@ class ExploreThenNavRLEnv(NavRLEnv):
         return old_low, old_hi + self._rl_config.COVERAGE_REWARD
 
     def get_reward(self, observations):
-        # Distance reward after agent sees the object
-        if self._goal_was_seen:
-            return super().get_reward(observations)
-
-        # ! If there's no GoalObjectVisible measure (i.e. eval), automatically use shaping
-        if GoalObjectVisible.cls_uuid not in self.habitat_env.get_metrics() or self.habitat_env.get_metrics()[GoalObjectVisible.cls_uuid] > self._rl_config.EXPLORE_GOAL_SEEN_THRESHOLD:
-            self._goal_was_seen = True
-            super().get_reward(observations) # ! Hack -- clear the shaping reward from exploration phase
-
-
-        if self._rl_config.COVERAGE_TYPE == "VISIT":
-            visit = self.habitat_env.get_metrics()["coverage"]["visit_count"]
-            return 0
-        else: # VIEW
-            reward = 0
-            map_measures = self.habitat_env.get_metrics()[TopDownMap.cls_uuid]
-            if map_measures:
-                explore_view = np.log(1 +
-                    map_measures["fog_of_war_mask"].sum() / 50000.0
-                ) / np.log(2)
-            else:
-                explore_view = 0
-            if self._previous_view > 0:
-                reward += (
-                    explore_view - self._previous_view
-                ) * self._rl_config.COVERAGE_REWARD * self.step_penalty
-            self._previous_view = explore_view
-            return reward
+        reward = self._rl_config.SLACK_REWARD
+        visit = self._env.get_metrics()["coverage"]["visit_count"]
+        reward += self.step_penalty * self._rl_config.COVERAGE_REWARD / (visit ** self._rl_config.COVERAGE_VISIT_EXP)
+        if self._episode_success():
+            reward += self._rl_config.SUCCESS_REWARD
+        return reward
 
 
 @baseline_registry.register_env(name="ObjectNavRLEnv")

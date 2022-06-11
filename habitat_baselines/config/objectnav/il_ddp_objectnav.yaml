@@ -73,9 +73,9 @@ MODEL:
   SEMANTIC_PREDICTOR:
     name: "rednet"
     REDNET:
-      #pretrained_weights: "data/rednet-models/rednet_semmap_mp3d_40_v2_vince.pth"
-      pretrained_weights: "data/rednet-models/rednet_semmap_hm3d_6.pth"
-      num_classes: 7
+      pretrained_weights: "data/rednet-models/rednet_semmap_mp3d_40_v2_vince.pth"
+      # pretrained_weights: "data/rednet-models/rednet_semmap_hm3d_6.pth"
+      num_classes: 29
     DETIC:
       pretrained_weights: "Detic/models/Detic_LbaseI_CLIP_R5021k_640b64_4x_ft4x_max-size.pth"
       config: "Detic/configs/Detic_LbaseI_CLIP_R5021k_640b64_4x_ft4x_max-size.yaml"

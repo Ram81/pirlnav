@@ -115,10 +115,10 @@ class DDPPOTrainer(PPOTrainer):
             )
             logger.info("Loading checkpoint missing keys: {}".format(missing_keys))
 
-        logger.info("Freeze encoder")
-        if hasattr(self.config.RL, "Finetune"):
+        self.rl_finetuning = False
+        if hasattr(self.config.RL, "Finetune") and self.config.RL.Finetune.finetune:
             logger.info("Start Freeze encoder")
-            self.warm_up_critic = True
+            self.rl_finetuning = True
             if self.config.RL.Finetune.freeze_encoders:
                 self.actor_critic.freeze_visual_encoders()
 
@@ -143,7 +143,7 @@ class DDPPOTrainer(PPOTrainer):
             eps=ppo_cfg.eps,
             max_grad_norm=ppo_cfg.max_grad_norm,
             use_normalized_advantage=ppo_cfg.use_normalized_advantage,
-            finetune=self.warm_up_critic,
+            finetune=self.rl_finetuning,
         )
 
     @profiling_wrapper.RangeContext("train")
@@ -292,14 +292,20 @@ class DDPPOTrainer(PPOTrainer):
         start_update = 0
         prev_time = 0
 
-        lr_scheduler = LambdaLR(
-            optimizer=self.agent.optimizer,
-            lr_lambda=[
-                lambda x: critic_linear_decay(x, self.start_critic_warmup_at, self.critic_lr_decay_update, self.config.RL.PPO.lr, self.config.RL.Finetune.policy_ft_lr),
-                lambda x: linear_warmup(x, self.actor_finetuning_update, self.actor_lr_warmup_update, 0.0, self.config.RL.Finetune.policy_ft_lr),
-                lambda x: linear_warmup(x, self.actor_finetuning_update, self.actor_lr_warmup_update, 0.0, self.config.RL.Finetune.policy_ft_lr),
-            ]
-        )
+        if self.rl_finetuning:
+            lr_scheduler = LambdaLR(
+                optimizer=self.agent.optimizer,
+                lr_lambda=[
+                    lambda x: critic_linear_decay(x, self.start_critic_warmup_at, self.critic_lr_decay_update, self.config.RL.PPO.lr, self.config.RL.Finetune.policy_ft_lr),
+                    lambda x: linear_warmup(x, self.actor_finetuning_update, self.actor_lr_warmup_update, 0.0, self.config.RL.Finetune.policy_ft_lr),
+                    lambda x: linear_warmup(x, self.actor_finetuning_update, self.actor_lr_warmup_update, 0.0, self.config.RL.Finetune.policy_ft_lr),
+                ]
+            )
+        else:
+            lr_scheduler = LambdaLR(
+                optimizer=self.agent.optimizer,
+                lr_lambda=lambda x: linear_decay(x, self.config.NUM_UPDATES),
+            )
 
         if interrupted_state is not None:
             self.agent.load_state_dict(interrupted_state["state_dict"])
@@ -317,7 +323,7 @@ class DDPPOTrainer(PPOTrainer):
             prev_time = requeue_stats["prev_time"]
             self.current_update = start_update
 
-            if self.current_update >= self.actor_finetuning_update:
+            if self.rl_finetuning and self.current_update >= self.actor_finetuning_update:
                 for param in self.actor_critic.action_distribution.parameters():
                     param.requires_grad_(True)
                 for param in self.actor_critic.net.state_encoder.parameters():
@@ -374,7 +380,7 @@ class DDPPOTrainer(PPOTrainer):
                     return
 
                 # Enable actor finetuning at update actor_finetuning_update
-                if self.current_update == self.actor_finetuning_update:
+                if self.rl_finetuning and self.current_update == self.actor_finetuning_update:
                     for param in self.actor_critic.action_distribution.parameters():
                         param.requires_grad_(True)
                     for param in self.actor_critic.net.state_encoder.parameters():
@@ -391,7 +397,7 @@ class DDPPOTrainer(PPOTrainer):
                                 sum(param.numel() if param.requires_grad else 0 for param in self.agent.parameters())
                             )
                         )
-                if self.current_update == self.start_critic_warmup_at:
+                if self.rl_finetuning and self.current_update == self.start_critic_warmup_at:
                     self.agent.optimizer.param_groups[0]["eps"] = self.config.RL.PPO.eps
                     lr_scheduler.base_lrs[0] = 1.0
                     if self.world_rank == 0:
