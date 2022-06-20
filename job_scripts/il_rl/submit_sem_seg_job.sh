@@ -1,12 +1,11 @@
 #!/bin/bash
 #SBATCH --job-name=onav_ilrl
 #SBATCH --gres gpu:8
-#SBATCH --nodes 1
+#SBATCH --nodes 2
 #SBATCH --cpus-per-task 6
 #SBATCH --ntasks-per-node 8
 #SBATCH --signal=USR1@300
-#SBATCH --partition=long,user-overcap
-#SBATCH --qos=ram-special
+#SBATCH --partition=long
 #SBATCH --constraint=a40
 #SBATCH --output=slurm_logs/ddp-il-rl-%j.out
 #SBATCH --error=slurm_logs/ddp-il-rl-%j.err
@@ -24,10 +23,10 @@ export MASTER_ADDR
 
 config=$1
 
-TENSORBOARD_DIR="tb/objectnav_il_rl_ft/ddppo_hm3d/sem_seg_20k_scratch/sparse_reward/policy_warmup_critic_decay_mlp/train_split/seed_3/"
-CHECKPOINT_DIR="data/new_checkpoints/objectnav_il_rl_ft/ddppo_hm3d/sem_seg_20k_scratch/sparse_reward/policy_warmup_critic_decay_mlp/train_split/seed_3/"
+TENSORBOARD_DIR="tb/objectnav_il_rl_ft/ddppo_hm3d_pt_77k/sem_seg_pred/sparse_reward_success_0.5/train_split/seed_1/"
+CHECKPOINT_DIR="data/new_checkpoints/objectnav_il_rl_ft/ddppo_hm3d_pt_77k/sem_seg_pred/sparse_reward_success_0.5/train_split/seed_1/"
 DATA_PATH="data/datasets/objectnav/objectnav_hm3d/objectnav_hm3d_v1_fixed/"
-PRETRAINED_WEIGHTS="/srv/flash1/rramrakhya6/habitat-web/habitat-lab/data/new_checkpoints/objectnav/objectnav_hm3d_hd_20k_ft/sem_seg_20k_scratch/seed_2/ckpt.22.pth"
+PRETRAINED_WEIGHTS="data/new_checkpoints/objectnav_il/objectnav_hm3d/objectnav_hm3d_77k/sem_seg_pred/seed_1/ckpt.28.pth"
 set -x
 
 echo "In ObjectNav IL+RL DDP"
@@ -40,10 +39,11 @@ CHECKPOINT_FOLDER $CHECKPOINT_DIR \
 NUM_UPDATES 50000 \
 RL.DDPPO.pretrained_weights $PRETRAINED_WEIGHTS \
 RL.DDPPO.distrib_backend "GLOO" \
-RL.Finetune.start_actor_finetuning_at 1500 \
-RL.Finetune.actor_lr_warmup_update 3000 \
-RL.Finetune.start_critic_warmup_at 1000 \
-RL.Finetune.critic_lr_decay_update 2000 \
+RL.Finetune.start_actor_finetuning_at 750 \
+RL.Finetune.actor_lr_warmup_update 1500 \
+RL.Finetune.start_critic_warmup_at 500 \
+RL.Finetune.critic_lr_decay_update 1000 \
 TASK_CONFIG.DATASET.SPLIT "train" \
 TASK_CONFIG.DATASET.DATA_PATH "$DATA_PATH/{split}/{split}.json.gz" \
+TASK_CONFIG.TASK.SUCCESS.SUCCESS_DISTANCE 0.05 \
 MODEL.hm3d_goal True \
