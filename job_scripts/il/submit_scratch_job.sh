@@ -2,20 +2,14 @@
 #SBATCH --job-name=onav_il
 #SBATCH --gres gpu:1
 #SBATCH --nodes 1
-#SBATCH --cpus-per-task 6
+#SBATCH --cpus-per-task 8
 #SBATCH --ntasks-per-node 1
 #SBATCH --signal=USR1@1000
-#SBATCH --mem=160
-#SBATCH --partition=debug,user-overcap
-#SBATCH --qos=ram-special
-#SBATCH --constraint=a40
+#SBATCH --mem=120GB
+#SBATCH --constraint=volta32gb
 #SBATCH --output=slurm_logs/ddpil-%j.out
 #SBATCH --error=slurm_logs/ddpil-%j.err
 #SBATCH --requeue
-
-source /srv/flash1/rramrakhya6/miniconda3/etc/profile.d/conda.sh
-conda deactivate
-conda activate il-rl
 
 export GLOG_minloglevel=2
 export MAGNUM_LOG=quiet
@@ -25,10 +19,10 @@ export MASTER_ADDR
 
 config=$1
 
-DATA_PATH="data/datasets/objectnav/objectnav_hm3d/objectnav_hm3d_s_path"
-TENSORBOARD_DIR="tb/objectnav_il/objectnav_hm3d/objectnav_hm3d_s_path/sem_seg_pred/seed_1/"
-CHECKPOINT_DIR="data/new_checkpoints/objectnav_il/objectnav_hm3d/objectnav_hm3d_s_path/sem_seg_pred/seed_1/"
-INFLECTION_COEF=3.234951275740812
+DATA_PATH="data/datasets/objectnav/objectnav_hm3d/objectnav_hm3d_77k"
+TENSORBOARD_DIR="tb/objectnav_il/objectnav_hm3d/objectnav_hm3d_77k/sem_seg_pred/seed_1/"
+CHECKPOINT_DIR="data/new_checkpoints/objectnav_il/objectnav_hm3d/objectnav_hm3d_77k/sem_seg_pred/seed_1/"
+INFLECTION_COEF=3.186409513220174
 set -x
 
 echo "In ObjectNav IL DDP"
@@ -51,3 +45,16 @@ MODEL.SEMANTIC_PREDICTOR.REDNET.pretrained_weights "data/rednet-models/rednet_se
 MODEL.SEMANTIC_PREDICTOR.REDNET.num_classes 29 \
 MODEL.SEMANTIC_ENCODER.is_hm3d False \
 MODEL.SEMANTIC_ENCODER.is_thda True \
+#TASK_CONFIG.SIMULATOR.RGB_SENSOR.POSITION "[0, 1.31, 0]" \
+#TASK_CONFIG.SIMULATOR.DEPTH_SENSOR.POSITION "[0, 1.31, 0]" \
+#TASK_CONFIG.SIMULATOR.SEMANTIC_SENSOR.POSITION "[0, 1.31, 0]" \
+#TASK_CONFIG.SIMULATOR.SEMANTIC_SENSOR.WIDTH 480 \
+#TASK_CONFIG.SIMULATOR.RGB_SENSOR.WIDTH 480 \
+#TASK_CONFIG.SIMULATOR.DEPTH_SENSOR.WIDTH 480 \
+#TASK_CONFIG.SIMULATOR.SEMANTIC_SENSOR.HEIGHT 640 \
+#TASK_CONFIG.SIMULATOR.RGB_SENSOR.HEIGHT 640 \
+#TASK_CONFIG.SIMULATOR.DEPTH_SENSOR.HEIGHT 640 \
+#TASK_CONFIG.SIMULATOR.DEPTH_SENSOR.HFOV 42 \
+#TASK_CONFIG.SIMULATOR.RGB_SENSOR.HFOV 42 \
+#TASK_CONFIG.SIMULATOR.SEMANTIC_SENSOR.HFOV 42 \
+#TASK_CONFIG.SIMULATOR.DEPTH_SENSOR.MAX_DEPTH 4.0 \
