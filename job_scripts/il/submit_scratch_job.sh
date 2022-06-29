@@ -1,10 +1,10 @@
 #!/bin/bash
 #SBATCH --job-name=onav_il
 #SBATCH --time=3-00:00:00
-#SBATCH --gres gpu:1
-#SBATCH --nodes 1
+#SBATCH --gres gpu:8
+#SBATCH --nodes 16
 #SBATCH --cpus-per-task 8
-#SBATCH --ntasks-per-node 1
+#SBATCH --ntasks-per-node 8
 #SBATCH --signal=USR1@1000
 #SBATCH --mem=120GB
 #SBATCH --constraint=volta32gb
