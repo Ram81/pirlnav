@@ -217,7 +217,7 @@ class InstructionSensor(Sensor):
 class DemonstrationSensor(Sensor):
     def __init__(self, **kwargs):
         self.uuid = "demonstration"
-        self.observation_space = spaces.Discrete(0)
+        self.observation_space = spaces.Discrete(1)
         self.timestep = 0
         self.prev_action = 0
 
@@ -234,7 +234,7 @@ class DemonstrationSensor(Sensor):
         # Fetch next action as observation
         if task.is_resetting:  # reset
             self.timestep = 1
-        
+
         if self.timestep < len(episode.reference_replay):
             action_name = episode.reference_replay[self.timestep].action
             action = get_habitat_sim_action(action_name)
@@ -252,7 +252,7 @@ class DemonstrationSensor(Sensor):
 class InflectionWeightSensor(Sensor):
     def __init__(self, config: Config, **kwargs):
         self.uuid = "inflection_weight"
-        self.observation_space = spaces.Discrete(0)
+        self.observation_space = spaces.Discrete(1)
         self._config = config
         self.timestep = 0
 
@@ -268,12 +268,12 @@ class InflectionWeightSensor(Sensor):
     ):
         if task.is_resetting:  # reset
             self.timestep = 0
-        
+
         inflection_weight = 1.0
         if self.timestep == 0:
             inflection_weight = 1.0
         elif self.timestep >= len(episode.reference_replay):
-            inflection_weight = 1.0 
+            inflection_weight = 1.0
         elif episode.reference_replay[self.timestep - 1].action != episode.reference_replay[self.timestep].action:
             inflection_weight = self._config.INFLECTION_COEF
         self.timestep += 1
@@ -530,7 +530,7 @@ class AgentToReceptacleDistance(Measure):
             agent_position = agent_state.position
 
             self._metric = self._geo_dist(
-                agent_position, receptacle_position 
+                agent_position, receptacle_position
             )
             if self._metric == np.inf or self._metric == np.nan:
                 was_nan = True
@@ -582,7 +582,7 @@ class GoalObjectVisible(Measure):
                 # If object is gripped caclulate visible pixels for receptacle
                 if observations["gripped_object_id"] != -1:
                     semantic_object_id = self._sim.obj_id_to_semantic_obj_id_map[1]
-                
+
                 goal_visible_pixels += (semantic_obs == semantic_object_id).sum() # Sum over all since we're not batched
                 goal_visible_area = goal_visible_pixels / semantic_obs.size
                 self._metric = goal_visible_area
@@ -789,7 +789,7 @@ class ReleaseFailed(Measure):
 @registry.register_sensor
 class AllObjectPositions(PointGoalSensor):
     cls_uuid = "all_object_positions"
-    
+
     def _get_observation_space(self, *args: Any, **kwargs: Any):
         sensor_shape = (2, self._dimensionality,)
 
@@ -802,7 +802,7 @@ class AllObjectPositions(PointGoalSensor):
 
     def get_observation(
         self, observations, episode, *args: Any, **kwargs: Any
-    ):  
+    ):
         agent_state = self._sim.get_agent_state()
         agent_position = agent_state.position
         rotation_world_agent = agent_state.rotation
@@ -863,7 +863,7 @@ class RearrangementReward(Measure):
         self._previous_placement_success = 0
         self._placed_success = False
         self.update_metric(episode=episode, task=task, action={"action": 0}, observations=observations, *args, **kwargs)
-    
+
     def reward_coverage(
         self,
         episode,
@@ -906,8 +906,8 @@ class RearrangementReward(Measure):
             # If agent drops object too far from receptacle add penalty
             if self._previous_gripped_object_id != -1 and current_agent_receptacle_distance > drop_penalty_dist_threshold:
                 reward += self._config.DROP_PENALTY
-        
-        # If the agent drops an object at it's successful position, 
+
+        # If the agent drops an object at it's successful position,
         # give a positive reward, if it removes from a successful position,
         # give a negative reward
         if observations['gripped_object_id'] == -1:
@@ -918,7 +918,7 @@ class RearrangementReward(Measure):
 
             reward += self._config.GRAB_SUCCESS_REWARD * new_success
             self._previous_placement_success = is_success
-        
+
         return reward
 
     def reward_distance_to_object(
@@ -1307,7 +1307,7 @@ class RearrangementSPL(Measure):
             AgentToObjectDistance.cls_uuid
         ].get_metric()["metric"] + task.measurements.measures[
             ObjectToReceptacleDistance.cls_uuid
-        ].get_metric()["metric"] 
+        ].get_metric()["metric"]
         self.update_metric(  # type:ignore
             episode=episode, task=task, *args, **kwargs
         )
@@ -1388,7 +1388,7 @@ class PickPlaceTask(EmbodiedTask):
     def __init__(self, **kwargs) -> None:
         super().__init__(**kwargs)
         self._is_episode_active = False
-    
+
     def reset(self, **kwargs):
         observations = super().reset(**kwargs)
         return observations
