@@ -10,6 +10,7 @@ from typing import Optional
 from habitat import Config
 from habitat.tasks.nav.object_nav_task import task_cat2hm3dcat40, mapping_mpcat40_to_goal21
 from habitat_baselines.il.env_based.policy.rednet import load_rednet
+from habitat_baselines.il.env_based.policy.coco_segmentation.coco_segmentation_model import COCOSegmentationModel
 
 # import detectron2.data.transforms as T
 
@@ -125,15 +126,23 @@ class SemanticPredictor(nn.Module):
             # num_classes = len(self.metadata.thing_classes)
             # reset_cls_test(self.semantic_predictor, classifier, num_classes)
             pass
+
+        elif model_config.SEMANTIC_PREDICTOR.name == "coco_maskrcnn":
+            self.semantic_predictor = COCOSegmentationModel(
+                sem_pred_prob_thr=0.9,
+                sem_gpu_id=(-1 if self.device == torch.device("cpu") else self.device.index),
+                visualize=False
+            )
+
         else:
             # Default to RedNet predictor
             self.semantic_predictor = load_rednet(
                 self.device,
                 ckpt=model_config.SEMANTIC_PREDICTOR.REDNET.pretrained_weights,
-                resize=True, # since we train on half-vision
+                resize=True,  # since we train on half-vision
                 num_classes=model_config.SEMANTIC_PREDICTOR.REDNET.num_classes
             )
-        self.semantic_predictor.eval()
+            self.semantic_predictor.eval()
 
         self.task_cat2hm3dcat40_t = torch.tensor(task_cat2hm3dcat40).to(self.device)
         self.mapping_mpcat40_to_goal = np.zeros(
@@ -149,12 +158,12 @@ class SemanticPredictor(nn.Module):
         self.mapping_mpcat40_to_goal = torch.tensor(self.mapping_mpcat40_to_goal, device=self.device)
 
         self.eval()
-    
+
     def get_clip_embeddings(self, vocabulary, prompt='a '):
         texts = [prompt + x for x in vocabulary]
         emb = self.text_encoder(texts).detach().permute(1, 0).contiguous().cpu()
         return emb
-    
+
     def convert_to_semantic_mask(self, preds):
         pass
 
@@ -183,6 +192,15 @@ class SemanticPredictor(nn.Module):
             #         masks.append(zeros_sem_mask)
             # x = torch.cat(masks, dim=0)
             pass
+
+        elif self.model_config.SEMANTIC_PREDICTOR.name == "coco_maskrcnn":
+            semantic, _ = self.semantic_predictor.get_prediction(
+                rgb_obs.cpu().numpy(),
+                depth_obs.cpu().numpy()
+            )
+            x = torch.from_numpy(semantic).to(rgb_obs.device)
+
         else:
             x = self.semantic_predictor(rgb_obs, depth_obs)
+
         return x
