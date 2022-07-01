@@ -14,9 +14,10 @@ export MAGNUM_LOG=quiet
 MASTER_ADDR=$(srun --ntasks=1 hostname 2>&1 | tail -n1)
 export MASTER_ADDR
 
-path=$1
-val_dataset_path=$2
-checkpoint=$3
+config=$1
+checkpoint=$2
+
+DATA_PATH="data/datasets/objectnav/objectnav_hm3d/objectnav_hm3d_77k"
 
 set -x
 
@@ -24,8 +25,8 @@ echo "Evaluating..."
 echo "Hab-Sim: ${PYTHONPATH}"
 
 srun python -u -m habitat_baselines.run \
---exp-config  $path \
+--exp-config  $config \
 --run-type eval \
-TASK_CONFIG.DATASET.DATA_PATH "$val_dataset_path/{split}/{split}.json.gz" \
+TASK_CONFIG.DATASET.DATA_PATH "$DATA_PATH/{split}/{split}.json.gz" \
 EVAL_CKPT_PATH_DIR $checkpoint \
 TASK_CONFIG.TASK.SENSORS "['OBJECTGOAL_SENSOR', 'COMPASS_SENSOR', 'GPS_SENSOR']"
