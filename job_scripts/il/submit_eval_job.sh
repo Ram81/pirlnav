@@ -1,5 +1,6 @@
 #!/bin/bash
 #SBATCH --job-name=onav_il
+#SBATCH --time=1-00:00:00
 #SBATCH --gres gpu:1
 #SBATCH --nodes 1
 #SBATCH --cpus-per-task 8
