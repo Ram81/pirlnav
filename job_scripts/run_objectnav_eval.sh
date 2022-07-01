@@ -2,16 +2,11 @@
 #SBATCH --job-name=onav_eval
 #SBATCH --gres gpu:1
 #SBATCH --nodes 1
-#SBATCH --cpus-per-task 6
+#SBATCH --cpus-per-task 8
 #SBATCH --ntasks-per-node 1
-#SBATCH --partition=long
-#SBATCH --constraint=rtx_6000
+#SBATCH --constraint=volta32gb
 #SBATCH --output=slurm_logs/eval/eval-%j.out
 #SBATCH --error=slurm_logs/eval/eval-%j.err
-
-source /srv/flash1/rramrakhya6/miniconda3/etc/profile.d/conda.sh
-conda deactivate
-conda activate il-rl
 
 export GLOG_minloglevel=2
 export MAGNUM_LOG=quiet
