@@ -2,19 +2,13 @@
 #SBATCH --job-name=onav_il
 #SBATCH --gres gpu:1
 #SBATCH --nodes 1
-#SBATCH --cpus-per-task 6
+#SBATCH --cpus-per-task 8
 #SBATCH --ntasks-per-node 1
 #SBATCH --signal=USR1@300
-#SBATCH --partition=short
-#SBATCH --qos=ram-special
-#SBATCH --constraint=a40
+#SBATCH --constraint=volta32gb
 #SBATCH --output=slurm_logs/eval/ddpil-%j.out
 #SBATCH --error=slurm_logs/eval/ddpil-%j.err
 #SBATCH --requeue
-
-source /srv/flash1/rramrakhya6/miniconda3/etc/profile.d/conda.sh
-conda deactivate
-conda activate habitat-web
 
 export GLOG_minloglevel=2
 export MAGNUM_LOG=quiet
