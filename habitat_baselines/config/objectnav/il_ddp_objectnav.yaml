@@ -86,8 +86,8 @@ MODEL:
     backbone: "resnet18"
     train_encoder: True
     embedding_size: 4
-    is_hm3d: True
-    is_thda: False
+    is_hm3d: False
+    is_thda: True
   RGB_ENCODER:
     cnn_type: "ResnetRGBEncoder"
     output_size: 256

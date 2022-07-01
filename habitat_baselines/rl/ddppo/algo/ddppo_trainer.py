@@ -43,7 +43,8 @@ from habitat_baselines.rl.ddppo.algo.ddppo import DDPPO
 from habitat_baselines.rl.ppo.ppo_trainer import PPOTrainer
 from habitat_baselines.utils.common import batch_obs, linear_decay, linear_warmup, critic_linear_decay
 from habitat_baselines.utils.env_utils import construct_envs
-from habitat_baselines.il.env_based.policy.rednet import load_rednet
+# from habitat_baselines.il.env_based.policy.rednet import load_rednet
+from habitat_baselines.il.env_based.policy.semantic_predictor import SemanticPredictor
 
 
 @baseline_registry.register_trainer(name="ddppo")
@@ -87,14 +88,24 @@ class DDPPOTrainer(PPOTrainer):
         self.actor_critic.to(self.device)
 
         self.semantic_predictor = None
+        model_config = self.config.MODEL
         self.use_pred_semantic = hasattr(self.config.MODEL, "USE_PRED_SEMANTICS") and self.config.MODEL.USE_PRED_SEMANTICS
+        # if self.use_pred_semantic:
+        #     self.semantic_predictor = load_rednet(
+        #         self.device,
+        #         ckpt=self.config.MODEL.SEMANTIC_ENCODER.rednet_ckpt,
+        #         resize=True, # since we train on half-vision
+        #         num_classes=self.config.MODEL.SEMANTIC_ENCODER.num_classes
+        #     )
+        #     self.semantic_predictor.eval()
         if self.use_pred_semantic:
-            self.semantic_predictor = load_rednet(
-                self.device,
-                ckpt=self.config.MODEL.SEMANTIC_ENCODER.rednet_ckpt,
-                resize=True, # since we train on half-vision
-                num_classes=self.config.MODEL.SEMANTIC_ENCODER.num_classes
-            )
+            # self.semantic_predictor = load_rednet(
+            #     self.device,
+            #     ckpt=model_config.SEMANTIC_ENCODER.rednet_ckpt,
+            #     resize=True, # since we train on half-vision
+            #     num_classes=model_config.SEMANTIC_ENCODER.num_classes
+            # )
+            self.semantic_predictor = SemanticPredictor(model_config, self.device)
             self.semantic_predictor.eval()
 
         if (
@@ -231,9 +242,9 @@ class DDPPOTrainer(PPOTrainer):
         batch = batch_obs(observations, device=self.device)
 
         if self.use_pred_semantic:
-            batch["semantic"] = self.semantic_predictor(batch["rgb"], batch["depth"])
+            batch["semantic"] = self.semantic_predictor(batch) # self.semantic_predictor(batch["rgb"], batch["depth"])
             # Subtract 1 from class labels for THDA YCB categories
-            if self.config.MODEL.SEMANTIC_ENCODER.is_thda:
+            if self.config.MODEL.SEMANTIC_ENCODER.is_thda and self.config.MODEL.SEMANTIC_PREDICTOR.name == "rednet":
                 batch["semantic"] = batch["semantic"] - 1
 
         batch = apply_obs_transforms_batch(batch, self.obs_transforms)
