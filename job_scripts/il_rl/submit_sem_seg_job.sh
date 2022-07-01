@@ -2,7 +2,7 @@
 #SBATCH --job-name=onav_ilrl
 #SBATCH --time=3-00:00:00
 #SBATCH --gres gpu:8
-#SBATCH --nodes 1
+#SBATCH --nodes 4
 #SBATCH --cpus-per-task 8
 #SBATCH --ntasks-per-node 8
 #SBATCH --signal=USR1@300
