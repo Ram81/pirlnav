@@ -6,7 +6,7 @@
 #SBATCH --cpus-per-task 8
 #SBATCH --ntasks-per-node 8
 #SBATCH --signal=USR1@1000
-#SBATCH --mem=120GB
+#SBATCH --mem=480GB
 #SBATCH --constraint=volta32gb
 #SBATCH --output=slurm_logs/ddpil-%j.out
 #SBATCH --error=slurm_logs/ddpil-%j.err
