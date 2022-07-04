@@ -1,10 +1,13 @@
 import argparse
 import habitat
 import os
+import torch
 
 from PIL import Image
 from habitat.utils.visualizations.utils import observations_to_image, images_to_video, append_text_to_image
 from scripts.parsing.parse_objectnav_dataset import write_json
+
+from mmdet.apis import init_detector, inference_detector # needs MMDetection library
 
 config = habitat.get_config("configs/tasks/objectnav_mp3d_il.yaml")
 
@@ -19,15 +22,35 @@ def save_image(img, file_name):
     im.save("demos/" + file_name)
 
 
+def get_detector(config_path, checkpoint_path, device):
+    model = init_detector(config_path, checkpoint_path, device)
+    return model
+
+
+def get_device():
+    device = (
+        torch.device("cuda", 0)
+        if torch.cuda.is_available()
+        else torch.device("cpu")
+    )
+    return device
+
+
 def run_reference_replay(
     cfg,
     num_episodes=None,
     output_prefix=None,
     append_instruction=False,
     save_videos=False,
-    save_step_image=False
+    save_step_image=False,
+    detector_config="",
+    detector_checkpoint=None,
 ):
-    possible_actions = cfg.TASK.POSSIBLE_ACTIONS  
+    # Set up semantic predictor/detector
+    device = get_device()
+    detector = get_detector(detector_config, detector_checkpoint, device)
+
+    possible_actions = cfg.TASK.POSSIBLE_ACTIONS
     with habitat.Env(cfg) as env:
         total_success = 0
         spl = 0
@@ -50,9 +73,11 @@ def run_reference_replay(
                 )
 
                 observations = env.step(action=action)
+                result = inference_detector(detector, observations["rgb"])
+                det_frame = detector.show_result(observations["rgb"], result)
 
                 info = env.get_metrics()
-                frame = observations_to_image({"rgb": observations["rgb"]}, info)
+                frame = observations_to_image({"rgb": observations["rgb"], "detection": det_frame}, info)
 
                 if append_instruction:
                     frame = append_text_to_image(frame, "Find and go to {}".format(episode.object_category))
@@ -111,6 +136,12 @@ def main():
     parser.add_argument(
         "--save-step-image", dest="save_step_image", action="store_true"
     )
+    parser.add_argument(
+        "--detector-config", type=str, default="configs/detector/mask_rcnn_r50_270cat.py"
+    )
+    parser.add_argument(
+        "--detector-checkpoint", type=str, default="checkpoints/detector/mask_rcnn_r50_270cat.pth"
+    )
     args = parser.parse_args()
     cfg = config
     cfg.defrost()
@@ -125,7 +156,9 @@ def main():
         output_prefix=args.output_prefix,
         append_instruction=args.append_instruction,
         save_videos=args.save_videos,
-        save_step_image=args.save_step_image
+        save_step_image=args.save_step_image,
+        detector_config=args.detector_config,
+        detector_checkpoint=args.detector_checkpoint,
     )
 
 

@@ -206,6 +206,9 @@ def observations_to_image(observation: Dict, info: Dict, top_down_map_only=False
             semantic_colors = colors[semantic_map % 45] * 255
             semantic_colors = semantic_colors.astype(np.uint8)
             egocentric_view_l.append(semantic_colors)
+    
+    if "detection" in observation:
+        egocentric_view_l.append(observation["detection"])
 
     # add image goal if observation has image_goal info
     if "imagegoal" in observation:

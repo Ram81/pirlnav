@@ -217,7 +217,7 @@ class InstructionSensor(Sensor):
 class DemonstrationSensor(Sensor):
     def __init__(self, **kwargs):
         self.uuid = "demonstration"
-        self.observation_space = spaces.Discrete(0)
+        self.observation_space = spaces.Discrete(1)
         self.timestep = 0
         self.prev_action = 0
 
@@ -252,7 +252,7 @@ class DemonstrationSensor(Sensor):
 class InflectionWeightSensor(Sensor):
     def __init__(self, config: Config, **kwargs):
         self.uuid = "inflection_weight"
-        self.observation_space = spaces.Discrete(0)
+        self.observation_space = spaces.Discrete(1)
         self._config = config
         self.timestep = 0
 
