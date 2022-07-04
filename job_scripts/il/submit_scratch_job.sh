@@ -21,8 +21,8 @@ export MASTER_ADDR
 config=$1
 
 DATA_PATH="data/datasets/objectnav/objectnav_hm3d/objectnav_hm3d_77k"
-TENSORBOARD_DIR="tb/objectnav_il/objectnav_hm3d/objectnav_hm3d_77k/sem_seg_pred/128gpus/"
-CHECKPOINT_DIR="data/new_checkpoints/objectnav_il/objectnav_hm3d/objectnav_hm3d_77k/sem_seg_pred/128gpus/"
+TENSORBOARD_DIR="tb/objectnav_il/objectnav_hm3d/objectnav_hm3d_77k/sem_seg_pred/original_settings/"
+CHECKPOINT_DIR="data/new_checkpoints/objectnav_il/objectnav_hm3d/objectnav_hm3d_77k/sem_seg_pred/original_settings/"
 INFLECTION_COEF=3.186409513220174
 set -x
 
