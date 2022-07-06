@@ -242,10 +242,7 @@ class DDPPOTrainer(PPOTrainer):
         batch = batch_obs(observations, device=self.device)
 
         if self.use_pred_semantic:
-            batch["semantic"] = self.semantic_predictor(batch) # self.semantic_predictor(batch["rgb"], batch["depth"])
-            # Subtract 1 from class labels for THDA YCB categories
-            if self.config.MODEL.SEMANTIC_ENCODER.is_thda and self.config.MODEL.SEMANTIC_PREDICTOR.name == "rednet":
-                batch["semantic"] = batch["semantic"] - 1
+            batch["semantic"] = self.semantic_predictor(batch)
 
         batch = apply_obs_transforms_batch(batch, self.obs_transforms)
 

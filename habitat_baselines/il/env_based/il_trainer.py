@@ -264,10 +264,7 @@ class ILEnvTrainer(BaseRLTrainer):
         t_update_stats = time.time()
         batch = batch_obs(observations, device=self.device)
         if self.config.MODEL.USE_PRED_SEMANTICS and self.current_update >= self.config.MODEL.SWITCH_TO_PRED_SEMANTICS_UPDATE:
-            batch["semantic"] = self.semantic_predictor(batch) # ["rgb"], batch["depth"])
-            # Subtract 1 from class labels for THDA YCB categories
-            if self.config.MODEL.SEMANTIC_ENCODER.is_thda and self.config.MODEL.SEMANTIC_PREDICTOR.name == "rednet":
-                batch["semantic"] = batch["semantic"] - 1
+            batch["semantic"] = self.semantic_predictor(batch)
         batch = apply_obs_transforms_batch(batch, self.obs_transforms)
 
         rewards = torch.tensor(
@@ -372,11 +369,7 @@ class ILEnvTrainer(BaseRLTrainer):
             rollouts.observations[sensor][0].copy_(batch[sensor])
             # Use first semantic observations from RedNet predictor as well
             if sensor == "semantic" and self.config.MODEL.USE_PRED_SEMANTICS:
-                semantic_obs = self.semantic_predictor(batch) #["rgb"], batch["depth"])
-                print(semantic_obs.shape)
-                # Subtract 1 from class labels for THDA YCB categories
-                if self.config.MODEL.SEMANTIC_ENCODER.is_thda and self.config.MODEL.SEMANTIC_PREDICTOR.name == "rednet":
-                    semantic_obs = semantic_obs - 1
+                semantic_obs = self.semantic_predictor(batch)
                 rollouts.observations[sensor][0].copy_(semantic_obs)
 
         # batch and observations may contain shared PyTorch CUDA
@@ -622,8 +615,6 @@ class ILEnvTrainer(BaseRLTrainer):
             with torch.no_grad():
                 if self.semantic_predictor is not None:
                     batch["semantic"] = self.semantic_predictor(batch)
-                    if self.config.MODEL.SEMANTIC_ENCODER.is_thda:
-                        batch["semantic"] = batch["semantic"] - 1
                 (
                     logits,
                     test_recurrent_hidden_states,

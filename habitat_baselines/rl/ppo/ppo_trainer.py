@@ -290,10 +290,7 @@ class PPOTrainer(BaseRLTrainer):
         t_update_stats = time.time()
         batch = batch_obs(observations, device=self.device)
         if self.use_pred_semantic and self.current_update >= self.config.MODEL.SWITCH_TO_PRED_SEMANTICS_UPDATE:
-            batch["semantic"] = self.semantic_predictor(batch) # self.semantic_predictor(batch["rgb"], batch["depth"])
-            # Subtract 1 from class labels for THDA YCB categories
-            if self.config.MODEL.SEMANTIC_ENCODER.is_thda and self.config.MODEL.SEMANTIC_PREDICTOR.name == "rednet":
-                batch["semantic"] = batch["semantic"] - 1
+            batch["semantic"] = self.semantic_predictor(batch)
 
         batch = apply_obs_transforms_batch(batch, self.obs_transforms)
 
@@ -446,10 +443,7 @@ class PPOTrainer(BaseRLTrainer):
         observations = self.envs.reset()
         batch = batch_obs(observations, device=self.device)
         if self.use_pred_semantic:
-            batch["semantic"] = self.semantic_predictor(batch) # self.semantic_predictor(batch["rgb"], batch["depth"])
-            # Subtract 1 from class labels for THDA YCB categories
-            if self.config.MODEL.SEMANTIC_ENCODER.is_thda and self.config.MODEL.SEMANTIC_PREDICTOR.name == "rednet":
-                batch["semantic"] = batch["semantic"] - 1
+            batch["semantic"] = self.semantic_predictor(batch)
         batch = apply_obs_transforms_batch(batch, self.obs_transforms)
 
         for sensor in rollouts.observations:
@@ -677,10 +671,7 @@ class PPOTrainer(BaseRLTrainer):
         batch = batch_obs(observations, device=self.device)
         batch = apply_obs_transforms_batch(batch, self.obs_transforms)
         if self.semantic_predictor is not None:
-            batch["semantic"] = self.semantic_predictor(batch["rgb"], batch["depth"])
-            # Subtract 1 from class labels for THDA YCB categories
-            if self.config.MODEL.SEMANTIC_ENCODER.is_thda:
-                batch["semantic"] = batch["semantic"] - 1
+            batch["semantic"] = self.semantic_predictor(batch)
 
         current_episode_reward = torch.zeros(
             self.envs.num_envs, 1, device=self.device
@@ -733,11 +724,6 @@ class PPOTrainer(BaseRLTrainer):
             current_episodes = self.envs.current_episodes_info()
 
             with torch.no_grad():
-                # if self.semantic_predictor is not None:
-                #     batch["semantic"] = self.semantic_predictor(batch["rgb"], batch["depth"])
-                #     # Subtract 1 from class labels for THDA YCB categories
-                #     if self.config.MODEL.SEMANTIC_ENCODER.is_thda:
-                #         batch["semantic"] = batch["semantic"] - 1
                 (
                     value,
                     actions,
@@ -775,10 +761,7 @@ class PPOTrainer(BaseRLTrainer):
             batch = apply_obs_transforms_batch(batch, self.obs_transforms)
 
             if self.semantic_predictor is not None:
-                batch["semantic"] = self.semantic_predictor(batch["rgb"], batch["depth"])
-                # Subtract 1 from class labels for THDA YCB categories
-                if self.config.MODEL.SEMANTIC_ENCODER.is_thda:
-                    batch["semantic"] = batch["semantic"] - 1
+                batch["semantic"] = self.semantic_predictor(batch)
 
             not_done_masks = torch.tensor(
                 [[0.0] if done else [1.0] for done in dones],

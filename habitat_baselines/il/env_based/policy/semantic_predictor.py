@@ -203,4 +203,8 @@ class SemanticPredictor(nn.Module):
         else:
             x = self.semantic_predictor(rgb_obs, depth_obs)
 
+            # Subtract 1 from class labels for THDA YCB categories
+            if self.model_config.SEMANTIC_ENCODER.is_thda:
+                x = x - 1
+
         return x
