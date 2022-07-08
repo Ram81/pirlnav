@@ -655,9 +655,9 @@ class ILEnvTrainer(BaseRLTrainer):
 
                 def reshape_640x480_to_480x640_preserving_entire_frame(rgb, depth, semantic):
                     # (640, 480) -> (480, 640)
-                    rgb = cv2.resize(rgb, (640, 480), interpolation=cv2.INTER_LINEAR)
-                    depth = cv2.resize(depth, (640, 480), interpolation=cv2.INTER_LINEAR)
-                    semantic = cv2.resize(depth, (640, 480), interpolation=cv2.INTER_NEAREST)
+                    rgb = F.interpolate(rgb.permute(0, 3, 1, 2), (480, 640), mode='nearest').permute(0, 2, 3, 1)
+                    depth = F.interpolate(depth.permute(0, 3, 1, 2), (480, 640), mode='nearest').permute(0, 2, 3, 1)
+                    semantic = F.interpolate(semantic.permute(0, 3, 1, 2), (480, 640), mode='nearest').permute(0, 2, 3, 1)
                     return rgb, depth, semantic
 
                 _, inference_height, inference_width, _ = batch["rgb"].shape
@@ -672,14 +672,13 @@ class ILEnvTrainer(BaseRLTrainer):
                     rgb1, depth1, semantic1 = reshape_640x480_to_480x640_preserving_aspect_ratio(
                         batch["rgb"], batch["depth"], batch["semantic"]
                     )
-                    # rgb2, depth2, semantic2 = reshape_640x480_to_480x640_preserving_entire_frame(
-                    #     batch["rgb"], batch["depth"], batch["semantic"]
-                    # )
-                    # if rgb1.shape[0] > 0:
-                    #     cv2.imwrite("rgb1.png", rgb1.cpu().numpy())
-                    #     cv2.imwrite("depth1.png", depth1.cpu().numpy())
-                    #     # cv2.imwrite("rgb2.png", rgb2)
-                    #     # cv2.imwrite("depth2.png", depth2)
+                    rgb2, depth2, semantic2 = reshape_640x480_to_480x640_preserving_entire_frame(
+                        batch["rgb"], batch["depth"], batch["semantic"]
+                    )
+                    for i, rgb in enumerate(rgb1.cpu().numpy()):
+                        cv2.imwrite(f"rgb1_{i}.png", rgb)
+                    for i, rgb in enumerate(rgb2.cpu().numpy()):
+                        cv2.imwrite(f"rgb2_{i}.png", rgb)
 
                     batch["rgb"] = rgb1
                     batch["depth"] = depth1
