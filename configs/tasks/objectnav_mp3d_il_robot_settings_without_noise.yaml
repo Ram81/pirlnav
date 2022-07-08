@@ -28,7 +28,7 @@ SIMULATOR:
     HEIGHT: 640
     HFOV: 42
     MIN_DEPTH: 0.5
-    MAX_DEPTH: 5.0
+    MAX_DEPTH: 4.0
     POSITION: [0, 1.31, 0]
 TASK:
   TYPE: ObjectNav-v1

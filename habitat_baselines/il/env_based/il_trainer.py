@@ -7,6 +7,7 @@
 import os
 import time
 import wandb
+import cv2
 
 from collections import defaultdict, deque
 from typing import Any, DefaultDict, Dict, List, Optional
@@ -615,6 +616,53 @@ class ILEnvTrainer(BaseRLTrainer):
             with torch.no_grad():
                 if self.semantic_predictor is not None:
                     batch["semantic"] = self.semantic_predictor(batch)
+
+                # TODO Reshape if obs shape in training config doesn't match obs shape at inference
+                # TODO Visualize some images to check that they look reasonable
+                # TODO Parametrize reshape
+
+                def reshape_640x480_to_480x640_preserving_aspect_ratio(rgb, depth, semantic):
+                    # (640, 480) -> (360, 480)
+                    rgb = rgb[280:, :]
+                    depth = depth[280:, :]
+                    semantic = depth[280:, :]
+                    # (360, 480) -> (480, 640)
+                    rgb = cv2.resize(rgb, (640, 480), interpolation=cv2.INTER_LINEAR)
+                    depth = cv2.resize(depth, (640, 480), interpolation=cv2.INTER_LINEAR)
+                    semantic = cv2.resize(depth, (640, 480), interpolation=cv2.INTER_NEAREST)
+                    return rgb, depth, semantic
+
+                def reshape_640x480_to_480x640_preserving_entire_frame(rgb, depth, semantic):
+                    # (640, 480) -> (480, 640)
+                    rgb = cv2.resize(rgb, (640, 480), interpolation=cv2.INTER_LINEAR)
+                    depth = cv2.resize(depth, (640, 480), interpolation=cv2.INTER_LINEAR)
+                    semantic = cv2.resize(depth, (640, 480), interpolation=cv2.INTER_NEAREST)
+                    return rgb, depth, semantic
+
+                _, inference_height, inference_width, _ = batch["rgb"].shape
+                training_height = self.config.TASK_CONFIG.SIMULATOR.RGB_SENSOR.HEIGHT
+                training_width = self.config.TASK_CONFIG.SIMULATOR.RGB_SENSOR.WIDTH
+
+                print("(inference_height, inference_width)", (inference_height, inference_width))
+                print("(training_height, training_width)", (training_height, training_width))
+
+                if ((inference_height, inference_width) == (640, 480) 
+                        and (training_height, training_width) == (480, 640)):
+                    rgb1, depth1, semantic1 = reshape_640x480_to_480x640_preserving_aspect_ratio(
+                        batch["rgb"], batch["depth"], batch["semantic"]
+                    )
+                    rgb2, depth2, semantic2 = reshape_640x480_to_480x640_preserving_entire_frame(
+                        batch["rgb"], batch["depth"], batch["semantic"]
+                    )
+                    cv2.imwrite("rgb1.png", rgb1)
+                    cv2.imwrite("depth1.png", depth1)
+                    cv2.imwrite("rgb2.png", rgb2)
+                    cv2.imwrite("depth2.png", depth2)
+
+                    batch["rgb"] = rgb1
+                    batch["depth"] = depth1
+                    batch["semantic"] = semantic1
+
                 (
                     logits,
                     test_recurrent_hidden_states,
