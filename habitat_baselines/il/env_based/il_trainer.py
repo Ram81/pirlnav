@@ -651,11 +651,11 @@ class ILEnvTrainer(BaseRLTrainer):
                     return rgb, depth, semantic
 
                 _, inference_height, inference_width, _ = batch["rgb"].shape
-                training_height = self.config.TASK_CONFIG.SIMULATOR.RGB_SENSOR.HEIGHT
-                training_width = self.config.TASK_CONFIG.SIMULATOR.RGB_SENSOR.WIDTH
+                training_height = ckpt_dict['config'].TASK_CONFIG.SIMULATOR.RGB_SENSOR.HEIGHT
+                training_width = ckpt_dict['config'].TASK_CONFIG.SIMULATOR.RGB_SENSOR.WIDTH
 
-                # print("(inference_height, inference_width)", (inference_height, inference_width))
-                # print("(training_height, training_width)", (training_height, training_width))
+                print("(inference_height, inference_width)", (inference_height, inference_width))
+                print("(training_height, training_width)", (training_height, training_width))
 
                 if ((inference_height, inference_width) == (640, 480) 
                         and (training_height, training_width) == (480, 640)):
