@@ -8,6 +8,7 @@ import os
 import time
 import wandb
 import cv2
+import torch.nn.functional as F
 
 from collections import defaultdict, deque
 from typing import Any, DefaultDict, Dict, List, Optional
@@ -637,10 +638,18 @@ class ILEnvTrainer(BaseRLTrainer):
                     rgb = rgb[280:, :]
                     depth = depth[280:, :]
                     semantic = depth[280:, :]
+                    print()
+                    print("rgb.shape", rgb.shape)
+                    print("depth.shape", depth.shape)
+                    print("semantic.shape", semantic.shape)
                     # (360, 480) -> (480, 640)
-                    rgb = cv2.resize(rgb, (640, 480), interpolation=cv2.INTER_LINEAR)
-                    depth = cv2.resize(depth, (640, 480), interpolation=cv2.INTER_LINEAR)
-                    semantic = cv2.resize(depth, (640, 480), interpolation=cv2.INTER_NEAREST)
+                    rgb = F.interpolate(rgb.permute(0, 3, 1, 2), (480, 640), mode='bilinear').permute(0, 2, 3, 1)
+                    depth = F.interpolate(depth.permute(0, 3, 1, 2), (480, 640), mode='bilinear').permute(0, 2, 3, 1)
+                    semantic = F.interpolate(semantic.permute(0, 3, 1, 2), (480, 640), mode='nearest').permute(0, 2, 3, 1)
+                    print("rgb.shape", rgb.shape)
+                    print("depth.shape", depth.shape)
+                    print("semantic.shape", semantic.shape)
+                    print()
                     return rgb, depth, semantic
 
                 def reshape_640x480_to_480x640_preserving_entire_frame(rgb, depth, semantic):
@@ -654,21 +663,18 @@ class ILEnvTrainer(BaseRLTrainer):
                 training_height = ckpt_dict['config'].TASK_CONFIG.SIMULATOR.RGB_SENSOR.HEIGHT
                 training_width = ckpt_dict['config'].TASK_CONFIG.SIMULATOR.RGB_SENSOR.WIDTH
 
-                print("(inference_height, inference_width)", (inference_height, inference_width))
-                print("(training_height, training_width)", (training_height, training_width))
-
                 if ((inference_height, inference_width) == (640, 480) 
                         and (training_height, training_width) == (480, 640)):
                     rgb1, depth1, semantic1 = reshape_640x480_to_480x640_preserving_aspect_ratio(
                         batch["rgb"], batch["depth"], batch["semantic"]
                     )
-                    rgb2, depth2, semantic2 = reshape_640x480_to_480x640_preserving_entire_frame(
-                        batch["rgb"], batch["depth"], batch["semantic"]
-                    )
-                    cv2.imwrite("rgb1.png", rgb1)
-                    cv2.imwrite("depth1.png", depth1)
-                    cv2.imwrite("rgb2.png", rgb2)
-                    cv2.imwrite("depth2.png", depth2)
+                    # rgb2, depth2, semantic2 = reshape_640x480_to_480x640_preserving_entire_frame(
+                    #     batch["rgb"], batch["depth"], batch["semantic"]
+                    # )
+                    cv2.imwrite("rgb1.png", rgb1.cpu().numpy())
+                    cv2.imwrite("depth1.png", depth1.cpu().numpy())
+                    # cv2.imwrite("rgb2.png", rgb2)
+                    # cv2.imwrite("depth2.png", depth2)
 
                     batch["rgb"] = rgb1
                     batch["depth"] = depth1
