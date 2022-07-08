@@ -639,7 +639,7 @@ class ILEnvTrainer(BaseRLTrainer):
                     rgb = rgb[280:, :]
                     depth = depth[280:, :]
                     semantic = depth[280:, :]
-                    print()
+                    print("pre-processing:")
                     print("rgb.shape", rgb.shape)
                     print("depth.shape", depth.shape)
                     print("semantic.shape", semantic.shape)
@@ -647,10 +647,10 @@ class ILEnvTrainer(BaseRLTrainer):
                     rgb = F.interpolate(rgb.permute(0, 3, 1, 2), (480, 640), mode='nearest').permute(0, 2, 3, 1)
                     depth = F.interpolate(depth.permute(0, 3, 1, 2), (480, 640), mode='nearest').permute(0, 2, 3, 1)
                     semantic = F.interpolate(semantic.permute(0, 3, 1, 2), (480, 640), mode='nearest').permute(0, 2, 3, 1)
+                    print("post-processing:")
                     print("rgb.shape", rgb.shape)
                     print("depth.shape", depth.shape)
                     print("semantic.shape", semantic.shape)
-                    print()
                     return rgb, depth, semantic
 
                 def reshape_640x480_to_480x640_preserving_entire_frame(rgb, depth, semantic):
@@ -663,6 +663,9 @@ class ILEnvTrainer(BaseRLTrainer):
                 _, inference_height, inference_width, _ = batch["rgb"].shape
                 training_height = ckpt_dict['config'].TASK_CONFIG.SIMULATOR.RGB_SENSOR.HEIGHT
                 training_width = ckpt_dict['config'].TASK_CONFIG.SIMULATOR.RGB_SENSOR.WIDTH
+                print()
+                print("inference_height, inference_width", (inference_height, inference_width))
+                print("training_height, training_width", (training_height, training_width))
 
                 if ((inference_height, inference_width) == (640, 480) 
                         and (training_height, training_width) == (480, 640)):
@@ -681,7 +684,7 @@ class ILEnvTrainer(BaseRLTrainer):
                     batch["rgb"] = rgb1
                     batch["depth"] = depth1
                     batch["semantic"] = semantic1
-
+            
                 (
                     logits,
                     test_recurrent_hidden_states,
