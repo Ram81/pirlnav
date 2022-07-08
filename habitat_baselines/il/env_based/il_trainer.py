@@ -671,10 +671,11 @@ class ILEnvTrainer(BaseRLTrainer):
                     # rgb2, depth2, semantic2 = reshape_640x480_to_480x640_preserving_entire_frame(
                     #     batch["rgb"], batch["depth"], batch["semantic"]
                     # )
-                    cv2.imwrite("rgb1.png", rgb1.cpu().numpy())
-                    cv2.imwrite("depth1.png", depth1.cpu().numpy())
-                    # cv2.imwrite("rgb2.png", rgb2)
-                    # cv2.imwrite("depth2.png", depth2)
+                    if rgb1.shape[0] > 0:
+                        cv2.imwrite("rgb1.png", rgb1.cpu().numpy())
+                        cv2.imwrite("depth1.png", depth1.cpu().numpy())
+                        # cv2.imwrite("rgb2.png", rgb2)
+                        # cv2.imwrite("depth2.png", depth2)
 
                     batch["rgb"] = rgb1
                     batch["depth"] = depth1
