@@ -683,6 +683,11 @@ class ILEnvTrainer(BaseRLTrainer):
                     batch["rgb"] = rgb1
                     batch["depth"] = depth1
                     batch["semantic"] = semantic1
+                
+                print("batch components:")
+                for key, value in batch.items():
+                    print(key)
+                    print(type(value))
             
                 (
                     logits,
