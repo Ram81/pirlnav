@@ -635,14 +635,14 @@ class ILEnvTrainer(BaseRLTrainer):
                 # TODO Parametrize reshape
 
                 def reshape_640x480_to_480x640_preserving_aspect_ratio(rgb, depth, semantic):
-                    # (640, 480) -> (360, 480)
-                    rgb = rgb[280:, :]
-                    depth = depth[280:, :]
-                    semantic = depth[280:, :]
                     print("pre-processing:")
                     print("rgb.shape", rgb.shape)
                     print("depth.shape", depth.shape)
                     print("semantic.shape", semantic.shape)
+                    # (640, 480) -> (360, 480)
+                    rgb = rgb[:, 280:, :]
+                    depth = depth[:, 280:, :]
+                    semantic = depth[:, 280:, :]
                     # (360, 480) -> (480, 640)
                     rgb = F.interpolate(rgb.permute(0, 3, 1, 2), (480, 640), mode='nearest').permute(0, 2, 3, 1)
                     depth = F.interpolate(depth.permute(0, 3, 1, 2), (480, 640), mode='nearest').permute(0, 2, 3, 1)
