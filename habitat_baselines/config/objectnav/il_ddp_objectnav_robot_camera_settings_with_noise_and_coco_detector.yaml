@@ -1,7 +1,7 @@
 # Note:  This is an example config, see habitat_baselines/config/pointnav/ppo_pointnav.yaml
 # for better hyperparameters for actual trainingsem_seg_pred
 
-BASE_TASK_CONFIG_PATH: "configs/tasks/objectnav_mp3d_il_robot_settings.yaml"
+BASE_TASK_CONFIG_PATH: "configs/tasks/objectnav_mp3d_il_robot_settings_with_noise.yaml"
 TRAINER_NAME: "ddp-il-trainer"
 ENV_NAME: NavRLEnv
 SIMULATOR_GPU_ID: 0
