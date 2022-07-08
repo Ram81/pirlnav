@@ -531,11 +531,22 @@ class ILEnvTrainer(BaseRLTrainer):
         # Map location CPU is almost always better than mapping to a CUDA device.
         ckpt_dict = self.load_checkpoint(checkpoint_path, map_location="cpu")
 
+        print()
         if self.config.EVAL.USE_CKPT_CONFIG:
+            print("self.config.EVAL.USE_CKPT_CONFIG=True")
+
             conf = ckpt_dict["config"]
             config = self._setup_eval_config(ckpt_dict["config"])
         else:
+            print("self.config.EVAL.USE_CKPT_CONFIG=False")
+            
             config = self.config.clone()
+
+        print("self.config.TASK_CONFIG.SIMULATOR.RGB_SENSOR.HEIGHT", self.config.TASK_CONFIG.SIMULATOR.RGB_SENSOR.HEIGHT)
+        print("self.config.TASK_CONFIG.SIMULATOR.RGB_SENSOR.WIDTH", self.config.TASK_CONFIG.SIMULATOR.RGB_SENSOR.WIDTH)
+        print("ckpt_dict['config'].TASK_CONFIG.SIMULATOR.RGB_SENSOR.HEIGHT", ckpt_dict["config"].TASK_CONFIG.SIMULATOR.RGB_SENSOR.HEIGHT)
+        print("ckpt_dict['config'].TASK_CONFIG.SIMULATOR.RGB_SENSOR.WIDTH", ckpt_dict["config"].TASK_CONFIG.SIMULATOR.RGB_SENSOR.WIDTH)
+        print()
 
         il_cfg = config.IL.BehaviorCloning
 
@@ -643,8 +654,8 @@ class ILEnvTrainer(BaseRLTrainer):
                 training_height = self.config.TASK_CONFIG.SIMULATOR.RGB_SENSOR.HEIGHT
                 training_width = self.config.TASK_CONFIG.SIMULATOR.RGB_SENSOR.WIDTH
 
-                print("(inference_height, inference_width)", (inference_height, inference_width))
-                print("(training_height, training_width)", (training_height, training_width))
+                # print("(inference_height, inference_width)", (inference_height, inference_width))
+                # print("(training_height, training_width)", (training_height, training_width))
 
                 if ((inference_height, inference_width) == (640, 480) 
                         and (training_height, training_width) == (480, 640)):
