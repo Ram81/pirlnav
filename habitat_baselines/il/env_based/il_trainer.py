@@ -688,6 +688,7 @@ class ILEnvTrainer(BaseRLTrainer):
                 for key, value in batch.items():
                     print(key)
                     print(type(value))
+                    print(value.shape)
             
                 (
                     logits,
