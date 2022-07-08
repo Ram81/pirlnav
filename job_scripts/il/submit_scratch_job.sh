@@ -6,7 +6,7 @@
 #SBATCH --cpus-per-task 8
 #SBATCH --ntasks-per-node 8
 #SBATCH --signal=USR1@1000
-#SBATCH --mem=500GB
+#SBATCH --mem=480GB
 #SBATCH --constraint=volta32gb
 #SBATCH --output=slurm_logs/ddpil-%j.out
 #SBATCH --error=slurm_logs/ddpil-%j.err
@@ -21,8 +21,8 @@ export MASTER_ADDR
 config=$1
 
 DATA_PATH="data/datasets/objectnav/objectnav_hm3d/objectnav_hm3d_77k"
-TENSORBOARD_DIR="tb/objectnav_il/objectnav_hm3d/objectnav_hm3d_77k/sem_seg_pred/original_settings/"
-CHECKPOINT_DIR="data/new_checkpoints/objectnav_il/objectnav_hm3d/objectnav_hm3d_77k/sem_seg_pred/original_settings/"
+TENSORBOARD_DIR="tb/objectnav_il/objectnav_hm3d/objectnav_hm3d_77k/il_model_train/robot_camera_settings_and_mp3d_detector"
+CHECKPOINT_DIR="data/new_checkpoints/objectnav_il/objectnav_hm3d/objectnav_hm3d_77k/il_model/robot_camera_settings_and_mp3d_detector"
 INFLECTION_COEF=3.186409513220174
 set -x
 
