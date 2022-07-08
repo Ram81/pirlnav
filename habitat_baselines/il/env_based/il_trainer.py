@@ -672,13 +672,13 @@ class ILEnvTrainer(BaseRLTrainer):
                     rgb1, depth1, semantic1 = reshape_640x480_to_480x640_preserving_aspect_ratio(
                         batch["rgb"], batch["depth"], batch["semantic"]
                     )
-                    rgb2, depth2, semantic2 = reshape_640x480_to_480x640_preserving_entire_frame(
-                        batch["rgb"], batch["depth"], batch["semantic"]
-                    )
-                    for i, rgb in enumerate(rgb1.cpu().numpy()):
-                        cv2.imwrite(f"rgb1_{i}.png", rgb)
-                    for i, rgb in enumerate(rgb2.cpu().numpy()):
-                        cv2.imwrite(f"rgb2_{i}.png", rgb)
+                    # rgb2, depth2, semantic2 = reshape_640x480_to_480x640_preserving_entire_frame(
+                    #     batch["rgb"], batch["depth"], batch["semantic"]
+                    # )
+                    # for i, rgb in enumerate(rgb1.cpu().numpy()):
+                    #     cv2.imwrite(f"rgb1_{i}.png", rgb)
+                    # for i, rgb in enumerate(rgb2.cpu().numpy()):
+                    #     cv2.imwrite(f"rgb2_{i}.png", rgb)
 
                     batch["rgb"] = rgb1
                     batch["depth"] = depth1
