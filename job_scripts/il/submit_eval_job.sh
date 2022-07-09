@@ -29,7 +29,6 @@ srun python -u -m habitat_baselines.run \
 --run-type eval \
 NUM_PROCESSES 20 \
 TENSORBOARD_DIR $TENSORBOARD_DIR \
-# TODO Set to -1 to evaluate on all split
 TEST_EPISODE_COUNT 1 \
 EVAL.SPLIT "val" \
 EVAL.meta_file "$TENSORBOARD_DIR/evaluation_meta.json" \
@@ -44,6 +43,5 @@ MODEL.SEMANTIC_ENCODER.is_thda True \
 MODEL.embed_sge True \
 MODEL.USE_SEMANTICS True \
 MODEL.USE_PRED_SEMANTICS True \
-# TODO Disable videos when not debugging
 VIDEO_OPTION "['disk']" \
 VIDEO_DIR "$TENSORBOARD_DIR/videos"
