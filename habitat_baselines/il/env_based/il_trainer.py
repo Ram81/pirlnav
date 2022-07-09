@@ -72,14 +72,9 @@ class ILEnvTrainer(BaseRLTrainer):
 
         observation_space = self.envs.observation_spaces[0]
         self.obs_transforms = get_active_obs_transforms(self.config)
-        print()
-        print("self.obs_transforms", self.obs_transforms)
-        print("observation_space before", observation_space)
         observation_space = apply_obs_transforms_obs_space(
             observation_space, self.obs_transforms
         )
-        print("observation_space after", observation_space)
-        print()
         self.obs_space = observation_space
 
         model_config.defrost()
