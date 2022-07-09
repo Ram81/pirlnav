@@ -610,9 +610,7 @@ class ILEnvTrainer(BaseRLTrainer):
 
             with torch.no_grad():
                 if self.semantic_predictor is not None:
-                    print("batch['rgb'].shape", batch['rgb'].shape)
                     batch["semantic"] = self.semantic_predictor(batch)
-                    print("batch['semantic'].unique()", batch['semantic'].unique())
             
                 (
                     logits,

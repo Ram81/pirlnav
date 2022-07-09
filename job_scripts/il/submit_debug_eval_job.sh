@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --job-name=onav_il
-#SBATCH --time=1-0:00:00
+#SBATCH --time=0-0:10:00
 #SBATCH --gres gpu:1
 #SBATCH --nodes 1
 #SBATCH --cpus-per-task 8
@@ -29,7 +29,7 @@ srun python -u -m habitat_baselines.run \
 --run-type eval \
 NUM_PROCESSES 20 \
 TENSORBOARD_DIR $TENSORBOARD_DIR \
-TEST_EPISODE_COUNT -1 \
+TEST_EPISODE_COUNT 5 \
 EVAL.SPLIT "val" \
 EVAL.meta_file "$TENSORBOARD_DIR/evaluation_meta.json" \
 EVAL_CKPT_PATH_DIR $EVAL_CKPT_PATH_DIR \
@@ -42,4 +42,6 @@ MODEL.SEMANTIC_ENCODER.is_hm3d False \
 MODEL.SEMANTIC_ENCODER.is_thda True \
 MODEL.embed_sge True \
 MODEL.USE_SEMANTICS True \
-MODEL.USE_PRED_SEMANTICS True
+MODEL.USE_PRED_SEMANTICS True \
+VIDEO_OPTION "['disk']" \
+VIDEO_DIR "$TENSORBOARD_DIR/videos"
