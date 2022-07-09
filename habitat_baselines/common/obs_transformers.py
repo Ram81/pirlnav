@@ -196,11 +196,11 @@ class FrameReshape(ObservationTransformer):
 
     def get_reshape_function(self):
         if self.mode == "preserve_entire_frame":
-            return self.reshape_640x480_to_480x640_preserving_aspect_ratio
+            return self.reshape_preserving_entire_frame
         elif (self.input_shape == (640, 480) and 
                 self.output_shape == (480, 640) and 
                 self.mode == "preserve_aspect_ratio"):
-            return self.reshape_640x480_to_480x640_preserving_entire_frame
+            return self.reshape_640x480_to_480x640_preserving_aspect_ratio
         else:
             raise NotImplementedError
     
