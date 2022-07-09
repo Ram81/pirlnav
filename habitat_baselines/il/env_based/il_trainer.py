@@ -112,12 +112,6 @@ class ILEnvTrainer(BaseRLTrainer):
 
         self.semantic_predictor = None
         if model_config.USE_PRED_SEMANTICS:
-            # self.semantic_predictor = load_rednet(
-            #     self.device,
-            #     ckpt=model_config.SEMANTIC_ENCODER.rednet_ckpt,
-            #     resize=True, # since we train on half-vision
-            #     num_classes=model_config.SEMANTIC_ENCODER.num_classes
-            # )
             self.semantic_predictor = SemanticPredictor(model_config, self.device)
             self.semantic_predictor.eval()
 

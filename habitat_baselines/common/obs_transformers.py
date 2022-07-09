@@ -210,8 +210,9 @@ class FrameReshape(ObservationTransformer):
         for key in ["rgb", "depth"]:
             if key in observations:
                 input_shape = observations[key].shape
-                if (input_shape[0], input_shape[1]) != self.output_shape:
-                    assert (input_shape[0], input_shape[1]) == self.input_shape
+                print("input_shape..........", input_shape)
+                if (input_shape[1], input_shape[2]) != self.output_shape:
+                    assert (input_shape[1], input_shape[2]) == self.input_shape
                     observations[key] = reshape(observations[key])
         return observations
 
