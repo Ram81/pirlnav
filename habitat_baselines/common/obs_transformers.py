@@ -1341,7 +1341,7 @@ def get_active_obs_transforms(config: Config) -> List[ObservationTransformer]:
     active_obs_transforms = []
     if hasattr(config.RL.POLICY, "OBS_TRANSFORMS"):
         obs_transform_names = (
-            config.RL.POLICY.OBS_TRANSFORMS
+            config.RL.POLICY.OBS_TRANSFORMS.ENABLED_TRANSFORMS
         )
         for obs_transform_name in obs_transform_names:
             obs_trans_cls = baseline_registry.get_obs_transformer(
@@ -1352,7 +1352,7 @@ def get_active_obs_transforms(config: Config) -> List[ObservationTransformer]:
     
     if hasattr(config, "IL") and hasattr(config.IL, "OBS_TRANSFORMS"):
         obs_transform_names = (
-            config.IL.OBS_TRANSFORMS, 
+            config.IL.OBS_TRANSFORMS.ENABLED_TRANSFORMS 
         )
         for obs_transform_name in obs_transform_names:
             obs_trans_cls = baseline_registry.get_obs_transformer(

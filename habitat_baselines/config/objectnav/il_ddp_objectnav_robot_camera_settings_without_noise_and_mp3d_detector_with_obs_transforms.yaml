@@ -39,6 +39,7 @@ WANDB:
 
 IL:
   OBS_TRANSFORMS:
+    ENABLED_TRANSFORMS: ["FrameReshape"]
     FrameReshape:
       input_height: 640
       input_width: 480
