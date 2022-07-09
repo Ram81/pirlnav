@@ -41,6 +41,7 @@ class ObjectNavILNet(Net):
     def __init__(self, observation_space: Space, model_config: Config, num_actions, device=None):
         super().__init__()
         self.model_config = model_config
+        self.observation_space = observation_space
         rnn_input_size = 0
 
         # Init the depth encoder
@@ -228,6 +229,10 @@ class ObjectNavILNet(Net):
         """
         rgb_obs = observations["rgb"]
         depth_obs = observations["depth"]
+        print("resnet_policy.py observations['rgb'].shape", observations['rgb'].shape)
+        print("resnet_policy.py observations['depth'].shape", observations['depth'].shape)
+        print("self.observation_space.spaces['rgb'].shape", self.observation_space.spaces['rgb'].shape)
+        print("self.observation_space.spaces['depth'].shape", self.observation_space.spaces['depth'].shape)
 
         x = []
 
