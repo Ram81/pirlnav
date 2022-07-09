@@ -611,6 +611,7 @@ class ILEnvTrainer(BaseRLTrainer):
             with torch.no_grad():
                 if self.semantic_predictor is not None:
                     batch["semantic"] = self.semantic_predictor(batch)
+                    print("eval_checkpoint() 1 - torch.unique(batch['semantic'])", torch.unique(batch['semantic']))
             
                 (
                     logits,
@@ -703,6 +704,7 @@ class ILEnvTrainer(BaseRLTrainer):
                 # episode continues
                 elif len(self.config.VIDEO_OPTION) > 0:
                     # TODO move normalization / channel changing out of the policy and undo it here
+                    print("eval_checkpoint() 2 - torch.unique(batch['semantic'][i])", torch.unique(batch['semantic'][i]))
                     frame = observations_to_image(
                         {
                             "rgb": batch["rgb"][i],
