@@ -163,7 +163,13 @@ class FrameReshape(ObservationTransformer):
                 current_shape = observation_space.spaces[key].shape
                 if (current_shape[0], current_shape[1]) != self.output_shape:
                     assert (current_shape[0], current_shape[1]) == self.input_shape 
-                    new_shape = (self.output_shape[0], self.output_shape[1], current_shape[2])
+                    if len(current_shape) == 2:
+                        new_shape = self.output_shape
+                    elif len(current_shape) == 3:
+                        new_shape = (*self.output_shape, current_shape[2])
+                    else:
+                        raise NotImplementedError
+                    print(f"Reshaping {key} obs shape from {current_shape} to {new_shape}")
                     observation_space.spaces[key] = overwrite_gym_box_shape(
                         observation_space.spaces[key], new_shape
                     )
