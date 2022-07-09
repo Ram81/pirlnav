@@ -6,6 +6,7 @@
 #SBATCH --cpus-per-task 8
 #SBATCH --ntasks-per-node 8
 #SBATCH --signal=USR1@300
+#SBATCH --mem=480GB
 #SBATCH --constraint=volta32gb
 #SBATCH --output=slurm_logs/ddp-il-rl-%j.out
 #SBATCH --error=slurm_logs/ddp-il-rl-%j.err
@@ -19,10 +20,10 @@ export MASTER_ADDR
 
 config=$1
 
-TENSORBOARD_DIR="tb/objectnav_il/objectnav_hm3d/objectnav_hm3d_77k/sem_seg_pred_rl_fine_tuning/128gpus/"
-CHECKPOINT_DIR="data/new_checkpoints/objectnav_il/objectnav_hm3d/objectnav_hm3d_77k/sem_seg_pred_rl_fine_tuning/128gpus/"
+TENSORBOARD_DIR="tb/objectnav_il/objectnav_hm3d/objectnav_hm3d_77k/rl_model_finetune/robot_camera_settings_and_coco_detector"
+CHECKPOINT_DIR="data/new_checkpoints/objectnav_il/objectnav_hm3d/objectnav_hm3d_77k/rl_model_finetune/robot_camera_settings_and_coco_detector"
 DATA_PATH="data/datasets/objectnav/objectnav_hm3d/objectnav_hm3d_v1_fixed/"
-PRETRAINED_WEIGHTS="data/new_checkpoints/objectnav_il/objectnav_hm3d/objectnav_hm3d_77k/sem_seg_pred/seed_1/ckpt.11.pth"
+PRETRAINED_WEIGHTS="data/new_checkpoints/objectnav_il/objectnav_hm3d/objectnav_hm3d_77k/il_model/robot_camera_settings_and_coco_detector/ckpt.16.pth"
 set -x
 
 echo "In ObjectNav IL+RL DDP"

@@ -1,4 +1,4 @@
-BASE_TASK_CONFIG_PATH: "configs/tasks/objectnav_mp3d_il_rl_ft.yaml"
+BASE_TASK_CONFIG_PATH: "configs/tasks/objectnav_mp3d_il_robot_settings_with_noise.yaml"
 CMD_TRAILING_OPTS: ["TASK_CONFIG.ENVIRONMENT.ITERATOR_OPTIONS.MAX_SCENE_REPEAT_STEPS", "50000"]
 ENV_NAME: "ObjectNavRLEnv"
 SIMULATOR_GPU_ID: 0
@@ -95,18 +95,8 @@ MODEL:
   USE_SEMANTICS: True
   USE_PRED_SEMANTICS: True
   SWITCH_TO_PRED_SEMANTICS_UPDATE: 0
-  # SEMANTIC_ENCODER:
-  #   rednet_ckpt: "data/rednet-models/rednet_semmap_mp3d_40_v2_vince.pth"
-  #   cnn_type: "ResnetSemSegEncoder"
-  #   output_size: 256
-  #   backbone: "resnet18"
-  #   train_encoder: True
-  #   embedding_size: 4
-  #   is_hm3d: False
-  #   is_thda: True
-  #   num_classes: 29
   SEMANTIC_PREDICTOR:
-    name: "coco_maskrcnn"
+    name: "rednet"
     REDNET:
       pretrained_weights: "data/rednet-models/rednet_semmap_mp3d_40_v2_vince.pth"
       # pretrained_weights: "data/rednet-models/rednet_semmap_hm3d_6.pth"
