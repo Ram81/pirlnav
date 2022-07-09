@@ -189,6 +189,8 @@ def observations_to_image(observation: Dict, info: Dict, top_down_map_only=False
         depth_map = np.stack([depth_map for _ in range(3)], axis=2)
         egocentric_view_l.append(depth_map)
 
+    import torch
+    print("observations_to_image() - torch.unique(observation['semantic'])", torch.unique(observation['semantic']))
     if "semantic" in observation:
         semantic_map = observation["semantic"].squeeze()
         if not isinstance(semantic_map, np.ndarray):
