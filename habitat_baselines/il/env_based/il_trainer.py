@@ -532,22 +532,11 @@ class ILEnvTrainer(BaseRLTrainer):
         # Map location CPU is almost always better than mapping to a CUDA device.
         ckpt_dict = self.load_checkpoint(checkpoint_path, map_location="cpu")
 
-        print()
         if self.config.EVAL.USE_CKPT_CONFIG:
-            print("self.config.EVAL.USE_CKPT_CONFIG=True")
-
             conf = ckpt_dict["config"]
             config = self._setup_eval_config(ckpt_dict["config"])
-        else:
-            print("self.config.EVAL.USE_CKPT_CONFIG=False")
-            
+        else:            
             config = self.config.clone()
-
-        print("self.config.TASK_CONFIG.SIMULATOR.RGB_SENSOR.HEIGHT", self.config.TASK_CONFIG.SIMULATOR.RGB_SENSOR.HEIGHT)
-        print("self.config.TASK_CONFIG.SIMULATOR.RGB_SENSOR.WIDTH", self.config.TASK_CONFIG.SIMULATOR.RGB_SENSOR.WIDTH)
-        print("ckpt_dict['config'].TASK_CONFIG.SIMULATOR.RGB_SENSOR.HEIGHT", ckpt_dict["config"].TASK_CONFIG.SIMULATOR.RGB_SENSOR.HEIGHT)
-        print("ckpt_dict['config'].TASK_CONFIG.SIMULATOR.RGB_SENSOR.WIDTH", ckpt_dict["config"].TASK_CONFIG.SIMULATOR.RGB_SENSOR.WIDTH)
-        print()
 
         il_cfg = config.IL.BehaviorCloning
 
@@ -572,7 +561,18 @@ class ILEnvTrainer(BaseRLTrainer):
 
         observations = self.envs.reset()
         batch = batch_obs(observations, device=self.device)
+
+        print()
+        print("batch components BEFORE transform:")
+        for key, value in batch.items():
+            print(key)
+            print(value.shape)
         batch = apply_obs_transforms_batch(batch, self.obs_transforms)
+        print("batch components AFTER transform:")
+        for key, value in batch.items():
+            print(key)
+            print(value.shape)
+        print()
 
         current_episode_reward = torch.zeros(
             self.envs.num_envs, 1, device=self.device
@@ -626,69 +626,8 @@ class ILEnvTrainer(BaseRLTrainer):
             current_episodes = self.envs.current_episodes_info()
 
             with torch.no_grad():
-                # TODO Compute semantic after reshape to training shape
                 if self.semantic_predictor is not None:
                     batch["semantic"] = self.semantic_predictor(batch)
-
-                # TODO Reshape if obs shape in training config doesn't match obs shape at inference
-                # TODO Visualize some images to check that they look reasonable
-                # TODO Parametrize reshape
-
-                def reshape_640x480_to_480x640_preserving_aspect_ratio(rgb, depth, semantic):
-                    print("pre-processing:")
-                    print("rgb.shape", rgb.shape)
-                    print("depth.shape", depth.shape)
-                    print("semantic.shape", semantic.shape)
-                    # (640, 480) -> (360, 480)
-                    rgb = rgb[:, 280:, :]
-                    depth = depth[:, 280:, :]
-                    semantic = depth[:, 280:, :]
-                    # (360, 480) -> (480, 640)
-                    rgb = F.interpolate(rgb.permute(0, 3, 1, 2), (480, 640), mode='nearest').permute(0, 2, 3, 1)
-                    depth = F.interpolate(depth.permute(0, 3, 1, 2), (480, 640), mode='nearest').permute(0, 2, 3, 1)
-                    semantic = F.interpolate(semantic.permute(0, 3, 1, 2), (480, 640), mode='nearest').permute(0, 2, 3, 1)
-                    print("post-processing:")
-                    print("rgb.shape", rgb.shape)
-                    print("depth.shape", depth.shape)
-                    print("semantic.shape", semantic.shape)
-                    return rgb, depth, semantic
-
-                def reshape_640x480_to_480x640_preserving_entire_frame(rgb, depth, semantic):
-                    # (640, 480) -> (480, 640)
-                    rgb = F.interpolate(rgb.permute(0, 3, 1, 2), (480, 640), mode='nearest').permute(0, 2, 3, 1)
-                    depth = F.interpolate(depth.permute(0, 3, 1, 2), (480, 640), mode='nearest').permute(0, 2, 3, 1)
-                    semantic = F.interpolate(semantic.permute(0, 3, 1, 2), (480, 640), mode='nearest').permute(0, 2, 3, 1)
-                    return rgb, depth, semantic
-
-                _, inference_height, inference_width, _ = batch["rgb"].shape
-                training_height = ckpt_dict['config'].TASK_CONFIG.SIMULATOR.RGB_SENSOR.HEIGHT
-                training_width = ckpt_dict['config'].TASK_CONFIG.SIMULATOR.RGB_SENSOR.WIDTH
-                print()
-                print("inference_height, inference_width", (inference_height, inference_width))
-                print("training_height, training_width", (training_height, training_width))
-
-                if ((inference_height, inference_width) == (640, 480) 
-                        and (training_height, training_width) == (480, 640)):
-                    rgb1, depth1, semantic1 = reshape_640x480_to_480x640_preserving_aspect_ratio(
-                        batch["rgb"], batch["depth"], batch["semantic"]
-                    )
-                    # rgb2, depth2, semantic2 = reshape_640x480_to_480x640_preserving_entire_frame(
-                    #     batch["rgb"], batch["depth"], batch["semantic"]
-                    # )
-                    # for i, rgb in enumerate(rgb1.cpu().numpy()):
-                    #     cv2.imwrite(f"rgb1_{i}.png", rgb)
-                    # for i, rgb in enumerate(rgb2.cpu().numpy()):
-                    #     cv2.imwrite(f"rgb2_{i}.png", rgb)
-
-                    batch["rgb"] = rgb1
-                    batch["depth"] = depth1
-                    batch["semantic"] = semantic1
-                
-                print("batch components:")
-                for key, value in batch.items():
-                    print(key)
-                    print(type(value))
-                    print(value.shape)
             
                 (
                     logits,
@@ -782,7 +721,11 @@ class ILEnvTrainer(BaseRLTrainer):
                 elif len(self.config.VIDEO_OPTION) > 0:
                     # TODO move normalization / channel changing out of the policy and undo it here
                     frame = observations_to_image(
-                        {"rgb": batch["rgb"][i]}, infos[i]
+                        {
+                            "rgb": batch["rgb"][i],
+                            "semantic": batch["semantic"][i]
+                        }, 
+                        infos[i]
                     )
                     rgb_frames[i].append(frame)
 
