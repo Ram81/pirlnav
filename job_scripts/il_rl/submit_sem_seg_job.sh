@@ -42,6 +42,7 @@ RL.Finetune.start_critic_warmup_at 250 \
 RL.Finetune.critic_lr_decay_update 500 \
 TASK_CONFIG.DATASET.SPLIT "train" \
 TASK_CONFIG.DATASET.DATA_PATH "$DATA_PATH/{split}/{split}.json.gz" \
+TASK_CONFIG.DATASET.TYPE "ObjectNav-v1" \
 MODEL.hm3d_goal True \
 MODEL.USE_SEMANTICS True \
 MODEL.USE_PRED_SEMANTICS True \
