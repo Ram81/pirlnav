@@ -198,7 +198,7 @@ class SemanticPredictor(nn.Module):
                 rgb_obs.cpu().numpy(),
                 depth_obs.cpu().numpy()
             )
-            x = torch.from_numpy(semantic).to(rgb_obs.device)
+            x = torch.from_numpy(semantic).to(rgb_obs.device).long()
 
         else:
             x = self.semantic_predictor(rgb_obs, depth_obs)
