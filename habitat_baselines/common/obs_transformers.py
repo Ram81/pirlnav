@@ -162,10 +162,8 @@ class FrameReshape(ObservationTransformer):
             if key in observation_space.spaces:
                 current_shape = observation_space.spaces[key].shape
                 if (current_shape[0], current_shape[1]) != self.output_shape:
-                    assert (current_shape[0], current_shape[1]) == self.input_shape
-                    new_shape = current_shape
-                    new_shape[0] = self.output_shape[0]
-                    new_shape[1] = self.output_shape[1]
+                    assert (current_shape[0], current_shape[1]) == self.input_shape 
+                    new_shape = (self.output_shape[0], self.output_shape[1], current_shape[2])
                     observation_space.spaces[key] = overwrite_gym_box_shape(
                         observation_space.spaces[key], new_shape
                     )
