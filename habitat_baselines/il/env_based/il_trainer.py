@@ -556,6 +556,9 @@ class ILEnvTrainer(BaseRLTrainer):
         observations = self.envs.reset()
         batch = batch_obs(observations, device=self.device)
         batch = apply_obs_transforms_batch(batch, self.obs_transforms)
+        with torch.no_grad():
+            if self.semantic_predictor is not None:
+                batch["semantic"] = self.semantic_predictor(batch)
 
         current_episode_reward = torch.zeros(
             self.envs.num_envs, 1, device=self.device
@@ -609,10 +612,6 @@ class ILEnvTrainer(BaseRLTrainer):
             current_episodes = self.envs.current_episodes_info()
 
             with torch.no_grad():
-                if self.semantic_predictor is not None:
-                    batch["semantic"] = self.semantic_predictor(batch)
-                    print("eval_checkpoint() 1 - torch.unique(batch['semantic'])", torch.unique(batch['semantic']))
-            
                 (
                     logits,
                     test_recurrent_hidden_states,
@@ -641,6 +640,9 @@ class ILEnvTrainer(BaseRLTrainer):
             ]
             batch = batch_obs(observations, device=self.device)
             batch = apply_obs_transforms_batch(batch, self.obs_transforms)
+            with torch.no_grad():
+                if self.semantic_predictor is not None:
+                    batch["semantic"] = self.semantic_predictor(batch)
 
             not_done_masks = torch.tensor(
                 [[0.0] if done else [1.0] for done in dones],
@@ -704,7 +706,6 @@ class ILEnvTrainer(BaseRLTrainer):
                 # episode continues
                 elif len(self.config.VIDEO_OPTION) > 0:
                     # TODO move normalization / channel changing out of the policy and undo it here
-                    print("eval_checkpoint() 2 - torch.unique(batch['semantic'][i])", torch.unique(batch['semantic'][i]))
                     frame = observations_to_image(
                         {
                             "rgb": batch["rgb"][i],
