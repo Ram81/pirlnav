@@ -229,10 +229,6 @@ class ObjectNavILNet(Net):
         """
         rgb_obs = observations["rgb"]
         depth_obs = observations["depth"]
-        print("resnet_policy.py observations['rgb'].shape", observations['rgb'].shape)
-        print("resnet_policy.py observations['depth'].shape", observations['depth'].shape)
-        print("self.observation_space.spaces['rgb'].shape", self.observation_space.spaces['rgb'].shape)
-        print("self.observation_space.spaces['depth'].shape", self.observation_space.spaces['depth'].shape)
 
         x = []
 

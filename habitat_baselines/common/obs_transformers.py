@@ -247,11 +247,14 @@ class DepthRescale(ObservationTransformer):
         output_range: Tuple[float, float]
     ):
         super().__init__()
+        self.input_range = input_range
+        self.output_range = output_range
         self.input_min_depth, self.input_max_depth = input_range
         self.output_min_depth, self.output_max_depth = output_range
 
     def transform_observation_space(self, observation_space: spaces.Dict):
         observation_space = copy.deepcopy(observation_space)
+        print(f"Rescaling depth from {self.input_range} to {self.output_range}")
         return observation_space
     
     @torch.no_grad()
