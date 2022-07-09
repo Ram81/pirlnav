@@ -207,26 +207,114 @@ class FrameReshape(ObservationTransformer):
     @torch.no_grad()
     def forward(self, observations: Dict[str, torch.Tensor]) -> Dict[str, torch.Tensor]:
         reshape = self.get_reshape_function()
-        for key in ["rgb", "depth"]:
+        for key in ["rgb", "depth", "semantic"]:
             if key in observations:
                 input_shape = observations[key].shape
-                print("input_shape..........", input_shape)
                 if (input_shape[1], input_shape[2]) != self.output_shape:
                     assert (input_shape[1], input_shape[2]) == self.input_shape
+                    if len(input_shape) == 3:
+                        observations[key] = observations[key].unsqueeze(-1)
                     observations[key] = reshape(observations[key])
         return observations
-
+    
     @classmethod
     def from_config(cls, config: Config):    
         if hasattr(config, "IL") and hasattr(config.IL, "OBS_TRANSFORMS"):
             cc_config = config.IL.OBS_TRANSFORMS.FrameReshape
-        elif hasattr(config, "RL") and hasattr(config.RL, "OBS_TRANSFORMS"):
-            cc_config = config.RL.OBS_TRANSFORMS.FrameReshape
+        elif hasattr(config.RL.POLICY, "OBS_TRANSFORMS"):
+            cc_config = config.RL.POLICY.OBS_TRANSFORMS.FrameReshape
         return cls(
             (cc_config.input_height, cc_config.input_width),
             (cc_config.output_height, cc_config.output_width),
             cc_config.mode
         )
+
+
+# @baseline_registry.register_obs_transformer(name="DepthRescale")
+# class DepthRescale(ObservationTransformer):
+#     """
+#     Rescale normalized depth.
+#     """
+#     def __init__(
+#         self,
+#         input_range: Tuple[float, float],
+#         output_range: Tuple[float, float]
+#     ):
+#         super().__init__()
+#         self.input_range = input_range
+#         self.output_range = output_range
+
+#     def transform_observation_space(self, observation_space: spaces.Dict):
+#         observation_space = copy.deepcopy(observation_space)
+#         for key in ["rgb", "depth", "semantic"]:
+#             if key in observation_space.spaces:
+#                 current_shape = observation_space.spaces[key].shape
+#                 if (current_shape[0], current_shape[1]) != self.output_shape:
+#                     assert (current_shape[0], current_shape[1]) == self.input_shape 
+#                     if len(current_shape) == 2:
+#                         new_shape = self.output_shape
+#                     elif len(current_shape) == 3:
+#                         new_shape = (*self.output_shape, current_shape[2])
+#                     else:
+#                         raise NotImplementedError
+#                     print(f"Reshaping {key} from {current_shape} to {new_shape}")
+#                     observation_space.spaces[key] = overwrite_gym_box_shape(
+#                         observation_space.spaces[key], new_shape
+#                     )
+#         return observation_space
+
+#     def reshape_640x480_to_480x640_preserving_aspect_ratio(self, frame):
+#         # (640, 480) -> (360, 480)
+#         frame = frame[:, 280:, :]
+#         # (360, 480) -> (480, 640)
+#         frame = F.interpolate(
+#             frame.permute(0, 3, 1, 2), 
+#             (480, 640), 
+#             mode='nearest'
+#             ).permute(0, 2, 3, 1)
+#         return frame
+
+#     def reshape_preserving_entire_frame(self, frame):
+#         frame = F.interpolate(
+#             frame.permute(0, 3, 1, 2), 
+#             self.output_shape, 
+#             mode='nearest'
+#         ).permute(0, 2, 3, 1)
+#         return frame
+
+#     def get_reshape_function(self):
+#         if self.mode == "preserve_entire_frame":
+#             return self.reshape_preserving_entire_frame
+#         elif (self.input_shape == (640, 480) and 
+#                 self.output_shape == (480, 640) and 
+#                 self.mode == "preserve_aspect_ratio"):
+#             return self.reshape_640x480_to_480x640_preserving_entire_frame
+#         else:
+#             raise NotImplementedError
+    
+#     @torch.no_grad()
+#     def forward(self, observations: Dict[str, torch.Tensor]) -> Dict[str, torch.Tensor]:
+#         reshape = self.get_reshape_function()
+#         for key in ["rgb", "depth", "semantic"]:
+#             if key in observations:
+#                 input_shape = observations[key].shape
+#                 if (input_shape[1], input_shape[2]) != self.output_shape:
+#                     assert (input_shape[1], input_shape[2]) == self.input_shape
+#                     if len(input_shape) == 3:
+#                         observations[key] = observations[key].unsqueeze(-1)
+#                     observations[key] = reshape(observations[key])
+#         return observations
+
+#     @classmethod
+#     def from_config(cls, config: Config):    
+#         if hasattr(config, "IL") and hasattr(config.IL, "OBS_TRANSFORMS"):
+#             cc_config = config.IL.OBS_TRANSFORMS.DepthRescale
+#         elif hasattr(config.RL.POLICY, "OBS_TRANSFORMS"):
+#             cc_config = config.RL.POLICY.OBS_TRANSFORMS.DepthRescale
+#         return cls(
+#             (cc_config.input_min_depth, cc_config.input_max_depth),
+#             (cc_config.output_min_depth, cc_config.output_max_depth)
+#         )
 
 
 @baseline_registry.register_obs_transformer()
