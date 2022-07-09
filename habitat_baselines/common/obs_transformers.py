@@ -257,13 +257,9 @@ class DepthRescale(ObservationTransformer):
     @torch.no_grad()
     def forward(self, observations: Dict[str, torch.Tensor]) -> Dict[str, torch.Tensor]:
         depth = observations["depth"]
-        print("depth 0", (depth.min(), depth.max()))
         depth = self.input_min_depth + depth * (self.input_max_depth - self.input_min_depth)
-        print("depth 1", (depth.min(), depth.max()))
         depth = torch.clip(depth, self.output_min_depth, self.output_max_depth)
-        print("depth 2", (depth.min(), depth.max()))
         depth = (depth - self.output_min_depth) / (self.output_max_depth - self.output_min_depth)
-        print("depth 3", (depth.min(), depth.max()))
         observations["depth"] = depth
         return observations
 

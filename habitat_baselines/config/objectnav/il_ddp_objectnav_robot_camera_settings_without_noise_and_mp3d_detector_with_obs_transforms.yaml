@@ -45,7 +45,7 @@ IL:
       input_width: 480
       output_height: 480
       output_width: 640
-      mode: preserve_entire_frame
+      mode: preserve_aspect_ratio
     DepthRescale:
       input_min_depth: 0.5
       input_max_depth: 4.0

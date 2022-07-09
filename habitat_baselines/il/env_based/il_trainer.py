@@ -555,18 +555,7 @@ class ILEnvTrainer(BaseRLTrainer):
 
         observations = self.envs.reset()
         batch = batch_obs(observations, device=self.device)
-
-        print()
-        print("batch components BEFORE transform:")
-        for key, value in batch.items():
-            print(key)
-            print(value.shape)
         batch = apply_obs_transforms_batch(batch, self.obs_transforms)
-        print("batch components AFTER transform:")
-        for key, value in batch.items():
-            print(key)
-            print(value.shape)
-        print()
 
         current_episode_reward = torch.zeros(
             self.envs.num_envs, 1, device=self.device

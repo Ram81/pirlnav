@@ -29,7 +29,7 @@ srun python -u -m habitat_baselines.run \
 --run-type eval \
 NUM_PROCESSES 20 \
 TENSORBOARD_DIR $TENSORBOARD_DIR \
-TEST_EPISODE_COUNT 1 \
+TEST_EPISODE_COUNT 5 \
 EVAL.SPLIT "val" \
 EVAL.meta_file "$TENSORBOARD_DIR/evaluation_meta.json" \
 EVAL_CKPT_PATH_DIR $EVAL_CKPT_PATH_DIR \
