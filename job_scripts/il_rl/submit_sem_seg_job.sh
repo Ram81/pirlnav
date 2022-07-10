@@ -22,7 +22,7 @@ config=$1
 
 TENSORBOARD_DIR="tb/objectnav_il/objectnav_hm3d/objectnav_hm3d_77k/rl_model_finetune/robot_camera_settings_and_coco_detector"
 CHECKPOINT_DIR="data/new_checkpoints/objectnav_il/objectnav_hm3d/objectnav_hm3d_77k/rl_model_finetune/robot_camera_settings_and_coco_detector"
-DATA_PATH="data/datasets/objectnav/objectnav_hm3d/objectnav_hm3d_v1_fixed/"
+DATA_PATH="data/datasets/objectnav/objectnav_hm3d/objectnav_hm3d_v1_fixed"
 PRETRAINED_WEIGHTS="data/new_checkpoints/objectnav_il/objectnav_hm3d/objectnav_hm3d_77k/il_model/robot_camera_settings_and_coco_detector/ckpt.16.pth"
 set -x
 

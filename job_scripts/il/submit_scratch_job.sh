@@ -21,8 +21,8 @@ export MASTER_ADDR
 config=$1
 
 DATA_PATH="data/datasets/objectnav/objectnav_hm3d/objectnav_hm3d_77k"
-TENSORBOARD_DIR="tb/objectnav_il/objectnav_hm3d/objectnav_hm3d_77k/il_model_train/robot_camera_settings_and_mp3d_detector"
-CHECKPOINT_DIR="data/new_checkpoints/objectnav_il/objectnav_hm3d/objectnav_hm3d_77k/il_model/robot_camera_settings_and_mp3d_detector"
+TENSORBOARD_DIR="tb/objectnav_il/objectnav_hm3d/objectnav_hm3d_77k/il_model_train/robot_camera_settings_and_coco_detector_fixed"
+CHECKPOINT_DIR="data/new_checkpoints/objectnav_il/objectnav_hm3d/objectnav_hm3d_77k/il_model/robot_camera_settings_and_coco_detector_fixed"
 INFLECTION_COEF=3.186409513220174
 set -x
 
