@@ -189,11 +189,6 @@ def observations_to_image(observation: Dict, info: Dict, top_down_map_only=False
         depth_map = np.stack([depth_map for _ in range(3)], axis=2)
         egocentric_view_l.append(depth_map)
 
-    print()
-    print(observation["semantic"].dtype)
-    print(observation["semantic"].shape)
-    print(observation["semantic"].unique())
-    print()
     if "semantic" in observation:
         semantic_map = observation["semantic"].squeeze()
         if not isinstance(semantic_map, np.ndarray):
