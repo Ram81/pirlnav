@@ -1,4 +1,4 @@
-BASE_TASK_CONFIG_PATH: "configs/tasks/objectnav_mp3d_il_robot_settings_without_noise.yaml"
+BASE_TASK_CONFIG_PATH: "configs/tasks/objectnav_mp3d_il_rl_ft_robot_settings_without_noise.yaml"
 CMD_TRAILING_OPTS: ["TASK_CONFIG.ENVIRONMENT.ITERATOR_OPTIONS.MAX_SCENE_REPEAT_STEPS", "50000"]
 ENV_NAME: "ObjectNavRLEnv"
 SIMULATOR_GPU_ID: 0
