@@ -15,11 +15,18 @@ from detectron2.modeling import build_model
 from detectron2.checkpoint import DetectionCheckpointer
 from detectron2.utils.visualizer import ColorMode, Visualizer, VisImage
 
-from .constants import coco_categories_to_goal21_categories
+from .constants import (
+    coco_categories_to_goal21_categories,
+    coco_categories_to_goal21_categories_expanded
+)
 
 
 class COCOSegmentationModel:
-    def __init__(self, sem_pred_prob_thr: float, sem_gpu_id: int, visualize: bool):
+    def __init__(self, 
+                 sem_pred_prob_thr: float, 
+                 sem_gpu_id: int, 
+                 visualize: bool,
+                 semantic_categories: str):
         """
         Arguments:
             sem_pred_prob_thr: prediction threshold
@@ -28,7 +35,12 @@ class COCOSegmentationModel:
         """
         self.segmentation_model = ImageSegmentation(sem_pred_prob_thr, sem_gpu_id)
         self.visualize = visualize
-        self.num_sem_categories = len(coco_categories_to_goal21_categories)
+        assert semantic_categories in ["only_goal", "expanded"]
+        if semantic_categories == "only_goal":
+            self.semantic_categories = coco_categories_to_goal21_categories
+        else:
+            self.semantic_categories = coco_categories_to_goal21_categories_expanded
+        self.num_sem_categories = len(self.semantic_categories)
 
     def get_prediction(self,
                        images: np.ndarray,
@@ -54,8 +66,8 @@ class COCOSegmentationModel:
 
         for i in range(batch_size):
             for j, class_idx in enumerate(predictions[i]["instances"].pred_classes.cpu().numpy()):
-                if class_idx in list(coco_categories_to_goal21_categories.keys()):
-                    idx = coco_categories_to_goal21_categories[class_idx]
+                if class_idx in list(self.semantic_categories.keys()):
+                    idx = self.semantic_categories[class_idx]
                     obj_mask = predictions[i]["instances"].pred_masks[j].cpu().numpy()
                     prediction_masks[i, obj_mask] = idx
 

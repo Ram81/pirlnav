@@ -131,7 +131,8 @@ class SemanticPredictor(nn.Module):
             self.semantic_predictor = COCOSegmentationModel(
                 sem_pred_prob_thr=0.9,
                 sem_gpu_id=(-1 if self.device == torch.device("cpu") else self.device.index),
-                visualize=False
+                visualize=False,
+                semantic_categories=model_config.SEMANTIC_PREDICTOR.COCO_MASKRCNN.semantic_categories
             )
 
         else:

@@ -39,18 +39,12 @@ WANDB:
 
 IL:
   OBS_TRANSFORMS:
-    ENABLED_TRANSFORMS: ["FrameReshape", "DepthRescale"]
-    FrameReshape:
-      input_height: 640
-      input_width: 480
-      output_height: 480
-      output_width: 640
-      mode: preserve_aspect_ratio
+    ENABLED_TRANSFORMS: ["DepthRescale"]
     DepthRescale:
       input_min_depth: 0.5
       input_max_depth: 4.0
-      output_min_depth: 0.5
-      output_max_depth: 5.0
+      output_min_depth: 0.0
+      output_max_depth: 10.0
   POLICY:
     name: "ObjectNavILPolicy"
   USE_IW: True
@@ -94,7 +88,7 @@ MODEL:
       config: "Detic/configs/Detic_LbaseI_CLIP_R5021k_640b64_4x_ft4x_max-size.yaml"
       score_threshold: 0.3
     COCO_MASKRCNN:
-      semantic_categories: only_goal
+      semantic_categories: expanded
   SEMANTIC_ENCODER:
     cnn_type: "ResnetSemSegEncoder"
     output_size: 256
