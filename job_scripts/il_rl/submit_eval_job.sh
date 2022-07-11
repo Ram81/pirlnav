@@ -17,11 +17,10 @@ export MAGNUM_LOG=quiet
 MASTER_ADDR=$(srun --ntasks=1 hostname 2>&1 | tail -n1)
 export MASTER_ADDR
 
-config=$1
 DATA_PATH="data/datasets/objectnav/objectnav_hm3d/objectnav_hm3d_77k"
-TENSORBOARD_DIR="tb/objectnav_il/objectnav_hm3d/objectnav_hm3d_77k/sem_seg_pred_rl_fine_tuning/32gpus/"
-EVAL_CKPT_PATH_DIR="TODO"
-VIDEO_DIR="video_dir/objectnav_il_rl_ft/ddppo_hm3d_pt_77k/sem_seg_pred/sparse_reward/train_split/seed_1_4node/ckpt_86/"
+config=$1
+TENSORBOARD_DIR=$2
+EVAL_CKPT_PATH_DIR=$3
 set -x
 
 echo "In ObjectNav IL+RL DDP"
