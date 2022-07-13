@@ -1,11 +1,10 @@
 #!/bin/bash
 #SBATCH --job-name=onav_il
-#SBATCH --time=3-00:00:00
+#SBATCH --time=3-0
 #SBATCH --gres gpu:8
 #SBATCH --nodes 16
 #SBATCH --cpus-per-task 8
 #SBATCH --ntasks-per-node 8
-#SBATCH --signal=USR1@1000
 #SBATCH --mem=480GB
 #SBATCH --constraint=volta32gb
 #SBATCH --output=slurm_logs/ddpil-%j.out
