@@ -51,9 +51,9 @@ done
 # Robot camera settings & COCO segmentation
 
 SEGMENTATION=coco
-MODEL=robot_camera_settings_and_${SEGMENTATION}_detector
+MODEL=robot_camera_settings_without_noise_and_${SEGMENTATION}_detector
 EVAL_SETTINGS=(robot_camera_settings_with_noise robot_camera_settings_without_noise)
-CKPTS=(12 16 20)
+CKPTS=(22 24)
 
 for EVAL_SETTING in ${EVAL_SETTINGS[@]}; do
     for CKPT in ${CKPTS[@]}; do
