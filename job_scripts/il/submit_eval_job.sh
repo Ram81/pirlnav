@@ -6,15 +6,15 @@
 #SBATCH --ntasks-per-node 1
 #SBATCH --signal=USR1@300
 #SBATCH --partition=short
-#SBATCH --qos=ram-special
 #SBATCH --constraint=a40
+#SBATCH --exclude=robby
 #SBATCH --output=slurm_logs/eval/ddpil-%j.out
 #SBATCH --error=slurm_logs/eval/ddpil-%j.err
 #SBATCH --requeue
 
 source /srv/flash1/rramrakhya6/miniconda3/etc/profile.d/conda.sh
 conda deactivate
-conda activate habitat-web
+conda activate il-rl
 
 export GLOG_minloglevel=2
 export MAGNUM_LOG=quiet
@@ -24,8 +24,9 @@ export MASTER_ADDR
 
 config=$1
 DATA_PATH="data/datasets/objectnav/objectnav_hm3d/objectnav_hm3d_v1"
-TENSORBOARD_DIR="tb/objectnav_il/objectnav_hm3d/objectnav_hm3d_77k/hm3d_sem_seg/seed_1/ckpt_38/"
-EVAL_CKPT_PATH_DIR="data/new_checkpoints/objectnav_il/objectnav_hm3d/objectnav_hm3d_77k/hm3d_sem_seg/seed_1/ckpt.38.pth"
+# TENSORBOARD_DIR="tb/objectnav_il/objectnav_hm3d/objectnav_hm3d_s_path_240k/sem_seg_pred/seed_1/v1_fixed_evals/ckpt_16_val_2/"
+TENSORBOARD_DIR="tb/objectnav_il/objectnav_hm3d/objectnav_hm3d_10k/sem_seg_pred_shapeconv/seed_2/ckpt_23_val/"
+EVAL_CKPT_PATH_DIR="data/new_checkpoints/objectnav_il/objectnav_hm3d/objectnav_hm3d_10k/sem_seg_pred_shapeconv/seed_2/ckpt.23.pth"
 set -x
 
 echo "In ObjectNav IL DDP"
@@ -39,14 +40,13 @@ EVAL.SPLIT "val" \
 EVAL.meta_file "$TENSORBOARD_DIR/evaluation_meta.json" \
 EVAL_CKPT_PATH_DIR $EVAL_CKPT_PATH_DIR \
 TASK_CONFIG.TASK.SENSORS "['OBJECTGOAL_SENSOR', 'COMPASS_SENSOR', 'GPS_SENSOR']" \
-TASK_CONFIG.TASK.MEASUREMENTS "['DISTANCE_TO_GOAL', 'SUCCESS', 'SPL', 'SOFT_SPL', 'GOAL_OBJECT_VISIBLE', 'MIN_DISTANCE_TO_GOAL']" \
+TASK_CONFIG.TASK.MEASUREMENTS "['DISTANCE_TO_GOAL', 'SUCCESS', 'SPL', 'SOFT_SPL', 'GOAL_OBJECT_VISIBLE', 'MIN_DISTANCE_TO_GOAL', 'TOP_DOWN_MAP', 'EXPLORATION_METRICS']" \
 TASK_CONFIG.DATASET.TYPE "ObjectNav-v1" \
 TASK_CONFIG.DATASET.DATA_PATH "$DATA_PATH/{split}/{split}.json.gz" \
 MODEL.hm3d_goal True \
-MODEL.SEMANTIC_PREDICTOR.REDNET.pretrained_weights "data/rednet-models/rednet_semmap_hm3d_6_8gpu.pth" \
-MODEL.SEMANTIC_PREDICTOR.REDNET.num_classes 7 \
-MODEL.SEMANTIC_ENCODER.is_hm3d True \
-MODEL.SEMANTIC_ENCODER.is_thda False \
-MODEL.embed_sge True \
 MODEL.USE_SEMANTICS True \
 MODEL.USE_PRED_SEMANTICS True \
+MODEL.SEMANTIC_PREDICTOR.name "shapeconv"
+MODEL.SEMANTIC_PREDICTOR.SHAPECONV.config "configs/semantic_predictor/shapeconv/hm3d_deeplabv3plus_resnet101_baseline.py" \
+MODEL.SEMANTIC_PREDICTOR.SHAPECONV.pretrained_weights "data/new_checkpoints/mmdet/semantic_predictor/shapeconv/shapeconv_23cat_best_class_acc_with_bg.pth" \
+

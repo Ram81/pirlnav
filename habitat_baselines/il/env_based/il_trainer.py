@@ -37,7 +37,6 @@ from habitat_baselines.utils.common import (
     linear_decay,
 )
 from habitat_baselines.utils.env_utils import construct_envs
-# from habitat_baselines.il.env_based.policy.rednet import load_rednet
 from habitat_baselines.il.env_based.policy.semantic_predictor import SemanticPredictor
 from scripts.utils.utils import write_json
 
@@ -110,14 +109,9 @@ class ILEnvTrainer(BaseRLTrainer):
 
         self.semantic_predictor = None
         if model_config.USE_PRED_SEMANTICS:
-            # self.semantic_predictor = load_rednet(
-            #     self.device,
-            #     ckpt=model_config.SEMANTIC_ENCODER.rednet_ckpt,
-            #     resize=True, # since we train on half-vision
-            #     num_classes=model_config.SEMANTIC_ENCODER.num_classes
-            # )
             self.semantic_predictor = SemanticPredictor(model_config, self.device)
             self.semantic_predictor.eval()
+            self.semantic_predictor.to(self.device)
 
         self.agent = ILAgent(
             model=self.policy,
@@ -164,7 +158,7 @@ class ILEnvTrainer(BaseRLTrainer):
         """
         return torch.load(checkpoint_path, *args, **kwargs)
 
-    METRICS_BLACKLIST = {"top_down_map", "collisions.is_collision", "room_visitation_map", "exploration_metrics"}
+    METRICS_BLACKLIST = {"top_down_map", "collisions.is_collision", "room_visitation_map"}
 
     @classmethod
     def _extract_scalars_from_info(
@@ -263,12 +257,16 @@ class ILEnvTrainer(BaseRLTrainer):
 
         t_update_stats = time.time()
         batch = batch_obs(observations, device=self.device)
+        batch_end_time, inf_end_time, softmax_time = 0, 0, 0
         if self.config.MODEL.USE_PRED_SEMANTICS and self.current_update >= self.config.MODEL.SWITCH_TO_PRED_SEMANTICS_UPDATE:
-            batch["semantic"] = self.semantic_predictor(batch) # ["rgb"], batch["depth"])
+            batch["semantic"], batch_end_time, inf_end_time, softmax_time = self.semantic_predictor(batch)
+            #logger.info("done senseg infer")
             # Subtract 1 from class labels for THDA YCB categories
             if self.config.MODEL.SEMANTIC_ENCODER.is_thda and self.config.MODEL.SEMANTIC_PREDICTOR.name == "rednet":
                 batch["semantic"] = batch["semantic"] - 1
         batch = apply_obs_transforms_batch(batch, self.obs_transforms)
+        #logger.info("done tfms")
+        st_time = time.time()
 
         rewards = torch.tensor(
             rewards_l, dtype=torch.float, device=current_episode_reward.device
@@ -297,16 +295,20 @@ class ILEnvTrainer(BaseRLTrainer):
 
         current_episode_reward *= masks
 
+        ent_time = time.time() - st_time
+        #logger.info("before insert")
+
         rollouts.insert(
             batch,
             actions,
             rewards,
             masks,
         )
+        #logger.info("done insert")
 
         pth_time += time.time() - t_update_stats
 
-        return pth_time, env_time, self.envs.num_envs
+        return pth_time, env_time, self.envs.num_envs, batch_end_time, inf_end_time, softmax_time, ent_time
 
     @profiling_wrapper.RangeContext("_update_agent")
     def _update_agent(self, ppo_cfg, rollouts):
@@ -571,6 +573,12 @@ class ILEnvTrainer(BaseRLTrainer):
         current_episode_reward = torch.zeros(
             self.envs.num_envs, 1, device=self.device
         )
+        current_episode_entropy = torch.zeros(
+            self.envs.num_envs, 1, device=self.device
+        )
+        current_episode_steps = torch.zeros(
+            self.envs.num_envs, 1, device=self.device
+        )
 
         test_recurrent_hidden_states = torch.zeros(
             config.MODEL.STATE_ENCODER.num_recurrent_layers,
@@ -621,19 +629,19 @@ class ILEnvTrainer(BaseRLTrainer):
 
             with torch.no_grad():
                 if self.semantic_predictor is not None:
-                    batch["semantic"] = self.semantic_predictor(batch)
-                    if self.config.MODEL.SEMANTIC_ENCODER.is_thda:
+                    batch["semantic"], batch_end_time, inf_end_time, softmax_time = self.semantic_predictor(batch)
+                    if self.config.MODEL.SEMANTIC_ENCODER.is_thda and self.config.MODEL.SEMANTIC_PREDICTOR.name == "rednet":
                         batch["semantic"] = batch["semantic"] - 1
                 (
                     logits,
                     test_recurrent_hidden_states,
+                    dist_entropy
                 ) = self.policy(
                     batch,
                     test_recurrent_hidden_states,
                     prev_actions,
                     not_done_masks,
                 )
-                current_episode_steps += 1
 
                 actions = torch.argmax(logits, dim=1)
                 prev_actions.copy_(actions.unsqueeze(1))  # type: ignore
@@ -663,6 +671,8 @@ class ILEnvTrainer(BaseRLTrainer):
                 rewards_l, dtype=torch.float, device=self.device
             ).unsqueeze(1)
             current_episode_reward += rewards
+            current_episode_entropy += dist_entropy
+            current_episode_steps += 1
             next_episodes = self.envs.current_episodes_info()
             envs_to_pause = []
             n_envs = self.envs.num_envs
@@ -678,6 +688,7 @@ class ILEnvTrainer(BaseRLTrainer):
                     pbar.update()
                     episode_stats = {}
                     episode_stats["reward"] = current_episode_reward[i].item()
+                    episode_stats["entropy"] = current_episode_entropy[i].item() / current_episode_steps[i].item()
                     episode_stats.update(
                         self._extract_scalars_from_info(infos[i])
                     )
@@ -728,6 +739,8 @@ class ILEnvTrainer(BaseRLTrainer):
                 prev_actions,
                 batch,
                 rgb_frames,
+                current_episode_entropy,
+                current_episode_steps,
             ) = self._pause_envs(
                 envs_to_pause,
                 self.envs,
@@ -737,6 +750,8 @@ class ILEnvTrainer(BaseRLTrainer):
                 prev_actions,
                 batch,
                 rgb_frames,
+                current_episode_entropy,
+                current_episode_steps,
             )
 
         num_episodes = len(stats_episodes)

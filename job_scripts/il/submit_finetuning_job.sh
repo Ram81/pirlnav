@@ -6,7 +6,6 @@
 #SBATCH --ntasks-per-node 8
 #SBATCH --signal=USR1@300
 #SBATCH --partition=long
-#SBATCH --qos=ram-special
 #SBATCH --constraint=rtx_6000
 #SBATCH --output=slurm_logs/ddpil-%j.out
 #SBATCH --error=slurm_logs/ddpil-%j.err

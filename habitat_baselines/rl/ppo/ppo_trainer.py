@@ -685,6 +685,12 @@ class PPOTrainer(BaseRLTrainer):
         current_episode_reward = torch.zeros(
             self.envs.num_envs, 1, device=self.device
         )
+        current_episode_entropy = torch.zeros(
+            self.envs.num_envs, 1, device=self.device
+        )
+        current_episode_steps = torch.zeros(
+            self.envs.num_envs, 1, device=self.device
+        )
 
         test_recurrent_hidden_states = torch.zeros(
             self.actor_critic.net.num_recurrent_layers,
@@ -733,16 +739,12 @@ class PPOTrainer(BaseRLTrainer):
             current_episodes = self.envs.current_episodes_info()
 
             with torch.no_grad():
-                # if self.semantic_predictor is not None:
-                #     batch["semantic"] = self.semantic_predictor(batch["rgb"], batch["depth"])
-                #     # Subtract 1 from class labels for THDA YCB categories
-                #     if self.config.MODEL.SEMANTIC_ENCODER.is_thda:
-                #         batch["semantic"] = batch["semantic"] - 1
                 (
                     value,
                     actions,
                     _,
                     test_recurrent_hidden_states,
+                    dist_entropy,
                 ) = self.actor_critic.act(
                     batch,
                     test_recurrent_hidden_states,
@@ -789,7 +791,11 @@ class PPOTrainer(BaseRLTrainer):
             rewards = torch.tensor(
                 rewards_l, dtype=torch.float, device=self.device
             ).unsqueeze(1)
+
             current_episode_reward += rewards
+            current_episode_entropy += dist_entropy
+            current_episode_steps += 1
+
             next_episodes = self.envs.current_episodes_info()
             envs_to_pause = []
             n_envs = self.envs.num_envs
@@ -805,11 +811,14 @@ class PPOTrainer(BaseRLTrainer):
                     pbar.update()
                     episode_stats = {}
                     episode_stats["reward"] = current_episode_reward[i].item()
+                    episode_stats["entropy"] = current_episode_entropy[i].item() / current_episode_steps[i].item() # +1 to handle divide by zero
                     episode_stats.update(
                         self._extract_scalars_from_info(infos[i])
                     )
                     current_episode_reward[i] = 0
-                    logger.info("Success: {}, SPL: {}".format(episode_stats["success"], episode_stats["spl"]))
+                    current_episode_entropy[i] = 0
+                    current_episode_steps[i] = 0
+                    logger.info("Success: {}, SPL: {}, Episode stats: {}".format(episode_stats["success"], episode_stats["spl"], episode_stats))
                     episode_meta.append({
                         "scene_id": current_episodes[i].scene_id,
                         "episode_id": current_episodes[i].episode_id,
@@ -855,6 +864,8 @@ class PPOTrainer(BaseRLTrainer):
                 prev_actions,
                 batch,
                 rgb_frames,
+                current_episode_entropy,
+                current_episode_steps,
             ) = self._pause_envs(
                 envs_to_pause,
                 self.envs,
@@ -864,6 +875,8 @@ class PPOTrainer(BaseRLTrainer):
                 prev_actions,
                 batch,
                 rgb_frames,
+                current_episode_entropy,
+                current_episode_steps,
             )
 
         num_episodes = len(stats_episodes)

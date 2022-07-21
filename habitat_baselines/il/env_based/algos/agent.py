@@ -69,6 +69,7 @@ class ILAgent(nn.Module):
             (
                 logits,
                 rnn_hidden_states,
+                dist_entropy
             ) = self.model(
                 obs_batch,
                 recurrent_hidden_states_batch,

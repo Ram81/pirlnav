@@ -5,8 +5,7 @@
 #SBATCH --cpus-per-task 6
 #SBATCH --ntasks-per-node 1
 #SBATCH --signal=USR1@300
-#SBATCH --partition=long
-#SBATCH --qos=ram-special
+#SBATCH --partition=long,user-overcap
 #SBATCH --constraint=a40
 #SBATCH --output=slurm_logs/ddp-rl-%j.out
 #SBATCH --error=slurm_logs/ddp-rl-%j.err
@@ -40,6 +39,7 @@ NUM_UPDATES 50000 \
 NUM_PROCESSES 8 \
 RL.DDPPO.distrib_backend "GLOO" \
 TASK_CONFIG.DATASET.SPLIT "sample" \
+TASK_CONFIG.DATASET.CONTENT_SCENES "['1S7LAXRdDqK']" \
 TASK_CONFIG.DATASET.DATA_PATH "$DATA_PATH/{split}/{split}.json.gz" \
 TASK_CONFIG.TASK.MEASUREMENTS "['DISTANCE_TO_GOAL', 'SUCCESS', 'SPL', 'SOFT_SPL', 'COVERAGE']" \
 MODEL.hm3d_goal True \

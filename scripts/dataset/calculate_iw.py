@@ -64,7 +64,7 @@ def calculate_inflection_weight(path, stats_path):
             if action not in data["action_frequency"]:
                 data["action_frequency"][action] = 0
             data["action_frequency"][action] += 1
-            wall_clock_time += get_action_time(action, "rearrangement")
+            wall_clock_time += 0 # get_action_time(action, "rearrangement")
         
         if len(reference_replay) <= 1500:
             ep_success_count += 1
@@ -122,7 +122,7 @@ def calculate_inflection_weight_objectnav(path, stats_path):
                 if action not in data_stats["action_frequency"]:
                     data_stats["action_frequency"][action] = 0
                 data_stats["action_frequency"][action] += 1
-                wall_clock_time += get_action_time(action, "objectnav")
+                wall_clock_time += 0 #get_action_time(action, "objectnav")
 
             object_category = episode['object_category']
             if object_category not in data_stats['object_frequency']:

@@ -6,7 +6,6 @@
 #SBATCH --ntasks-per-node 1
 #SBATCH --signal=USR1@1000
 #SBATCH --partition=short
-#SBATCH --qos=ram-special
 #SBATCH --constraint=a40
 #SBATCH --output=slurm_logs/data/gen-%j.out
 #SBATCH --error=slurm_logs/data/gen-%j.err

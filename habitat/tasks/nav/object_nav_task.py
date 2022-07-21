@@ -24,7 +24,9 @@ from habitat.tasks.nav.nav import (
     NavigationEpisode,
     NavigationGoal,
     NavigationTask,
-    DistanceToGoal
+    DistanceToGoal,
+    EpisodicGPSSensor,
+    TopDownMap
 )
 
 try:
@@ -73,6 +75,15 @@ task_cat2hm3dcat40 = [
     18,  # ('toilet', 17, 10),
     22,  # ('tv_monitor', 21, 13)
     10,  # ('sofa', 9, 5),
+]
+
+task_cat2hm3d_shapeconv_cat = [
+    1,  # ('chair', 2, 0)
+    7,  # ('bed', 10, 6)
+    9,  # ('plant', 13, 8)
+    11,  # ('toilet', 17, 10),
+    14,  # ('tv_monitor', 21, 13)
+    6,  # ('sofa', 9, 5),
 ]
 
 mapping_mpcat40_to_goal21 = {
@@ -426,3 +437,191 @@ class ObjectGoalPromptSensor(Sensor):
             raise RuntimeError(
                 "Wrong GOAL_SPEC specified for ObjectGoalSensor."
             )
+
+
+@registry.register_measure
+class Coverage(Measure):
+    """Coverage
+    Number of visited squares in a gridded environment
+    - this is not exactly what we want to reward, but a decent starting point
+    - the semantic coverage is agent-based i.e. we should reward new visuals/objects discovered
+    - Note, internal grid has origin at bottom left
+    EGOCENTRIC -- center + align the coverage reward.
+    """
+    cls_uuid: str = "coverage"
+
+    def __init__(self, sim, config, **kwargs: Any):
+        self._sim = sim
+        self._config = config
+
+        self._visited = None  # number of visits
+        self._mini_visited = None
+        self._step = None
+        self._reached_count = None
+        self._mini_reached = None
+        self._mini_delta = 0.5
+        self._grid_delta = config.GRID_DELTA
+        super().__init__()
+
+    def _get_uuid(self, *args: Any, **kwargs: Any):
+        return self.cls_uuid
+
+    def _to_grid(self, delta, sim_x, sim_y, sim_z=0):
+        # ! Note we actually get sim_x, sim_z in 2D case but that doesn't affect code
+        grid_x = int((sim_x) / delta)
+        grid_y = int((sim_y) / delta)
+        grid_z = int((sim_z) / delta)
+        return grid_x, grid_y, grid_z
+
+    def reset_metric(self, episode, task, observations, *args: Any, **kwargs: Any):
+        self._visited = {}
+        self._mini_visited = {}
+        self._reached_count = 0
+        # Used for coverage prediction (not elegant, I know)
+        self._mini_reached = 0
+        self._step = 0  # Tracking episode length
+        current_visit = self._visit(task, observations)
+        self._metric = {
+            "reached": self._reached_count,
+            "mini_reached": self._mini_reached,
+            "visit_count": current_visit,
+            "step": self._step
+        }
+
+    def _visit(self, task, observations):
+        """ Returns number of times visited current square """
+        self._step += 1
+        if self._config.EGOCENTRIC:
+            global_loc = observations[EpisodicGPSSensor.cls_uuid]
+        else:
+            global_loc = self._sim.get_agent_state().position.tolist()
+
+        mini_loc = self._to_grid(self._mini_delta, *global_loc)
+        if mini_loc in self._mini_visited:
+            self._mini_visited[mini_loc] += 1
+        else:
+            self._mini_visited[mini_loc] = 1
+            self._mini_reached += 1
+
+        grid_loc = self._to_grid(self._grid_delta, *global_loc)
+        if grid_loc in self._visited:
+            self._visited[grid_loc] += 1
+            return self._visited[grid_loc]
+        self._visited[grid_loc] = 1
+        self._reached_count += 1
+        return self._visited[grid_loc]
+
+    def update_metric(
+        self, episode, action, task: EmbodiedTask, observations, *args: Any, **kwargs: Any
+    ):
+        current_visit = self._visit(task, observations)
+        self._metric = {
+            "reached": self._reached_count,
+            "mini_reached": self._mini_reached,
+            "visit_count": current_visit,
+            "step": self._step
+        }
+
+
+@registry.register_measure
+class CoverageExplorationReward(Measure):
+    # Parallels ExploreRLEnv in `environments.py`
+
+    cls_uuid: str = "coverage_explore_reward"
+
+    def __init__(self, sim, config, **kwargs: Any):
+        self._sim = sim
+        self._config = config
+        self._attenuation_penalty = 1.0
+        super().__init__()
+
+    def _get_uuid(self, *args: Any, **kwargs: Any):
+        return self.cls_uuid
+
+    def reset_metric(self, episode, task, *args: Any, **kwargs: Any):
+        task.measurements.check_measure_dependencies(
+            self.cls_uuid,
+            [
+                Coverage.cls_uuid,
+            ],
+        )
+        self._attenuation_penalty = 1.0
+        self._metric = 0
+        self.update_metric(episode=episode, task=task, *args, **kwargs)
+
+    def update_metric(
+        self, episode, task: EmbodiedTask, *args: Any, **kwargs: Any
+    ):
+        self._attenuation_penalty *= self._config.ATTENUATION
+        visit = task.measurements.measures[
+            Coverage.cls_uuid
+        ].get_metric()["visit_count"]
+        self._metric = self._attenuation_penalty * self._config.REWARD / (visit ** self._config.VISIT_EXP)
+
+
+@registry.register_measure
+class ExplorationMetrics(Measure):
+    """Semantic exploration measure."""
+
+    cls_uuid: str = "exploration_metrics"
+
+    def __init__(
+        self, sim: Simulator, config: Config, *args: Any, **kwargs: Any
+    ):
+        self._sim = sim
+        self._config = config
+        self.coverage = 0
+        self.sight_coverage = 0
+
+        super().__init__(**kwargs)
+
+    @staticmethod
+    def _get_uuid(*args: Any, **kwargs: Any):
+        return ExplorationMetrics.cls_uuid
+
+    def reset_metric(self, episode, task, *args: Any, **kwargs: Any):
+        task.measurements.check_measure_dependencies(
+            self.uuid, [TopDownMap.cls_uuid]
+        )
+
+        self._metric = {
+            "coverage": 0,
+            "sight_coverage": 0,
+        }
+
+    def get_coverage(self, info):
+        if info is None:
+            return 0
+        top_down_map = info["map"]
+        visted_points = np.where(top_down_map <= 9, 0, 1)
+        coverage = np.sum(visted_points) / self.get_navigable_area(info)
+        return coverage
+
+    def get_navigable_area(self, info):
+        if info is None:
+            return 0
+        top_down_map = info["map"]
+        navigable_area = np.where(((top_down_map == 1) | (top_down_map >= 10)), 1, 0)
+        return np.sum(navigable_area)
+
+    def get_visible_area(self, info):
+        if info is None:
+            return 0
+        fog_of_war_mask = info["fog_of_war_mask"]
+        visible_area = fog_of_war_mask.sum() / self.get_navigable_area(info)
+        if visible_area > 1.0:
+            visible_area = 1.0
+        return visible_area
+
+    def update_metric(self, episode, task, action, *args: Any, **kwargs: Any):        
+        top_down_map = task.measurements.measures[
+            TopDownMap.cls_uuid
+        ].get_metric()
+
+        self.coverage = self.get_coverage(top_down_map)
+        self.sight_coverage = self.get_visible_area(top_down_map)
+
+        self._metric = {
+            "coverage": self.coverage,
+            "sight_coverage": self.sight_coverage,
+        }

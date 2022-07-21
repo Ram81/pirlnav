@@ -206,6 +206,8 @@ class BaseRLTrainer(BaseTrainer):
         prev_actions: Tensor,
         batch: Dict[str, Tensor],
         rgb_frames: Union[List[List[Any]], List[List[ndarray]]],
+        current_episode_entropy: Tensor = None,
+        current_episode_steps: Tensor = None,
     ) -> Tuple[
         Union[VectorEnv, RLEnv, Env],
         Tensor,
@@ -235,6 +237,9 @@ class BaseRLTrainer(BaseTrainer):
 
             rgb_frames = [rgb_frames[i] for i in state_index]
 
+            current_episode_entropy = current_episode_entropy[state_index]
+            current_episode_steps = current_episode_steps[state_index]
+
         return (
             envs,
             test_recurrent_hidden_states,
@@ -243,5 +248,7 @@ class BaseRLTrainer(BaseTrainer):
             prev_actions,
             batch,
             rgb_frames,
+            current_episode_entropy,
+            current_episode_steps,
         )
 

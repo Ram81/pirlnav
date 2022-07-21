@@ -43,7 +43,6 @@ from habitat_baselines.utils.common import batch_obs, linear_decay
 from habitat_baselines.utils.env_utils import construct_envs
 from habitat_baselines.il.env_based.algos.agent import DDPILAgent
 from habitat_baselines.il.env_based.il_trainer import ILEnvTrainer
-# from habitat_baselines.il.env_based.policy.rednet import load_rednet
 from habitat_baselines.il.env_based.policy.semantic_predictor import SemanticPredictor
 
 
@@ -118,14 +117,9 @@ class ILEnvDDPTrainer(ILEnvTrainer):
 
         self.semantic_predictor = None
         if model_config.USE_PRED_SEMANTICS:
-            # self.semantic_predictor = load_rednet(
-            #     self.device,
-            #     ckpt=model_config.SEMANTIC_ENCODER.rednet_ckpt,
-            #     resize=True, # since we train on half-vision
-            #     num_classes=model_config.SEMANTIC_ENCODER.num_classes
-            # )
             self.semantic_predictor = SemanticPredictor(model_config, self.device)
             self.semantic_predictor.eval()
+            self.semantic_predictor.to(self.device)
 
         self.agent = DDPILAgent(
             model=self.policy,
@@ -243,7 +237,8 @@ class ILEnvDDPTrainer(ILEnvTrainer):
             rollouts.observations[sensor][0].copy_(batch[sensor])
             # Use first semantic observations from RedNet predictor as well
             if sensor == "semantic" and self.config.MODEL.USE_PRED_SEMANTICS:
-                semantic_obs = self.semantic_predictor(batch) #["rgb"], batch["depth"])
+                semantic_obs,_, _, _ = self.semantic_predictor(batch)
+
                 # Subtract 1 from class labels for THDA YCB categories
                 if self.config.MODEL.SEMANTIC_ENCODER.is_thda and self.config.MODEL.SEMANTIC_PREDICTOR.name == "rednet":
                     semantic_obs = semantic_obs - 1
@@ -273,6 +268,8 @@ class ILEnvDDPTrainer(ILEnvTrainer):
         count_checkpoints = 0
         start_update = 0
         prev_time = 0
+        batch_end_time, inf_end_time, softmax_time = 0, 0, 0
+        ent_time = 0
 
         lr_scheduler = LambdaLR(
             optimizer=self.agent.optimizer,
@@ -349,12 +346,21 @@ class ILEnvDDPTrainer(ILEnvTrainer):
                         delta_pth_time,
                         delta_env_time,
                         delta_steps,
+                        delta_batch_end_time,
+                        delta_inf_end_time,
+                        delta_softmax_time,
+                        delta_ent_time,
                     ) = self._collect_rollout_step(
                         rollouts, current_episode_reward, running_episode_stats
                     )
                     pth_time += delta_pth_time
                     env_time += delta_env_time
                     count_steps_delta += delta_steps
+                    batch_end_time += delta_batch_end_time
+                    inf_end_time += delta_inf_end_time
+                    softmax_time += delta_softmax_time
+                    ent_time += delta_ent_time
+                    #logger.info("step: {}".format(step))
 
                     # This is where the preemption of workers happens.  If a
                     # worker detects it will be a straggler, it preempts itself!
@@ -368,6 +374,7 @@ class ILEnvDDPTrainer(ILEnvTrainer):
                 profiling_wrapper.range_pop()  # rollouts loop
 
                 num_rollouts_done_store.add("num_done", 1)
+                #logger.info("update: {}".format(update))
 
                 self.agent.train()
                 (
@@ -441,9 +448,9 @@ class ILEnvDDPTrainer(ILEnvTrainer):
                         )
 
                         logger.info(
-                            "update: {}\tenv-time: {:.3f}s\tpth-time: {:.3f}s\t"
+                            "update: {}\tenv-time: {:.3f}s\tpth-time: {:.3f}s\tbathc-time: {:.3f}s\t inf-time: {:.3f}s\t soft-time: {:.3f}s\t after-infer-time: {:.3f}s\t"
                             "frames: {}".format(
-                                update, env_time, pth_time, count_steps
+                                update, env_time, pth_time, batch_end_time, inf_end_time, softmax_time, ent_time, count_steps
                             )
                         )
                         logger.info(

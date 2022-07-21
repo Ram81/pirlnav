@@ -16,6 +16,7 @@ from habitat.tasks.nav.object_nav_task import (
     ObjectGoalSensor,
     task_cat2mpcat40,
     task_cat2hm3dcat40,
+    task_cat2hm3d_shapeconv_cat,
     mapping_mpcat40_to_goal21,
 )
 from habitat_baselines.il.common.encoders.resnet_encoders import (
@@ -112,11 +113,16 @@ class ObjectNavILNet(Net):
             rnn_input_size += sem_seg_output_size
 
             self.embed_sge = model_config.embed_sge
+            self.is_rednet = (model_config.SEMANTIC_PREDICTOR.name == "rednet")
             if self.embed_sge:
                 self.task_cat2mpcat40 = torch.tensor(task_cat2mpcat40, device=device)
-                if model_config.hm3d_goal:
-                    self.task_cat2mpcat40 = torch.tensor(task_cat2hm3dcat40, device=device)
-                    logger.info("Setting up HM3D goal map")
+                if not self.is_rednet:
+                    self.task_cat2mpcat40 = torch.tensor(task_cat2hm3d_shapeconv_cat, device=device)
+                    logger.info("Setting up ShapeConv goal map")
+                else:
+                    if model_config.hm3d_goal:
+                        self.task_cat2mpcat40 = torch.tensor(task_cat2hm3dcat40, device=device)
+                        logger.info("Setting up RedNet HM3D goal map")
                 self.mapping_mpcat40_to_goal = np.zeros(
                     max(
                         max(mapping_mpcat40_to_goal21.keys()) + 1,
@@ -205,12 +211,13 @@ class ObjectNavILNet(Net):
                 )
 
             idx = observations["objectgoal"].long()
-            if not self.is_hm3d:
+            if self.is_rednet:
                 idx = self.task_cat2mpcat40[idx]
+
+                if self.is_thda:
+                    idx = self.mapping_mpcat40_to_goal[idx].long()
             else:
-                idx += 1
-            if self.is_thda:
-                idx = self.mapping_mpcat40_to_goal[idx].long()
+                idx = self.task_cat2mpcat40[idx]
             idx = idx.to(obj_semantic.device)
 
             if len(idx.size()) == 3:

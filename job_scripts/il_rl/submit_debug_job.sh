@@ -6,7 +6,6 @@
 #SBATCH --ntasks-per-node 1
 #SBATCH --signal=USR1@300
 #SBATCH --partition=debug
-#SBATCH --qos=ram-special
 #SBATCH --constraint=a40
 #SBATCH --output=slurm_logs/ddp-il-rl-%j.out
 #SBATCH --error=slurm_logs/ddp-il-rl-%j.err

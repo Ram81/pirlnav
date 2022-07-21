@@ -1,14 +1,13 @@
 #!/bin/bash
 #SBATCH --job-name=onav_il
-#SBATCH --gres gpu:1
+#SBATCH --gres gpu:8
 #SBATCH --nodes 1
 #SBATCH --cpus-per-task 6
-#SBATCH --ntasks-per-node 1
+#SBATCH --ntasks-per-node 8
 #SBATCH --signal=USR1@1000
-#SBATCH --mem=160
-#SBATCH --partition=debug,user-overcap
-#SBATCH --qos=ram-special
+#SBATCH --partition=long
 #SBATCH --constraint=a40
+#SBATCH --exclude=robby,chappie
 #SBATCH --output=slurm_logs/ddpil-%j.out
 #SBATCH --error=slurm_logs/ddpil-%j.err
 #SBATCH --requeue
@@ -25,9 +24,9 @@ export MASTER_ADDR
 
 config=$1
 
-DATA_PATH="data/datasets/objectnav/objectnav_hm3d/objectnav_hm3d_s_path"
-TENSORBOARD_DIR="tb/objectnav_il/objectnav_hm3d/objectnav_hm3d_s_path/sem_seg_pred/seed_1/"
-CHECKPOINT_DIR="data/new_checkpoints/objectnav_il/objectnav_hm3d/objectnav_hm3d_s_path/sem_seg_pred/seed_1/"
+DATA_PATH="data/datasets/objectnav/objectnav_hm3d/objectnav_hm3d_10k"
+TENSORBOARD_DIR="tb/objectnav_il/objectnav_hm3d/objectnav_hm3d_10k/sem_seg_pred_shapeconv/seed_2/"
+CHECKPOINT_DIR="data/new_checkpoints/objectnav_il/objectnav_hm3d/objectnav_hm3d_10k/sem_seg_pred_shapeconv/seed_2/"
 INFLECTION_COEF=3.234951275740812
 set -x
 
@@ -47,7 +46,6 @@ TASK_CONFIG.DATASET.DATA_PATH "$DATA_PATH/{split}/{split}.json.gz" \
 MODEL.hm3d_goal True \
 MODEL.USE_SEMANTICS True \
 MODEL.USE_PRED_SEMANTICS True \
-MODEL.SEMANTIC_PREDICTOR.REDNET.pretrained_weights "data/rednet-models/rednet_semmap_mp3d_40_v2_vince.pth" \
-MODEL.SEMANTIC_PREDICTOR.REDNET.num_classes 29 \
-MODEL.SEMANTIC_ENCODER.is_hm3d False \
-MODEL.SEMANTIC_ENCODER.is_thda True \
+MODEL.SEMANTIC_PREDICTOR.name "shapeconv"
+MODEL.SEMANTIC_PREDICTOR.SHAPECONV.config "configs/semantic_predictor/shapeconv/hm3d_deeplabv3plus_resnet101_baseline.py" \
+MODEL.SEMANTIC_PREDICTOR.SHAPECONV.pretrained_weights "data/new_checkpoints/mmdet/semantic_predictor/shapeconv/shapeconv_23cat_best_class_acc_with_bg.pth" \

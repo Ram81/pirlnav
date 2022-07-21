@@ -22,17 +22,12 @@ from habitat.core.utils import not_none_validator
 from habitat.tasks.nav.nav import (
     merge_sim_episode_config,
     DistanceToGoal,
-    TopDownMap,
-    EpisodicGPSSensor,
     PointGoalSensor
 )
-from habitat.core.dataset import Dataset, Episode
-from habitat.core.embodied_task import SimulatorTaskAction, Measure
-from habitat.sims.habitat_simulator.actions import (
-    HabitatSimActions,
-    HabitatSimV1ActionSpaceConfiguration,
-)
-from habitat.tasks.utils import get_habitat_sim_action, get_habitat_sim_action_str
+from habitat.tasks.nav.object_nav_task import Coverage
+from habitat.core.dataset import Episode
+from habitat.core.embodied_task import Measure
+from habitat.tasks.utils import get_habitat_sim_action
 from habitat.sims.habitat_simulator.habitat_simulator import HabitatSim
 
 
@@ -595,163 +590,6 @@ class GoalObjectVisible(Measure):
                 goal_visible_pixels = (semantic_obs == idx).sum() # Sum over all since we're not batched
                 goal_visible_area = goal_visible_pixels / semantic_obs.size
                 self._metric = goal_visible_area
-
-
-@registry.register_measure
-class Coverage(Measure):
-    """Coverage
-    Number of visited squares in a gridded environment
-    - this is not exactly what we want to reward, but a decent starting point
-    - the semantic coverage is agent-based i.e. we should reward new visuals/objects discovered
-    - Note, internal grid has origin at bottom left
-    EGOCENTRIC -- center + align the coverage reward.
-    """
-    cls_uuid: str = "coverage"
-
-    def __init__(self, sim, config, **kwargs: Any):
-        self._sim = sim
-        self._config = config
-
-        self._visited = None  # number of visits
-        self._mini_visited = None
-        self._step = None
-        self._reached_count = None
-        self._mini_reached = None
-        self._mini_delta = 0.5
-        self._grid_delta = config.GRID_DELTA
-        super().__init__()
-
-    def _get_uuid(self, *args: Any, **kwargs: Any):
-        return self.cls_uuid
-
-    def _to_grid(self, delta, sim_x, sim_y, sim_z=0):
-        # ! Note we actually get sim_x, sim_z in 2D case but that doesn't affect code
-        grid_x = int((sim_x) / delta)
-        grid_y = int((sim_y) / delta)
-        grid_z = int((sim_z) / delta)
-        return grid_x, grid_y, grid_z
-
-    def reset_metric(self, episode, task, observations, *args: Any, **kwargs: Any):
-        self._visited = {}
-        self._mini_visited = {}
-        self._reached_count = 0
-        # Used for coverage prediction (not elegant, I know)
-        self._mini_reached = 0
-        self._step = 0  # Tracking episode length
-        current_visit = self._visit(task, observations)
-        self._metric = {
-            "reached": self._reached_count,
-            "mini_reached": self._mini_reached,
-            "visit_count": current_visit,
-            "step": self._step
-        }
-
-    def _visit(self, task, observations):
-        """ Returns number of times visited current square """
-        self._step += 1
-        if self._config.EGOCENTRIC:
-            global_loc = observations[EpisodicGPSSensor.cls_uuid]
-        else:
-            global_loc = self._sim.get_agent_state().position.tolist()
-
-        mini_loc = self._to_grid(self._mini_delta, *global_loc)
-        if mini_loc in self._mini_visited:
-            self._mini_visited[mini_loc] += 1
-        else:
-            self._mini_visited[mini_loc] = 1
-            self._mini_reached += 1
-
-        grid_loc = self._to_grid(self._grid_delta, *global_loc)
-        if grid_loc in self._visited:
-            self._visited[grid_loc] += 1
-            return self._visited[grid_loc]
-        self._visited[grid_loc] = 1
-        self._reached_count += 1
-        return self._visited[grid_loc]
-
-    def update_metric(
-        self, episode, action, task: EmbodiedTask, observations, *args: Any, **kwargs: Any
-    ):
-        current_visit = self._visit(task, observations)
-        self._metric = {
-            "reached": self._reached_count,
-            "mini_reached": self._mini_reached,
-            "visit_count": current_visit,
-            "step": self._step
-        }
-
-
-@registry.register_measure
-class CoverageExplorationReward(Measure):
-    # Parallels ExploreRLEnv in `environments.py`
-
-    cls_uuid: str = "coverage_explore_reward"
-
-    def __init__(self, sim, config, **kwargs: Any):
-        self._sim = sim
-        self._config = config
-        self._attenuation_penalty = 1.0
-        super().__init__()
-
-    def _get_uuid(self, *args: Any, **kwargs: Any):
-        return self.cls_uuid
-
-    def reset_metric(self, episode, task, *args: Any, **kwargs: Any):
-        task.measurements.check_measure_dependencies(
-            self.cls_uuid,
-            [
-                Coverage.cls_uuid,
-            ],
-        )
-        self._attenuation_penalty = 1.0
-        self._metric = 0
-        self.update_metric(episode=episode, task=task, *args, **kwargs)
-
-    def update_metric(
-        self, episode, task: EmbodiedTask, *args: Any, **kwargs: Any
-    ):
-        self._attenuation_penalty *= self._config.ATTENUATION
-        visit = task.measurements.measures[
-            Coverage.cls_uuid
-        ].get_metric()["visit_count"]
-        self._metric = self._attenuation_penalty * self._config.REWARD / (visit ** self._config.VISIT_EXP)
-
-
-@registry.register_measure
-class ExploreThenNavReward(CoverageExplorationReward):
-    # Stop count-based coverage once goal is seen
-
-    cls_uuid: str = "explore_then_nav_reward"
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self._goal_was_seen = False
-        self._previous_measure = None
-
-    def reset_metric(self, episode, task, *args, **kwargs):
-        task.measurements.check_measure_dependencies(
-            self.cls_uuid,
-            [
-                Coverage.cls_uuid,
-                GoalObjectVisible.cls_uuid,
-                DistanceToGoal.cls_uuid,
-            ]
-        )
-        self._goal_was_seen = False
-        self._previous_measure = None
-        super().reset_metric(episode, task, *args, **kwargs)
-
-    def update_metric(
-        self, episode, task: EmbodiedTask, *args: Any, **kwargs: Any
-    ):
-        if self._goal_was_seen:
-            measure = task.measurements.measures[DistanceToGoal.cls_uuid].get_metric()
-            self._metric = self._previous_measure - measure
-            return
-        goal_vis = task.measurements.measures[GoalObjectVisible.cls_uuid].get_metric()
-        if goal_vis > self._config.EXPLORE_GOAL_SEEN_THRESHOLD:
-            self._goal_was_seen = True
-            self._previous_measure = task.measurements.measures[DistanceToGoal.cls_uuid].get_metric()
-        super().update_metric(*args, episode, task, **kwargs)
 
 
 @registry.register_measure
