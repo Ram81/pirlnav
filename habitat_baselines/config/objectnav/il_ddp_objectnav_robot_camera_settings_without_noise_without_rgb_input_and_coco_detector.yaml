@@ -38,13 +38,6 @@ WANDB:
   LOG_DIR: "wandb/"
 
 IL:
-  OBS_TRANSFORMS:
-    ENABLED_TRANSFORMS: ["DepthRescale"]
-    DepthRescale:
-      input_min_depth: 0.5
-      input_max_depth: 4.0
-      output_min_depth: 0.0
-      output_max_depth: 10.0
   POLICY:
     name: "ObjectNavILPolicy"
   USE_IW: True
@@ -98,7 +91,7 @@ MODEL:
     is_hm3d: False
     is_thda: True
   RGB_ENCODER:
-    cnn_type: "ResnetRGBEncoder"
+    cnn_type: "None"
     output_size: 256
     backbone: "resnet18"
     train_encoder: True
