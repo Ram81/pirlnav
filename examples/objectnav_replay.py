@@ -1,10 +1,13 @@
 import argparse
 import habitat
 import os
+import torch
 
 from PIL import Image
 from habitat.utils.visualizations.utils import observations_to_image, images_to_video, append_text_to_image
 from scripts.parsing.parse_objectnav_dataset import write_json
+
+from habitat_baselines.il.env_based.policy.semantic_predictor import SemanticPredictor
 
 config = habitat.get_config("configs/tasks/objectnav_mp3d_il.yaml")
 
@@ -19,14 +22,25 @@ def save_image(img, file_name):
     im.save("demos/" + file_name)
 
 
+def get_semantic_predictor(config):
+    device = torch.device("cuda", 0)
+    semantic_predictor = SemanticPredictor(config.MODEL, device)
+    semantic_predictor.eval()
+    semantic_predictor.to(device)
+    return semantic_predictor
+
+
 def run_reference_replay(
     cfg,
     num_episodes=None,
     output_prefix=None,
     append_instruction=False,
     save_videos=False,
-    save_step_image=False
+    save_step_image=False,
+    config=None
 ):
+    semantic_predictor = get_semantic_predictor(config)
+
     possible_actions = cfg.TASK.POSSIBLE_ACTIONS  
     with habitat.Env(cfg) as env:
         total_success = 0
@@ -51,8 +65,11 @@ def run_reference_replay(
 
                 observations = env.step(action=action)
 
+                obs_semantic = semantic_predictor({"rgb": torch.tensor(observations["rgb"]).unsqueeze(0).cuda(), "depth": torch.tensor(observations["depth"]).unsqueeze(0).cuda()})
+
+
                 info = env.get_metrics()
-                frame = observations_to_image({"rgb": observations["rgb"]}, info)
+                frame = observations_to_image({"rgb": observations["rgb"], "semantic": obs_semantic[0].permute(1,2,0).long().cpu().numpy()}, info)
 
                 if append_instruction:
                     frame = append_text_to_image(frame, "Find and go to {}".format(episode.object_category))
@@ -111,6 +128,9 @@ def main():
     parser.add_argument(
         "--save-step-image", dest="save_step_image", action="store_true"
     )
+    parser.add_argument(
+        "--detector-config", type=str, default="path"
+    )
     args = parser.parse_args()
     cfg = config
     cfg.defrost()
@@ -119,13 +139,16 @@ def main():
     cfg.ENVIRONMENT.MAX_EPISODE_STEPS = args.max_steps
     cfg.freeze()
 
+    model_config = habitat.get_config(args.detector_config)
+
     run_reference_replay(
         cfg,
         num_episodes=args.num_episodes,
         output_prefix=args.output_prefix,
         append_instruction=args.append_instruction,
         save_videos=args.save_videos,
-        save_step_image=args.save_step_image
+        save_step_image=args.save_step_image,
+        config=model_config,
     )
 
 

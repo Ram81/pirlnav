@@ -71,7 +71,7 @@ MODEL:
   USE_PRED_SEMANTICS: True
   SWITCH_TO_PRED_SEMANTICS_UPDATE: 0
   SEMANTIC_PREDICTOR:
-    name: "rednet"
+    name: "shapeconv"
     REDNET:
       pretrained_weights: "data/rednet-models/rednet_semmap_mp3d_40_v2_vince.pth"
       # pretrained_weights: "data/rednet-models/rednet_semmap_hm3d_6.pth"

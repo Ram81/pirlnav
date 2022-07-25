@@ -25,8 +25,8 @@ export MASTER_ADDR
 config=$1
 DATA_PATH="data/datasets/objectnav/objectnav_hm3d/objectnav_hm3d_v1"
 # TENSORBOARD_DIR="tb/objectnav_il/objectnav_hm3d/objectnav_hm3d_s_path_240k/sem_seg_pred/seed_1/v1_fixed_evals/ckpt_16_val_2/"
-TENSORBOARD_DIR="tb/objectnav_il/objectnav_hm3d/objectnav_hm3d_10k/sem_seg_pred_shapeconv/seed_2/ckpt_23_val/"
-EVAL_CKPT_PATH_DIR="data/new_checkpoints/objectnav_il/objectnav_hm3d/objectnav_hm3d_10k/sem_seg_pred_shapeconv/seed_2/ckpt.23.pth"
+TENSORBOARD_DIR="tb/objectnav_il/objectnav_hm3d/objectnav_hm3d_10k/sem_seg_pred_shapeconv_depth_fix/seed_1/ckpt_16_val/"
+EVAL_CKPT_PATH_DIR="data/new_checkpoints/objectnav_il/objectnav_hm3d/objectnav_hm3d_10k/sem_seg_pred_shapeconv_depth_fix/seed_1/ckpt.16.pth"
 set -x
 
 echo "In ObjectNav IL DDP"
@@ -46,7 +46,9 @@ TASK_CONFIG.DATASET.DATA_PATH "$DATA_PATH/{split}/{split}.json.gz" \
 MODEL.hm3d_goal True \
 MODEL.USE_SEMANTICS True \
 MODEL.USE_PRED_SEMANTICS True \
-MODEL.SEMANTIC_PREDICTOR.name "shapeconv"
+MODEL.SEMANTIC_ENCODER.is_hm3d False \
+MODEL.SEMANTIC_ENCODER.is_thda False \
+MODEL.SEMANTIC_PREDICTOR.name "shapeconv" \
 MODEL.SEMANTIC_PREDICTOR.SHAPECONV.config "configs/semantic_predictor/shapeconv/hm3d_deeplabv3plus_resnet101_baseline.py" \
 MODEL.SEMANTIC_PREDICTOR.SHAPECONV.pretrained_weights "data/new_checkpoints/mmdet/semantic_predictor/shapeconv/shapeconv_23cat_best_class_acc_with_bg.pth" \
 

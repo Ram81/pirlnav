@@ -190,13 +190,14 @@ def observations_to_image(observation: Dict, info: Dict, top_down_map_only=False
         egocentric_view_l.append(depth_map)
 
     if "semantic" in observation:
-        # semantic_map = observation["semantic"].squeeze()
-        # if not isinstance(semantic_map, np.ndarray):
-        #     semantic_map = semantic_map.cpu().numpy()
-        # colors = make_rgb_palette(45)
-        # semantic_colors = colors[semantic_map % 45] * 255
-        # semantic_colors = semantic_colors.astype(np.uint8)
-        egocentric_view_l.append(observation["semantic"])
+        semantic_map = observation["semantic"].squeeze()
+        if not isinstance(semantic_map, np.ndarray):
+            semantic_map = semantic_map.cpu().numpy()
+        colors = make_rgb_palette(45)
+        semantic_colors = colors[semantic_map % 45] * 255
+        semantic_colors = semantic_colors.astype(np.uint8)
+        # egocentric_view_l.append(observation["semantic"])
+        egocentric_view_l.append(semantic_colors)
 
         if "gt_semantic" in observation:
             # semantic_map = observation["gt_semantic"].squeeze()

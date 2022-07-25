@@ -30,6 +30,9 @@ class SemanticPredictor(nn.Module):
         self.predictor = None
         self.device = device
 
+        self.MAX_DEPTH = 5.0
+        self.MIN_DEPTH = 0.5
+
         self.is_shapeconv = None
         if model_config.SEMANTIC_PREDICTOR.name == "shapeconv":
             self.is_shapeconv = True
@@ -62,13 +65,17 @@ class SemanticPredictor(nn.Module):
         rgb_embedding: [batch_size x RGB_ENCODER.output_size]
         """
         rgb_obs = observations["rgb"]
-        depth_obs = observations["depth"]
+        depth_obs = observations["depth"].clone()
         x = None
         batch_end_time, inf_end_time, softmax_time = 0,0,0
         if self.is_shapeconv:
             with torch.no_grad():
                 st_time = time.time()
-                rgbd_frame = [rgb_obs, depth_obs * 1000.0]
+
+                # unnormalize dept
+                depth_obs = ((depth_obs * (self.MAX_DEPTH - self.MIN_DEPTH)) + self.MIN_DEPTH) * 1000.0
+
+                rgbd_frame = [rgb_obs, depth_obs]
                 rgbd_frame = torch.cat(rgbd_frame, dim=-1).permute(0, 3, 1, 2)
                 batch_end_time = time.time() - st_time
 
