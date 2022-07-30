@@ -5,8 +5,11 @@
 # LICENSE file in the root directory of this source tree.
 
 import torch
+import time
 
 from collections import defaultdict
+from torch_geometric.data import Batch
+from habitat import logger
 
 
 class RolloutStorage:
@@ -20,8 +23,10 @@ class RolloutStorage:
         action_space,
         recurrent_hidden_state_size,
         num_recurrent_layers=1,
+        use_gcn=False,
     ):
         self.observations = {}
+        self.use_gcn = use_gcn
 
         for sensor in observation_space.spaces:
             self.observations[sensor] = torch.zeros(
@@ -29,6 +34,10 @@ class RolloutStorage:
                 num_envs,
                 *observation_space.spaces[sensor].shape
             )
+
+        self.scene_graph = {}
+        self.scene_graph["graphs"] = [[] for _ in range(num_steps + 1)]
+        self.scene_graph["graphs_batch"] = [[] for _ in range(num_steps + 1)]
 
         self.recurrent_hidden_states = torch.zeros(
             1,
@@ -75,11 +84,16 @@ class RolloutStorage:
         actions,
         rewards,
         masks,
+        graphs,
     ):
         for sensor in observations:
             self.observations[sensor][self.step + 1].copy_(
                 observations[sensor]
             )
+        
+        if graphs is not None and self.use_gcn:
+            self.scene_graph["graphs"][self.step + 1] = graphs
+
         self.actions[self.step].copy_(actions)
         self.prev_actions[self.step + 1].copy_(actions)
         self.rewards[self.step].copy_(rewards)
@@ -99,6 +113,9 @@ class RolloutStorage:
                 self.observations[sensor][self.step]
             )
 
+        if self.use_gcn:
+            self.scene_graph["graphs"][0] = self.scene_graph["graphs"][self.step]
+
         self.recurrent_hidden_states[0].copy_(
             rnn_hidden_states.detach()
         )
@@ -110,6 +127,9 @@ class RolloutStorage:
         next_action_observations = self.observations["demonstration"][self.step]
         actions = next_action_observations.clone()
         return actions
+    
+    def get_scene_graph_batch(self):
+        pass
 
     def recurrent_generator(self, num_mini_batch):
         num_processes = self.rewards.size(1)
@@ -128,6 +148,7 @@ class RolloutStorage:
             prev_actions_batch = []
             masks_batch = []
             index_batch = []
+            scene_graph_batch = []
 
             for offset in range(num_envs_per_batch):
                 # ind = perm[start_ind + offset]
@@ -149,6 +170,31 @@ class RolloutStorage:
                 prev_actions_batch.append(self.prev_actions[: self.step, ind])
                 masks_batch.append(self.masks[: self.step, ind])
                 index_batch.append(ind)
+
+            st_time = time.time()
+            scene_graph_batch = None
+            scene_graph_index_batch = None
+            if self.use_gcn:
+                scene_graph_batch = []
+                scene_graph_index_batch = []
+                graph_batch_count = 0
+                for step in range(self.step):
+                    local_graph_index_batch = []
+                    local_graph_batch = []                
+                    for offset in range(num_envs_per_batch):
+                        ind = start_ind + offset
+                        local_graph_index_batch.append(torch.ones(self.scene_graph["graphs"][step][ind].nodes.shape[0]) * graph_batch_count)
+                        local_graph_batch.append(self.scene_graph["graphs"][step][ind])
+                        graph_batch_count += 1
+
+                    scene_graph_index_batch.append(torch.cat(local_graph_index_batch))
+                    scene_graph_batch.extend(local_graph_batch)
+                scene_graph_batch = Batch.from_data_list(scene_graph_batch) #.to(self.device)
+                scene_graph_index_batch = torch.cat(scene_graph_index_batch).long().to(actions_batch[0].device)
+            end_time = time.time() - st_time
+            #logger.info("graph batch time: {}".format(end_time))
+
+            #logger.info("num graphs: {}: {}".format(scene_graph_batch.num_graphs, scene_graph_index_batch.max()))
 
             T, N = self.step, num_envs_per_batch
 
@@ -173,7 +219,10 @@ class RolloutStorage:
                 actions_batch,
                 prev_actions_batch,
                 masks_batch,
-                index_batch
+                index_batch,
+                scene_graph_batch,
+                scene_graph_index_batch,
+                end_time,
             )
 
     @staticmethod

@@ -23,6 +23,7 @@ from habitat_baselines.il.common.encoders.resnet_encoders import (
     ResnetRGBEncoder,
     ResnetSemSeqEncoder,
 )
+from habitat_baselines.il.common.encoders.gcn import LocalGCNEncoder
 from habitat_baselines.rl.models.rnn_state_encoder import RNNStateEncoder
 from habitat_baselines.common.baseline_registry import baseline_registry
 from habitat_baselines.rl.ppo import Net, Policy
@@ -79,56 +80,19 @@ class ObjectNavILNet(Net):
             self.rgb_encoder = None
             logger.info("RGB encoder is none")
 
-        sem_seg_output_size = 0
-        self.semantic_predictor = None
-        self.is_thda = False
-        self.is_hm3d = False
-        if model_config.USE_SEMANTICS:
-            logger.info("\n\nSetting up semantic sensor")
-            sem_embedding_size = model_config.SEMANTIC_ENCODER.embedding_size
-
-            self.is_thda = model_config.SEMANTIC_ENCODER.is_thda
-            self.is_hm3d = model_config.SEMANTIC_ENCODER.is_hm3d
-            rgb_shape = observation_space.spaces["rgb"].shape
-            spaces = {
-                "semantic": Box(
-                    low=0,
-                    high=255,
-                    shape=(rgb_shape[0], rgb_shape[1], sem_embedding_size),
-                    dtype=np.uint8,
-                ),
-            }
-            sem_obs_space = Dict(spaces)
-            self.sem_seg_encoder = ResnetSemSeqEncoder(
-                sem_obs_space,
-                output_size=model_config.SEMANTIC_ENCODER.output_size,
-                backbone=model_config.SEMANTIC_ENCODER.backbone,
-                trainable=model_config.SEMANTIC_ENCODER.train_encoder,
-                semantic_embedding_size=sem_embedding_size,
-                is_thda=self.is_thda
+        self.gcn_encoder = None
+        self.ablate_gcn = False
+        if model_config.SPATIAL_ENCODER.gcn_type == "local_gcn_encoder":
+            self.gcn_encoder = LocalGCNEncoder(
+                node_feature_dim=model_config.SPATIAL_ENCODER.node_features_dim,
+                hidden_feature_dim=model_config.SPATIAL_ENCODER.hidden_features_dim,
+                out_feature_dim=model_config.SPATIAL_ENCODER.out_features_dim,
+                embedding_dim=model_config.SPATIAL_ENCODER.embedding_dim,
+                gcn_config=model_config.SPATIAL_ENCODER,
             )
-            sem_seg_output_size = model_config.SEMANTIC_ENCODER.output_size
-            logger.info("Setting up Sem Seg model")
-            rnn_input_size += sem_seg_output_size
-
-            self.embed_sge = model_config.embed_sge
-            if self.embed_sge:
-                self.task_cat2mpcat40 = torch.tensor(task_cat2mpcat40, device=device)
-                if model_config.hm3d_goal:
-                    self.task_cat2mpcat40 = torch.tensor(task_cat2hm3dcat40, device=device)
-                    logger.info("Setting up HM3D goal map")
-                self.mapping_mpcat40_to_goal = np.zeros(
-                    max(
-                        max(mapping_mpcat40_to_goal21.keys()) + 1,
-                        50,
-                    ),
-                    dtype=np.int8,
-                )
-
-                for key, value in mapping_mpcat40_to_goal21.items():
-                    self.mapping_mpcat40_to_goal[key] = value
-                self.mapping_mpcat40_to_goal = torch.tensor(self.mapping_mpcat40_to_goal, device=device)
-                rnn_input_size += 1
+            rnn_input_size += model_config.SPATIAL_ENCODER.out_features_dim
+            self.ablate_gcn = model_config.SPATIAL_ENCODER.ablate_gcn
+            logger.info("Initializing GCN encoder")
 
         if EpisodicGPSSensor.cls_uuid in observation_space.spaces:
             input_gps_dim = observation_space.spaces[
@@ -158,8 +122,6 @@ class ObjectNavILNet(Net):
                 )
                 + 1
             )
-            if self.is_thda:
-                self._n_object_categories = 28
             logger.info("Object categories: {}".format(self._n_object_categories))
             self.obj_categories_embedding = nn.Embedding(
                 self._n_object_categories, 32
@@ -194,33 +156,7 @@ class ObjectNavILNet(Net):
     def num_recurrent_layers(self):
         return self.state_encoder.num_recurrent_layers
 
-    def _extract_sge(self, observations):
-        # recalculating to keep this self-contained instead of depending on training infra
-        if "semantic" in observations and "objectgoal" in observations:
-            obj_semantic = observations["semantic"].contiguous().flatten(start_dim=1)
-            
-            if len(observations["objectgoal"].size()) == 3:
-                observations["objectgoal"] = observations["objectgoal"].contiguous().view(
-                    -1, observations["objectgoal"].size(2)
-                )
-
-            idx = observations["objectgoal"].long()
-            if not self.is_hm3d:
-                idx = self.task_cat2mpcat40[idx]
-            else:
-                idx += 1
-            if self.is_thda:
-                idx = self.mapping_mpcat40_to_goal[idx].long()
-            idx = idx.to(obj_semantic.device)
-
-            if len(idx.size()) == 3:
-                idx = idx.squeeze(1)
-
-            goal_visible_pixels = (obj_semantic == idx).sum(dim=1)
-            goal_visible_area = torch.true_divide(goal_visible_pixels, obj_semantic.size(-1)).float()
-            return goal_visible_area.unsqueeze(-1)
-
-    def forward(self, observations, rnn_hidden_states, prev_actions, masks):
+    def forward(self, observations, rnn_hidden_states, prev_actions, masks, scene_graphs=None, scene_graph_index=None):
         r"""
         instruction_embedding: [batch_size x INSTRUCTION_ENCODER.output_size]
         depth_embedding: [batch_size x DEPTH_ENCODER.output_size]
@@ -248,19 +184,13 @@ class ObjectNavILNet(Net):
 
             rgb_embedding = self.rgb_encoder(observations)
             x.append(rgb_embedding)
+        
+        if self.gcn_encoder is not None:
+            scene_graph_embedding = self.gcn_encoder(scene_graphs, scene_graph_index)
 
-        if self.model_config.USE_SEMANTICS:
-            semantic_obs = observations["semantic"]
-            if len(semantic_obs.size()) == 4:
-                observations["semantic"] = semantic_obs.contiguous().view(
-                    -1, semantic_obs.size(2), semantic_obs.size(3)
-                )
-            if self.embed_sge:
-                sge_embedding = self._extract_sge(observations)
-                x.append(sge_embedding)
-
-            sem_seg_embedding = self.sem_seg_encoder(observations)
-            x.append(sem_seg_embedding)
+            if self.ablate_gcn:
+                scene_graph_embedding = scene_graph_embedding * 0
+            x.append(scene_graph_embedding)
 
         if EpisodicGPSSensor.cls_uuid in observations:
             obs_gps = observations[EpisodicGPSSensor.cls_uuid]
@@ -293,7 +223,7 @@ class ObjectNavILNet(Net):
                 ((prev_actions.float() + 1) * masks).long().view(-1)
             )
             x.append(prev_actions_embedding)
-        
+
         x = torch.cat(x, dim=1)
         x, rnn_hidden_states = self.state_encoder(x, rnn_hidden_states, masks)
 

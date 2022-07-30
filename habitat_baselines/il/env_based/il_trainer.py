@@ -9,7 +9,7 @@ import time
 import wandb
 
 from collections import defaultdict, deque
-from typing import Any, DefaultDict, Dict, List, Optional
+from typing import Any, DefaultDict, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import torch
@@ -37,9 +37,11 @@ from habitat_baselines.utils.common import (
     linear_decay,
 )
 from habitat_baselines.utils.env_utils import construct_envs
-# from habitat_baselines.il.env_based.policy.rednet import load_rednet
 from habitat_baselines.il.env_based.policy.semantic_predictor import SemanticPredictor
+from habitat_baselines.il.env_based.policy.detector import InstanceDetector
 from scripts.utils.utils import write_json
+
+from torch_geometric.data import Batch
 
 
 @baseline_registry.register_trainer(name="il-trainer")
@@ -110,14 +112,13 @@ class ILEnvTrainer(BaseRLTrainer):
 
         self.semantic_predictor = None
         if model_config.USE_PRED_SEMANTICS:
-            # self.semantic_predictor = load_rednet(
-            #     self.device,
-            #     ckpt=model_config.SEMANTIC_ENCODER.rednet_ckpt,
-            #     resize=True, # since we train on half-vision
-            #     num_classes=model_config.SEMANTIC_ENCODER.num_classes
-            # )
             self.semantic_predictor = SemanticPredictor(model_config, self.device)
             self.semantic_predictor.eval()
+
+        self.detector = None
+        if model_config.USE_DETECTOR:
+            self.detector = InstanceDetector(model_config, self.device)
+            self.detector.eval()
 
         self.agent = ILAgent(
             model=self.policy,
@@ -268,6 +269,14 @@ class ILEnvTrainer(BaseRLTrainer):
             # Subtract 1 from class labels for THDA YCB categories
             if self.config.MODEL.SEMANTIC_ENCODER.is_thda and self.config.MODEL.SEMANTIC_PREDICTOR.name == "rednet":
                 batch["semantic"] = batch["semantic"] - 1
+
+        graphs = None
+        bt_time, ct_time, inf_time, det_batch_time, det_rbatch_time, det_edge_b_time = 0,0,0,0,0,0
+        gf_end_time = 0
+        if self.config.MODEL.USE_DETECTOR:
+            graphs, bt_time, ct_time, inf_time, det_batch_time, det_rbatch_time, det_edge_b_time, gf_end_time = self.detector(batch)
+            # graphs = None
+
         batch = apply_obs_transforms_batch(batch, self.obs_transforms)
 
         rewards = torch.tensor(
@@ -302,23 +311,25 @@ class ILEnvTrainer(BaseRLTrainer):
             actions,
             rewards,
             masks,
+            graphs,
         )
 
         pth_time += time.time() - t_update_stats
 
-        return pth_time, env_time, self.envs.num_envs
+        return pth_time, env_time, self.envs.num_envs, bt_time, ct_time, inf_time, det_batch_time, det_rbatch_time, det_edge_b_time, gf_end_time
 
     @profiling_wrapper.RangeContext("_update_agent")
     def _update_agent(self, ppo_cfg, rollouts):
         t_update_model = time.time()
 
-        total_loss, rnn_hidden_states = self.agent.update(rollouts)
+        total_loss, rnn_hidden_states, total_batch_time = self.agent.update(rollouts)
 
         rollouts.after_update(rnn_hidden_states)
 
         return (
             time.time() - t_update_model,
             total_loss,
+            total_batch_time,
         )
 
     @profiling_wrapper.RangeContext("train")
@@ -624,6 +635,16 @@ class ILEnvTrainer(BaseRLTrainer):
                     batch["semantic"] = self.semantic_predictor(batch)
                     if self.config.MODEL.SEMANTIC_ENCODER.is_thda:
                         batch["semantic"] = batch["semantic"] - 1
+                if self.detector is not None:
+                    scene_graph_batch, bt_time, ct_time, inf_time, det_batch_time, det_rbatch_time, det_edge_b_time, gf_end_time = self.detector(batch)
+                    scene_graph_index_batch = torch.cat([torch.ones(scene_graph_batch[i].nodes.shape[0]) * i for i in range(len(scene_graph_batch))])
+
+                    st_time = time.time()
+                    scene_graph_batch = Batch.from_data_list(scene_graph_batch)
+                    scene_graph_index_batch = scene_graph_index_batch.long().to(self.device)
+                    endt_time = time.time() - st_time
+                    # logger.info("num graphs: {}".format(scene_graph_batch.num_graphs))
+                    # logger.info("bt time: {}, ct time: {}, inf: {}, det bt: {}, det rb: {}, edge: {}, gf: {}, end: {}".format(bt_time, ct_time, inf_time, det_batch_time, det_rbatch_time, det_edge_b_time, gf_end_time, endt_time))
                 (
                     logits,
                     test_recurrent_hidden_states,
@@ -632,10 +653,14 @@ class ILEnvTrainer(BaseRLTrainer):
                     test_recurrent_hidden_states,
                     prev_actions,
                     not_done_masks,
+                    scene_graph_batch,
+                    scene_graph_index_batch,
                 )
                 current_episode_steps += 1
+                # logger.info("step: {}".format(current_episode_steps))
 
                 actions = torch.argmax(logits, dim=1)
+                #logger.info("action pred: {}, gt: {}".format(actions, batch["demonstration"]))
                 prev_actions.copy_(actions.unsqueeze(1))  # type: ignore
 
             # NB: Move actions to CPU.  If CUDA tensors are

@@ -11,7 +11,7 @@
 
 source /srv/flash1/rramrakhya6/miniconda3/etc/profile.d/conda.sh
 conda deactivate
-conda activate il-rl
+conda activate scene-graph
 
 cd /srv/flash1/rramrakhya6/habitat-lab
 

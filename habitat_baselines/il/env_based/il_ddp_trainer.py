@@ -43,8 +43,8 @@ from habitat_baselines.utils.common import batch_obs, linear_decay
 from habitat_baselines.utils.env_utils import construct_envs
 from habitat_baselines.il.env_based.algos.agent import DDPILAgent
 from habitat_baselines.il.env_based.il_trainer import ILEnvTrainer
-# from habitat_baselines.il.env_based.policy.rednet import load_rednet
 from habitat_baselines.il.env_based.policy.semantic_predictor import SemanticPredictor
+from habitat_baselines.il.env_based.policy.detector import InstanceDetector
 
 
 @baseline_registry.register_trainer(name="ddp-il-trainer")
@@ -118,14 +118,13 @@ class ILEnvDDPTrainer(ILEnvTrainer):
 
         self.semantic_predictor = None
         if model_config.USE_PRED_SEMANTICS:
-            # self.semantic_predictor = load_rednet(
-            #     self.device,
-            #     ckpt=model_config.SEMANTIC_ENCODER.rednet_ckpt,
-            #     resize=True, # since we train on half-vision
-            #     num_classes=model_config.SEMANTIC_ENCODER.num_classes
-            # )
             self.semantic_predictor = SemanticPredictor(model_config, self.device)
             self.semantic_predictor.eval()
+
+        self.detector = None
+        if model_config.USE_DETECTOR:
+            self.detector = InstanceDetector(model_config, self.device)
+            self.detector.eval()
 
         self.agent = DDPILAgent(
             model=self.policy,
@@ -227,6 +226,10 @@ class ILEnvDDPTrainer(ILEnvTrainer):
         batch = batch_obs(observations, device=self.device)
         batch = apply_obs_transforms_batch(batch, self.obs_transforms)
 
+        graphs = None
+        if self.config.MODEL.USE_DETECTOR:
+            graphs, bt_time, ct_time, inf_time, det_batch_time, det_rbatch_time, det_edge_b_time, gf_end_time = self.detector(batch)
+
         obs_space = self.obs_space
 
         rollouts = RolloutStorage(
@@ -236,6 +239,7 @@ class ILEnvDDPTrainer(ILEnvTrainer):
             self.envs.action_spaces[0],
             self.config.MODEL.STATE_ENCODER.hidden_size,
             num_recurrent_layers=self.config.MODEL.STATE_ENCODER.num_recurrent_layers,
+            use_gcn=self.config.MODEL.USE_DETECTOR,
         )
         rollouts.to(self.device)
 
@@ -248,6 +252,9 @@ class ILEnvDDPTrainer(ILEnvTrainer):
                 if self.config.MODEL.SEMANTIC_ENCODER.is_thda and self.config.MODEL.SEMANTIC_PREDICTOR.name == "rednet":
                     semantic_obs = semantic_obs - 1
                 rollouts.observations[sensor][0].copy_(semantic_obs)
+
+            if graphs is not None and self.config.MODEL.USE_DETECTOR:
+                rollouts.scene_graph["graphs"][0] = graphs
 
         # batch and observations may contain shared PyTorch CUDA
         # tensors.  We must explicitly clear them here otherwise
@@ -273,6 +280,14 @@ class ILEnvDDPTrainer(ILEnvTrainer):
         count_checkpoints = 0
         start_update = 0
         prev_time = 0
+        det_bt_time = 0
+        det_col_time = 0
+        det_inf_time = 0
+        det_batch_time = 0
+        det_rbatch_time = 0
+        det_edge_time = 0
+        gf_batch_time = 0
+        gf_update_batch_time = 0
 
         lr_scheduler = LambdaLR(
             optimizer=self.agent.optimizer,
@@ -349,12 +364,27 @@ class ILEnvDDPTrainer(ILEnvTrainer):
                         delta_pth_time,
                         delta_env_time,
                         delta_steps,
+                        delta_bt_time,
+                        delta_col_time,
+                        delta_inf_time,
+                        delta_batch_time, 
+                        delta_rbatch_time,
+                        delta_edge_bt_time,
+                        delta_gf_end_time,
                     ) = self._collect_rollout_step(
                         rollouts, current_episode_reward, running_episode_stats
                     )
                     pth_time += delta_pth_time
                     env_time += delta_env_time
                     count_steps_delta += delta_steps
+                    det_bt_time += delta_bt_time
+                    det_col_time += delta_col_time
+                    det_inf_time += delta_inf_time
+                    det_batch_time += delta_batch_time
+                    det_rbatch_time += delta_rbatch_time
+                    det_edge_time += delta_edge_bt_time
+                    gf_batch_time += delta_gf_end_time
+                    # logger.info("step :{}".format(step))
 
                     # This is where the preemption of workers happens.  If a
                     # worker detects it will be a straggler, it preempts itself!
@@ -368,13 +398,16 @@ class ILEnvDDPTrainer(ILEnvTrainer):
                 profiling_wrapper.range_pop()  # rollouts loop
 
                 num_rollouts_done_store.add("num_done", 1)
+                # logger.info("update :{}".format(update))
 
                 self.agent.train()
                 (
                     delta_pth_time,
-                    total_loss
+                    total_loss,
+                    total_batch_time,
                 ) = self._update_agent(il_cfg, rollouts)
                 pth_time += delta_pth_time
+                gf_update_batch_time += total_batch_time
 
                 stats_ordering = sorted(running_episode_stats.keys())
                 stats = torch.stack(
@@ -431,7 +464,7 @@ class ILEnvDDPTrainer(ILEnvTrainer):
                     )
 
                     # log stats
-                    if update > 0 and update % self.config.LOG_INTERVAL == 0:
+                    if update % self.config.LOG_INTERVAL == 0:
                         logger.info(
                             "update: {}\tfps: {:.3f}\tloss: {:.3f}".format(
                                 update,
@@ -441,9 +474,9 @@ class ILEnvDDPTrainer(ILEnvTrainer):
                         )
 
                         logger.info(
-                            "update: {}\tenv-time: {:.3f}s\tpth-time: {:.3f}s\t"
+                            "update: {}\tenv-time: {:.3f}s\tpth-time: {:.3f}s\tdet-bt-time: {:.3f}s\tdet-col-time: {:.3f}s\tdet-inf-time: {:.3f}s\tdet-batch-time: {:.3f}s\tdet-rbatch-time: {:.3f}s\tdet-edge-time: {:.3f}s\tgraph-build-time: {:.3f}s\tgraph-batch-time: {:.3f}s\t"
                             "frames: {}".format(
-                                update, env_time, pth_time, count_steps
+                                update, env_time, pth_time, det_bt_time, det_col_time, det_inf_time, det_batch_time, det_rbatch_time, det_edge_time, gf_batch_time, gf_update_batch_time, count_steps
                             )
                         )
                         logger.info(

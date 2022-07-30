@@ -16,7 +16,7 @@ SHOW_TOP_DOWN_MAP: False
 NUM_PROCESSES: 8
 CHECKPOINT_FOLDER: "data/new_checkpoints/objectnav/objectnav_il/overfitting/sem_seg_pred/seed_1/"
 OUTPUT_LOG_DIR: data/objectnav/logs
-LOG_INTERVAL: 10
+LOG_INTERVAL: 1
 LOG_METRICS: True
 CHECKPOINT_INTERVAL: 500
 SENSORS: ['RGB_SENSOR', 'SEMANTIC_SENSOR', 'DEPTH_SENSOR']
@@ -66,10 +66,27 @@ RL:
 
 MODEL:
   hm3d_goal: False
-  embed_sge: True
-  USE_SEMANTICS: True
-  USE_PRED_SEMANTICS: True
+  embed_sge: False
+  USE_SEMANTICS: False
+  USE_PRED_SEMANTICS: False
   SWITCH_TO_PRED_SEMANTICS_UPDATE: 0
+  USE_DETECTOR: True
+  DETECTOR:
+    name: "mask_rcnn"
+    config_path: "configs/detector/mask_rcnn/mask_rcnn_r50_150k.py"
+    checkpoint_path: "data/new_checkpoints/mmdet/detector/mask_rcnn_r50_1496cat_150k_ds.pth"
+  SPATIAL_ENCODER:
+    gcn_type: "none"
+    node_features_dim: 1024
+    hidden_features_dim: 512
+    out_features_dim: 512
+    embedding_dim: 512
+    no_node_cat: False
+    no_bbox_feats: False
+    filter_nodes: False
+    conv_layer: "GCNConv"
+    no_gcn: False
+    ablate_gcn: False
   SEMANTIC_PREDICTOR:
     name: "rednet"
     REDNET:
@@ -89,13 +106,13 @@ MODEL:
     is_hm3d: True
     is_thda: False
   RGB_ENCODER:
-    cnn_type: "ResnetRGBEncoder"
+    cnn_type: "None"
     output_size: 256
     backbone: "resnet18"
     train_encoder: True
     normalize_visual_inputs: False
   DEPTH_ENCODER:
-    cnn_type: "VlnResnetDepthEncoder"
+    cnn_type: "None"
     output_size: 128
     backbone: "resnet50"
     trainable: False

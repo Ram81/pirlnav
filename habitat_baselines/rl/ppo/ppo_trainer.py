@@ -733,11 +733,6 @@ class PPOTrainer(BaseRLTrainer):
             current_episodes = self.envs.current_episodes_info()
 
             with torch.no_grad():
-                # if self.semantic_predictor is not None:
-                #     batch["semantic"] = self.semantic_predictor(batch["rgb"], batch["depth"])
-                #     # Subtract 1 from class labels for THDA YCB categories
-                #     if self.config.MODEL.SEMANTIC_ENCODER.is_thda:
-                #         batch["semantic"] = batch["semantic"] - 1
                 (
                     value,
                     actions,

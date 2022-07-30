@@ -59,10 +59,15 @@ RL:
 
 MODEL:
   hm3d_goal: False
-  embed_sge: True
-  USE_SEMANTICS: True
-  USE_PRED_SEMANTICS: True
+  embed_sge: False
+  USE_SEMANTICS: False
+  USE_PRED_SEMANTICS: False
   SWITCH_TO_PRED_SEMANTICS_UPDATE: 0
+  USE_DETECTOR: True
+  DETECTOR:
+    name: "mask_rcnn"
+    config_path: "configs/detector/mask_rcnn/mask_rcnn_r50_150k.py"
+    checkpoint_path: "data/new_checkpoints/mmdet/detector/mask_rcnn_r50_1496cat_150k_ds.pth"
   SEMANTIC_PREDICTOR:
     name: "rednet"
     REDNET:

@@ -41,7 +41,7 @@ The primary code contributions from the paper are located in:
 
     # We require python>=3.6 and cmake>=3.10
     conda create -n habitat-web python=3.6 cmake=3.14.0
-    conda activate habitat-web
+    conda activate scene-graph
 
     pip install -e .
     python setup.py develop --all

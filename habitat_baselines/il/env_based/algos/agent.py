@@ -54,6 +54,7 @@ class ILAgent(nn.Module):
         )
         cross_entropy_loss = torch.nn.CrossEntropyLoss(reduction="none")
         hidden_states = []
+        total_batch_time = 0
 
         for sample in data_generator:
             (
@@ -62,7 +63,10 @@ class ILAgent(nn.Module):
                 actions_batch,
                 prev_actions_batch,
                 masks_batch,
-                idx
+                idx,
+                scene_graph_batch,
+                scene_graph_index_batch,
+                batch_time,
             ) = sample
 
             # Reshape to do in a single forward pass for all steps
@@ -74,6 +78,8 @@ class ILAgent(nn.Module):
                 recurrent_hidden_states_batch,
                 prev_actions_batch,
                 masks_batch,
+                scene_graph_batch,
+                scene_graph_index_batch,
             )
 
             T, N, _ = actions_batch.shape
@@ -96,6 +102,7 @@ class ILAgent(nn.Module):
 
             total_loss_epoch += total_loss.item()
             hidden_states.append(rnn_hidden_states)
+            total_batch_time += batch_time
 
         profiling_wrapper.range_pop()
 
@@ -103,7 +110,7 @@ class ILAgent(nn.Module):
 
         total_loss_epoch /= self.num_mini_batch
 
-        return total_loss_epoch, hidden_states
+        return total_loss_epoch, hidden_states, total_batch_time
 
     def before_backward(self, loss: Tensor) -> None:
         pass
