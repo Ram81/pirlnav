@@ -13,6 +13,7 @@ from habitat_baselines.il.env_based.policy.rednet import load_rednet
 # ShapeConv imports
 from habitat_baselines.il.env_based.policy.shapeconv.config import ShapeConvConfig
 from habitat_baselines.il.env_based.policy.shapeconv import build_model
+from scripts.utils.hm3d_utils import mask_shapeconv_new_cats, shapeconv_hm3d_to_rednet_mapping
 
 # sys.path.insert(0, "/srv/flash1/rramrakhya6/spring_2022/AnalyzeSemanticDataset/dependencies/ShapeConv/")
 
@@ -34,6 +35,7 @@ class SemanticPredictor(nn.Module):
         self.MIN_DEPTH = 0.5
 
         self.is_shapeconv = None
+        self.only_rednet_cats = model_config.SEMANTIC_PREDICTOR.SHAPECONV.only_rednet_cats
         if model_config.SEMANTIC_PREDICTOR.name == "shapeconv":
             self.is_shapeconv = True
             self.shapeconv_config = ShapeConvConfig.fromfile(model_config.SEMANTIC_PREDICTOR.SHAPECONV.config)
@@ -45,6 +47,14 @@ class SemanticPredictor(nn.Module):
 
             self.predictor.to(self.device)
             logger.info("Initializing ShapeConv semantic predictor...")
+
+            self.category_map = np.zeros(25, dtype=np.int8)
+            for i in range(self.category_map.shape[0]):
+                self.category_map[i] = i
+
+            for key, value in shapeconv_hm3d_to_rednet_mapping.items():
+                self.category_map[key] = value
+            self.category_map = torch.tensor(self.category_map, device=device)
         else:
             # Default to RedNet predictor
             self.predictor = load_rednet(
@@ -86,7 +96,10 @@ class SemanticPredictor(nn.Module):
                 st_time = time.time()
                 semantic_frame = semantic_frame.detach().softmax(dim=1)
                 x = (torch.max(semantic_frame, dim=1)[1]).float()
-                #logger.info("sem shape: {}, {}".format(x.shape, x.dtype))
+
+                # Mask out categories not used in rednet training to background
+                if self.only_rednet_cats:
+                    x = self.category_map[x.long()].float()
                 softmax_time = time.time() - st_time
         else:
             x = self.predictor(rgb_obs, depth_obs)

@@ -39,17 +39,19 @@ def sample_dataset(input_path, output_path, episodes_per_scene=100, clear_replay
 
 
 def sample_filtered_dataset(input_path, output_path, episodes_per_scene=100, clear_replay=False, sample_dataset_path=None):
-    sample_dataset_path = ["data/datasets/objectnav/objectnav_hm3d/objectnav_hm3d_77k/train/content/", "data/datasets/objectnav/objectnav_hm3d/objectnav_hm3d_s_path/train/content/"]
+    #sample_dataset_path = ["data/datasets/objectnav/objectnav_hm3d/objectnav_hm3d_77k/train/content/", "data/datasets/objectnav/objectnav_hm3d/objectnav_hm3d_s_path/train/content/"]
+    sample_dataset_path = ["data/datasets/objectnav/objectnav_hm3d/objectnav_hm3d_fm/train/content/", "data/datasets/objectnav/objectnav_hm3d/objectnav_hm3d_v1_fixed/train_sample_4k_random/content/", "data/datasets/objectnav/objectnav_hm3d/objectnav_hm3d_v1_fixed/train_sample_4k_unseen/content/"]
+    total_existing_episodes = 0
+    VISITED_POINT_DICT = {}
     for sample_path in sample_dataset_path:
         files = list_files(os.path.join(sample_path, "*json.gz"))
         print("Sampling from: {}, {}".format(sample_path, len(files)))
 
-        VISITED_POINT_DICT = {}
-        total_existing_episodes = 0
         for f in files:
             dataset = load_dataset(f)
             scene_id = f.split("/")[-1].split(".")[0]
-            VISITED_POINT_DICT[scene_id] = {}
+            if scene_id not in VISITED_POINT_DICT.keys():
+                VISITED_POINT_DICT[scene_id] = {}
 
             for episode in dataset["episodes"]:
                 start_position = str(episode["start_position"])
@@ -80,6 +82,11 @@ def sample_filtered_dataset(input_path, output_path, episodes_per_scene=100, cle
             for episode in sampled_episodes:
                 if episode.get("reference_replay"):
                     episode["reference_replay"] = []
+                    del episode["reference_replay"]
+                    del episode["attempts"]
+                    del episode["scene_dataset"]
+                    del episode["scene_state"]
+                    del episode["is_thda"]
 
         dataset["episodes"] = sampled_episodes
 

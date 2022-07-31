@@ -6,6 +6,7 @@ import torch
 from PIL import Image
 from habitat.utils.visualizations.utils import observations_to_image, images_to_video, append_text_to_image
 from scripts.parsing.parse_objectnav_dataset import write_json
+from scripts.utils.hm3d_utils import mask_shapeconv_new_cats
 
 from habitat_baselines.il.env_based.policy.semantic_predictor import SemanticPredictor
 
@@ -23,6 +24,8 @@ def save_image(img, file_name):
 
 
 def get_semantic_predictor(config):
+    if config is None:
+        return None
     device = torch.device("cuda", 0)
     semantic_predictor = SemanticPredictor(config.MODEL, device)
     semantic_predictor.eval()
@@ -59,17 +62,23 @@ def run_reference_replay(
 
             for step_id, data in enumerate(env.current_episode.reference_replay[step_index:]):
                 action = possible_actions.index(data.action)
+                # action = data.action
                 action_name = env.task.get_action_name(
                     action
                 )
 
                 observations = env.step(action=action)
 
-                obs_semantic = semantic_predictor({"rgb": torch.tensor(observations["rgb"]).unsqueeze(0).cuda(), "depth": torch.tensor(observations["depth"]).unsqueeze(0).cuda()})
-
+                obs = {"rgb": observations["rgb"]}
+                masked_semantic = None
+                if semantic_predictor is not None:
+                    obs_semantic = semantic_predictor({"rgb": torch.tensor(observations["rgb"]).unsqueeze(0).cuda(), "depth": torch.tensor(observations["depth"]).unsqueeze(0).cuda()})
+                    obs["semantic"] = obs_semantic[0].permute(1,2,0).long().cpu().numpy()
+                    # obs["gt_semantic"] = mask_shapeconv_new_cats(obs["semantic"])
+                    obs["gt_semantic"] = obs_semantic[1].permute(1,2,0).long().cpu().numpy()
 
                 info = env.get_metrics()
-                frame = observations_to_image({"rgb": observations["rgb"], "semantic": obs_semantic[0].permute(1,2,0).long().cpu().numpy()}, info)
+                frame = observations_to_image(obs, info)
 
                 if append_instruction:
                     frame = append_text_to_image(frame, "Find and go to {}".format(episode.object_category))
@@ -129,7 +138,7 @@ def main():
         "--save-step-image", dest="save_step_image", action="store_true"
     )
     parser.add_argument(
-        "--detector-config", type=str, default="path"
+        "--semantic-predictor-config", type=str, default=None
     )
     args = parser.parse_args()
     cfg = config
@@ -139,7 +148,9 @@ def main():
     cfg.ENVIRONMENT.MAX_EPISODE_STEPS = args.max_steps
     cfg.freeze()
 
-    model_config = habitat.get_config(args.detector_config)
+    model_config = None
+    if not args.semantic_predictor_config is None:
+        model_config = habitat.get_config(args.semantic_predictor_config)
 
     run_reference_replay(
         cfg,

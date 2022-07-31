@@ -71,7 +71,7 @@ MODEL:
   USE_PRED_SEMANTICS: True
   SWITCH_TO_PRED_SEMANTICS_UPDATE: 0
   SEMANTIC_PREDICTOR:
-    name: "shapeconv"
+    name: "rednet"
     REDNET:
       pretrained_weights: "data/rednet-models/rednet_semmap_mp3d_40_v2_vince.pth"
       # pretrained_weights: "data/rednet-models/rednet_semmap_hm3d_6.pth"
@@ -83,6 +83,7 @@ MODEL:
     SHAPECONV:
       config: "configs/semantic_predictor/shapeconv/hm3d_deeplabv3plus_resnet101_baseline.py"
       pretrained_weights: "data/new_checkpoints/mmdet/semantic_predictor/shapeconv/shapeconv_23cat_best_class_acc_with_bg.pth"
+      only_rednet_cats: False
   SEMANTIC_ENCODER:
     cnn_type: "ResnetSemSegEncoder"
     output_size: 256

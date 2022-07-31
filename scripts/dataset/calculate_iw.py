@@ -107,10 +107,14 @@ def calculate_inflection_weight_objectnav(path, stats_path):
     mx = 0
     actions_lt_2k = 0
     wall_clock_time = 0
+    per_scene_episodes = []
+    scene_ids = []
     for file_path in tqdm(files):
         data = load_dataset(file_path)
 
         episodes = data["episodes"]
+        per_scene_episodes.append(len(episodes))
+        scene_ids.append(file_path.split("/")[-1].split(".")[0])
         for episode in episodes:
             num_inflections, num_actions = caclulate_inflections(episode)
 
@@ -150,6 +154,15 @@ def calculate_inflection_weight_objectnav(path, stats_path):
     print("Total actions: {}".format(total_actions))
     print("Total actions less than 2k: {}".format(actions_lt_2k))
     print("Wall clock time in hours: {}".format(wall_clock_time / 3600))
+    print("Per scene episodes: {}".format(per_scene_episodes))
+    print("Avg per scene episodes: {}".format(sum(per_scene_episodes) / len(per_scene_episodes)))
+
+    f_scenes = []
+    for i in range(len(scene_ids)):
+        if per_scene_episodes[i] <= 900:
+            print(scene_ids[i], per_scene_episodes[i])
+            f_scenes.append(scene_ids[i])
+    print(f_scenes)
 
 
 def convert_instruction_tokens(episodes):
