@@ -178,6 +178,13 @@ def observations_to_image(observation: Dict, info: Dict, top_down_map_only=False
             rgb = rgb.cpu().numpy()
 
         egocentric_view_l.append(rgb)
+    
+    if "graph" in observation:
+        graph = observation["graph"]
+        if not isinstance(rgb, np.ndarray):
+            graph = graph.cpu().numpy()
+
+        egocentric_view_l.append(graph)
 
     # draw depth map if observation has depth info
     if "depth" in observation:
