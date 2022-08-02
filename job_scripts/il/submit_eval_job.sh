@@ -23,8 +23,6 @@ export MASTER_ADDR
 
 config=$1
 DATA_PATH="data/datasets/objectnav/objectnav_hm3d/objectnav_hm3d_v1"
-#TENSORBOARD_DIR="tb/objectnav_scene_graph/objectnav_hm3d/objectnav_hm3d_10k/rgbd_spatial_graph/bbox_feats_edgeconv/seed_2/ckpt_22_train/"
-# EVAL_CKPT_PATH_DIR="data/new_checkpoints/objectnav_scene_graph/objectnav_hm3d/objectnav_hm3d_10k/rgbd_spatial_graph/bbox_feats_edgeconv/seed_1/ckpt.22.pth"
 TENSORBOARD_DIR="tb/objectnav_scene_graph/objectnav_hm3d/objectnav_hm3d_10k/rgbd_spatial_graph/bbox_feats_edgeconv_step_bfix/seed_1/ckpt_28/"
 EVAL_CKPT_PATH_DIR="data/new_checkpoints/objectnav_scene_graph/objectnav_hm3d/objectnav_hm3d_10k/rgbd_spatial_graph/bbox_feats_edgeconv_step_bfix/seed_1/ckpt.28.pth"
 set -x
@@ -62,8 +60,3 @@ MODEL.SEQ2SEQ.use_prev_action True \
 MODEL.RGB_ENCODER.cnn_type "ResnetRGBEncoder" \
 MODEL.DEPTH_ENCODER.cnn_type "VlnResnetDepthEncoder"
 
-
-# TASK_CONFIG.TASK.SENSORS "['OBJECTGOAL_SENSOR', 'DEMONSTRATION_SENSOR']" \
-# MODEL.SEQ2SEQ.use_prev_action False \
-# MODEL.RGB_ENCODER.cnn_type "ResnetRGBEncoder" \
-# MODEL.DEPTH_ENCODER.cnn_type "VlnResnetDepthEncoder"

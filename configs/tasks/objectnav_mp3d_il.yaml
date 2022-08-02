@@ -69,7 +69,7 @@ SEED: 103
 DATASET:
   TYPE: ObjectNav-v2
   SPLIT: train
-  DATA_PATH: "data/datasets/objectnav/objectnav_hm3d/objectnav_hm3d_10k/{split}/{split}.json.gz"
+  DATA_PATH: "data/datasets/objectnav/objectnav_mp3d/objectnav_mp3d_70k/{split}/{split}.json.gz"
   SCENES_DIR: "data/scene_datasets/"
   MAX_EPISODE_STEPS: 500
 
