@@ -536,6 +536,7 @@ class HabitatSim(habitat_sim.Simulator, Simulator):
         position_a: Union[Sequence[float], ndarray],
         position_b: Union[Sequence[float], Sequence[Sequence[float]]],
         episode: Optional[Episode] = None,
+        return_points = False,
     ) -> float:
         if episode is None or episode._shortest_path_cache is None:
             path = habitat_sim.MultiGoalShortestPath()
@@ -554,6 +555,10 @@ class HabitatSim(habitat_sim.Simulator, Simulator):
 
         if episode is not None:
             episode._shortest_path_cache = path
+
+        # Return closest points as well
+        if return_points:
+            return path.geodesic_distance, path.points
 
         return path.geodesic_distance
 

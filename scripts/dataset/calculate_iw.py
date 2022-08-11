@@ -159,7 +159,7 @@ def calculate_inflection_weight_objectnav(path, stats_path):
 
     f_scenes = []
     for i in range(len(scene_ids)):
-        if per_scene_episodes[i] <= 900:
+        if per_scene_episodes[i] <= 500:
             print(scene_ids[i], per_scene_episodes[i])
             f_scenes.append(scene_ids[i])
     print(f_scenes)
@@ -184,7 +184,7 @@ def main():
         "--path", type=str, default="data/hit_approvals/dataset/backup/train.json.gz"
     )
     parser.add_argument(
-        "--task", type=str, default="rearrangement"
+        "--task", type=str, default="objectnav"
     )
     parser.add_argument(
         "--stats", type=str, default="data/episodes/objectnav_sample/stats.json"

@@ -2,6 +2,7 @@ import argparse
 import habitat
 import os
 import torch
+import numpy as np
 
 from PIL import Image
 from habitat.utils.visualizations.utils import observations_to_image, images_to_video, append_text_to_image
@@ -33,6 +34,41 @@ def get_semantic_predictor(config):
     return semantic_predictor
 
 
+def compute_goal_distance_to_view_points(sim, object_goals):
+    avgs = []
+    view_points_within_1m = []
+    for goal in object_goals:
+        goal_position = goal.position
+        dists = []
+        for view_point in goal.view_points:
+            view_point_position = view_point.agent_state.position
+
+            dist = sim.geodesic_distance(goal_position, view_point_position)
+            # dist = np.linalg.norm(np.array(goal_position) - np.array(view_point_position), ord=2)
+            if dist == np.inf:
+                continue
+
+            view_points_within_1m.append((view_point_position, dist < 1.0))
+            dists.append(dist > 1.0)
+        avgs.extend(dists)
+    return avgs, view_points_within_1m
+
+
+def find_closest_view_point(env, view_points_within_1m):
+    closest_viewpoint = env.get_metrics()["distance_to_goal_v2"]["points"]
+    
+    is_within_1m = False
+    for view_point, in_range in view_points_within_1m:
+        if in_range:
+            for point in closest_viewpoint:
+                if np.allclose(view_point, point):
+                    is_within_1m = True
+                    break
+            if is_within_1m:
+                break
+    return is_within_1m
+
+
 def run_reference_replay(
     cfg,
     num_episodes=None,
@@ -51,10 +87,11 @@ def run_reference_replay(
 
         num_episodes = min(num_episodes, len(env.episodes))
         episode_meta = []
+        dists = []
         print("Replaying {}/{} episodes".format(num_episodes, len(env.episodes)))
         for ep_id in range(num_episodes):
             observation_list = []
-            env.reset()
+            obs = env.reset()
 
             step_index = 1
             total_reward = 0.0
@@ -75,10 +112,14 @@ def run_reference_replay(
                     obs_semantic = semantic_predictor({"rgb": torch.tensor(observations["rgb"]).unsqueeze(0).cuda(), "depth": torch.tensor(observations["depth"]).unsqueeze(0).cuda()})
                     obs["semantic"] = obs_semantic[0].permute(1,2,0).long().cpu().numpy()
                     # obs["gt_semantic"] = mask_shapeconv_new_cats(obs["semantic"])
-                    obs["gt_semantic"] = obs_semantic[1].permute(1,2,0).long().cpu().numpy()
+                    # obs["gt_semantic"] = obs_semantic[1].permute(1,2,0).long().cpu().numpy()
 
                 info = env.get_metrics()
                 frame = observations_to_image(obs, info)
+                total_reward += info["simple_reward"]
+                # is_in_range = find_closest_view_point(env, info["strict_success"]["reached_goal_within_1m"], info["strict_success"]["dtg"])
+
+                print(info["simple_reward"], info["distance_to_goal"], info["strict_success"]["reached_goal_within_1m"], info["strict_success"]["dtg"])
 
                 if append_instruction:
                     frame = append_text_to_image(frame, "Find and go to {}".format(episode.object_category))
@@ -106,6 +147,7 @@ def run_reference_replay(
                 "attempts": episode.attempts,
                 "object_category": episode.object_category
             })
+        print("Avg distances: {}".format(sum(dists) / len(dists)))
 
         print("SPL: {}, {}, {}".format(spl/num_episodes, spl, num_episodes))
         print("Success: {}, {}, {}".format(total_success/num_episodes, total_success, num_episodes))
@@ -146,6 +188,11 @@ def main():
     cfg.DATASET.DATA_PATH = args.path
     cfg.DATASET.MAX_EPISODE_STEPS = args.max_steps
     cfg.ENVIRONMENT.MAX_EPISODE_STEPS = args.max_steps
+    cfg.TASK.MEASUREMENTS = ["DISTANCE_TO_GOAL", "SUCCESS", "SPL", "SOFT_SPL", "TRAIN_SUCCESS",  "STRICT_SUCCESS", "SIMPLE_REWARD"] #, "TOP_DOWN_MAP"]
+    cfg.TASK.TOP_DOWN_MAP.DRAW_VIEW_POINTS_WITHIN_1M = True
+    cfg.TASK.SIMPLE_REWARD.USE_STRICT_SUCCESS_REWARD = False
+    cfg.TASK.SIMPLE_REWARD.USE_STRICT_SUCCESS_REWARD_V2 = False
+    cfg.TASK.SIMPLE_REWARD.USE_DTG_REWARD = True
     cfg.freeze()
 
     model_config = None

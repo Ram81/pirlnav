@@ -96,7 +96,21 @@ class BaseTrainer:
         with TensorboardWriter(
             self.config.TENSORBOARD_DIR, flush_secs=self.flush_secs
         ) as writer:
-            if os.path.isfile(self.config.EVAL_CKPT_PATH_DIR):
+            if self.config.EVAL.ENSEMBLE:
+                proposed_index = get_checkpoint_id(
+                    self.config.EVAL_CKPT_PATH_DIR_POLICY_A
+                )
+                if proposed_index is not None:
+                    ckpt_idx = proposed_index
+                else:
+                    ckpt_idx = 0
+                self._eval_ensemble_checkpoint(
+                    self.config.EVAL_CKPT_PATH_DIR_POLICY_A,
+                    self.config.EVAL_CKPT_PATH_DIR_POLICY_B,
+                    writer,
+                    checkpoint_index=ckpt_idx,
+                )
+            elif os.path.isfile(self.config.EVAL_CKPT_PATH_DIR):
                 # evaluate singe checkpoint
                 proposed_index = get_checkpoint_id(
                     self.config.EVAL_CKPT_PATH_DIR
@@ -133,6 +147,15 @@ class BaseTrainer:
     def _eval_checkpoint(
         self,
         checkpoint_path: str,
+        writer: TensorboardWriter,
+        checkpoint_index: int = 0,
+    ) -> None:
+        raise NotImplementedError
+    
+    def _eval_ensemble_checkpoint(
+        self,
+        policy_a_checkpoint_path: str,
+        policy_b_checkpoint_path: str,
         writer: TensorboardWriter,
         checkpoint_index: int = 0,
     ) -> None:
@@ -243,6 +266,67 @@ class BaseRLTrainer(BaseTrainer):
         return (
             envs,
             test_recurrent_hidden_states,
+            not_done_masks,
+            current_episode_reward,
+            prev_actions,
+            batch,
+            rgb_frames,
+            current_episode_entropy,
+            current_episode_steps,
+        )
+    
+    @staticmethod
+    def _pause_ensemble_envs(
+        envs_to_pause: List[int],
+        envs: Union[VectorEnv, RLEnv, Env],
+        policy_a_test_recurrent_hidden_states: Tensor,
+        policy_b_test_recurrent_hidden_states: Tensor,
+        not_done_masks: Tensor,
+        current_episode_reward: Tensor,
+        prev_actions: Tensor,
+        batch: Dict[str, Tensor],
+        rgb_frames: Union[List[List[Any]], List[List[ndarray]]],
+        current_episode_entropy: Tensor = None,
+        current_episode_steps: Tensor = None,
+    ) -> Tuple[
+        Union[VectorEnv, RLEnv, Env],
+        Tensor,
+        Tensor,
+        Tensor,
+        Tensor,
+        Dict[str, Tensor],
+        List[List[Any]],
+    ]:
+        # pausing self.envs with no new episode
+        if len(envs_to_pause) > 0:
+            state_index = list(range(envs.num_envs))
+            for idx in reversed(envs_to_pause):
+                state_index.pop(idx)
+                envs.pause_at(idx)
+
+            # indexing along the batch dimensions
+            policy_a_test_recurrent_hidden_states = policy_a_test_recurrent_hidden_states[
+                :, state_index
+            ]
+            policy_b_test_recurrent_hidden_states = policy_b_test_recurrent_hidden_states[
+                :, state_index
+            ]
+            not_done_masks = not_done_masks[state_index]
+            current_episode_reward = current_episode_reward[state_index]
+            prev_actions = prev_actions[state_index]
+
+            for k, v in batch.items():
+                batch[k] = v[state_index]
+
+            rgb_frames = [rgb_frames[i] for i in state_index]
+
+            current_episode_entropy = current_episode_entropy[state_index]
+            current_episode_steps = current_episode_steps[state_index]
+
+        return (
+            envs,
+            policy_a_test_recurrent_hidden_states,
+            policy_b_test_recurrent_hidden_states,
             not_done_masks,
             current_episode_reward,
             prev_actions,

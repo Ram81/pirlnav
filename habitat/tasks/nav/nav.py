@@ -740,8 +740,9 @@ class TopDownMap(Measure):
                 try:
                     if goal.view_points is not None:
                         for view_point in goal.view_points:
-                            # if abs(agent_position[1] - view_point.agent_state.position[1]) > 0.3:
-                            #     continue
+                            if self._config.DRAW_VIEW_POINTS_WITHIN_1M and not view_point.within_1m:
+                                continue
+
                             self._draw_point(
                                 view_point.agent_state.position,
                                 maps.MAP_VIEW_POINT_INDICATOR,

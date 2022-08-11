@@ -22,10 +22,12 @@ export MAGNUM_LOG=quiet
 MASTER_ADDR=$(srun --ntasks=1 hostname 2>&1 | tail -n1)
 export MASTER_ADDR
 
-config=$1
+config="habitat_baselines/config/objectnav/il_rl/ddppo_semseg_ft_objectnav_ensemble.yaml"
 DATA_PATH="data/datasets/objectnav/objectnav_hm3d/objectnav_hm3d_v1"
-TENSORBOARD_DIR="tb/objectnav_il_rl_ft/ddppo_hm3d_pt_77k/sem_seg_pred/strict_sparse_success_reward_ckpt_28/hm3d_v1_fixed_train/seed_1/v1_fixed_evals/ckpt_24_val/"
-EVAL_CKPT_PATH_DIR="data/new_checkpoints/objectnav_il_rl_ft/ddppo_hm3d_pt_77k/sem_seg_pred/strict_sparse_success_reward_ckpt_28/hm3d_v1_fixed_train/seed_1/ckpt.24.pth"
+TENSORBOARD_DIR="tb/objectnav_il_rl_ft/ddppo_hm3d_pt_77k/sem_seg_pred/sparse_reward/train_split/seed_1_4node/ensemble/v0_evals/ckpt_4_pt_32_w5_5_val/"
+EVAL_CKPT_PATH_DIR_POLICY_A="data/new_checkpoints/objectnav_il_rl_ft/ddppo_hm3d_pt_77k/sem_seg_pred/sparse_reward/train_split/seed_1_4node/ckpt.32.pth"
+EVAL_CKPT_PATH_DIR_POLICY_B="data/new_checkpoints/objectnav_il_rl_ft/ddppo_hm3d_pt_77k/sem_seg_pred/sparse_reward_pt_ckpt_4/train_split/seed_1/ckpt.16.pth"
+# EVAL_CKPT_PATH_DIR_POLICY_B="data/new_checkpoints/objectnav_il_rl_ft/ddppo_hm3d_pt_77k/sem_seg_pred/sparse_reward/train_split/seed_1_4node/ckpt.32.pth"
 
 set -x
 
@@ -36,10 +38,12 @@ srun python -u -m habitat_baselines.run \
 NUM_PROCESSES 20 \
 TENSORBOARD_DIR $TENSORBOARD_DIR \
 TEST_EPISODE_COUNT -1 \
+EVAL.ENSEMBLE True \
 EVAL.SPLIT "val" \
 EVAL.USE_CKPT_CONFIG False \
 EVAL.meta_file "$TENSORBOARD_DIR/evaluation_meta.json" \
-EVAL_CKPT_PATH_DIR $EVAL_CKPT_PATH_DIR \
+EVAL_CKPT_PATH_DIR_POLICY_A $EVAL_CKPT_PATH_DIR_POLICY_A \
+EVAL_CKPT_PATH_DIR_POLICY_B $EVAL_CKPT_PATH_DIR_POLICY_B \
 TASK_CONFIG.TASK.SENSORS "['OBJECTGOAL_SENSOR', 'COMPASS_SENSOR', 'GPS_SENSOR']" \
 TASK_CONFIG.TASK.MEASUREMENTS "['DISTANCE_TO_GOAL', 'SUCCESS', 'SPL', 'SOFT_SPL', 'GOAL_OBJECT_VISIBLE', 'MIN_DISTANCE_TO_GOAL', 'TOP_DOWN_MAP', 'EXPLORATION_METRICS']" \
 TASK_CONFIG.DATASET.TYPE "ObjectNav-v1" \

@@ -1,12 +1,13 @@
 #!/bin/bash
 #SBATCH --job-name=onav_ilrl
-#SBATCH --gres gpu:1
-#SBATCH --nodes 1
+#SBATCH --gres gpu:8
+#SBATCH --nodes 2
 #SBATCH --cpus-per-task 6
-#SBATCH --ntasks-per-node 1
+#SBATCH --ntasks-per-node 8
 #SBATCH --signal=USR1@300
-#SBATCH --partition=debug
+#SBATCH --partition=long
 #SBATCH --constraint=a40
+#SBATCH --exclude=robby,nestor
 #SBATCH --output=slurm_logs/ddp-il-rl-%j.out
 #SBATCH --error=slurm_logs/ddp-il-rl-%j.err
 #SBATCH --requeue
@@ -23,8 +24,8 @@ export MASTER_ADDR
 
 config=$1
 
-TENSORBOARD_DIR="tb/objectnav_il_rl_ft/overfitting/sem_seg_pred/dense_reward/train_split/seed_1/"
-CHECKPOINT_DIR="data/new_checkpoints/objectnav_il_rl_ft/overfitting/sem_seg_pred/dense_reward/train_split/seed_1/"
+TENSORBOARD_DIR="tb/objectnav_il_rl_ft/ddppo_hm3d_pt_77k/sem_seg_pred/strict_sparse_success_reward_ckpt_28/hm3d_v1_fixed_train/seed_1/"
+CHECKPOINT_DIR="data/new_checkpoints/objectnav_il_rl_ft/ddppo_hm3d_pt_77k/sem_seg_pred/strict_sparse_success_reward_ckpt_28/hm3d_v1_fixed_train/seed_1/"
 DATA_PATH="data/datasets/objectnav/objectnav_hm3d/objectnav_hm3d_v1_fixed/"
 PRETRAINED_WEIGHTS="data/new_checkpoints/objectnav_il/objectnav_hm3d/objectnav_hm3d_77k/sem_seg_pred/seed_1/ckpt.28.pth"
 set -x
@@ -49,8 +50,10 @@ TASK_CONFIG.DATASET.SPLIT "train" \
 TASK_CONFIG.DATASET.DATA_PATH "$DATA_PATH/{split}/{split}.json.gz" \
 TASK_CONFIG.TASK.SUCCESS.SUCCESS_DISTANCE 0.1 \
 TASK_CONFIG.TASK.MEASUREMENTS "['DISTANCE_TO_GOAL', 'SUCCESS', 'SPL', 'SOFT_SPL', 'TRAIN_SUCCESS', 'SIMPLE_REWARD']" \
-TASK_CONFIG.TASK.SIMPLE_REWARD.USE_DTG_REWARD True \
-TASK_CONFIG.TASK.SIMPLE_REWARD.SLACK_PENALTY -1e-3 \
+TASK_CONFIG.TASK.SIMPLE_REWARD.SLACK_PENALTY 0.0 \
+TASK_CONFIG.TASK.SIMPLE_REWARD.STRICT_SUCCESS_DISTANCE 0.05 \
+TASK_CONFIG.TASK.SIMPLE_REWARD.USE_DTG_REWARD False \
+TASK_CONFIG.TASK.SIMPLE_REWARD.USE_STRICT_SUCCESS_REWARD True \
 MODEL.hm3d_goal True \
 MODEL.embed_sge True \
 MODEL.USE_SEMANTICS True \

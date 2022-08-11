@@ -4,6 +4,7 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+import copy
 import os
 import time
 import wandb
@@ -38,6 +39,7 @@ from habitat_baselines.utils.common import (
 from habitat_baselines.utils.env_utils import construct_envs
 from habitat_baselines.il.env_based.policy.rednet import load_rednet
 from scripts.utils.utils import write_json
+from habitat_baselines.utils.common import CustomFixedCategorical
 
 
 @baseline_registry.register_trainer(name="ppo")
@@ -819,7 +821,7 @@ class PPOTrainer(BaseRLTrainer):
                     current_episode_reward[i] = 0
                     current_episode_entropy[i] = 0
                     current_episode_steps[i] = 0
-                    logger.info("Success: {}, SPL: {}, Episode stats: {}".format(episode_stats["success"], episode_stats["spl"], episode_stats))
+                    logger.info("Success: {}, SPL: {}".format(episode_stats["success"], episode_stats["spl"]))
                     episode_meta.append({
                         "scene_id": current_episodes[i].scene_id,
                         "episode_id": current_episodes[i].episode_id,
@@ -894,6 +896,326 @@ class PPOTrainer(BaseRLTrainer):
         step_id = checkpoint_index
         if "extra_state" in ckpt_dict and "step" in ckpt_dict["extra_state"]:
             step_id = ckpt_dict["extra_state"]["step"]
+
+        writer.add_scalars(
+            "eval_reward",
+            {"average reward": aggregated_stats["reward"]},
+            step_id,
+        )
+
+        metrics = {k: v for k, v in aggregated_stats.items() if k != "reward"}
+        if len(metrics) > 0:
+            writer.add_scalars("eval_metrics", metrics, step_id)
+
+        write_json(episode_meta, self.config.EVAL.meta_file)
+
+        self.envs.close()
+
+    def _eval_ensemble_checkpoint(
+        self,
+        policy_a_checkpoint_path: str,
+        policy_b_checkpoint_path: str,
+        writer: TensorboardWriter,
+        checkpoint_index: int = 0,
+    ) -> None:
+        r"""Evaluates a single checkpoint.
+
+        Args:
+            checkpoint_path: path of checkpoint
+            writer: tensorboard writer object for logging to tensorboard
+            checkpoint_index: index of cur checkpoint for logging
+
+        Returns:
+            None
+        """
+        logger.info("Evaluate using policy ensembling...")
+        # Map location CPU is almost always better than mapping to a CUDA device.
+        policy_a_ckpt_dict = self.load_checkpoint(policy_a_checkpoint_path, map_location="cpu")
+        policy_b_ckpt_dict = self.load_checkpoint(policy_b_checkpoint_path, map_location="cpu")
+
+        if self.config.EVAL.USE_CKPT_CONFIG:
+            config = self._setup_eval_config(policy_a_ckpt_dict["config"])
+        else:
+            config = self.config.clone()
+
+        ppo_cfg = config.RL.PPO
+
+        config.defrost()
+        config.TASK_CONFIG.DATASET.SPLIT = config.EVAL.SPLIT
+        config.freeze()
+
+        if len(self.config.VIDEO_OPTION) > 0:
+            config.defrost()
+            config.TASK_CONFIG.TASK.MEASUREMENTS.append("TOP_DOWN_MAP")
+            config.TASK_CONFIG.TASK.MEASUREMENTS.append("COLLISIONS")
+            config.freeze()
+
+        logger.info(f"env config: {config}")
+        self.envs = construct_envs(config, get_env_class(config.ENV_NAME))
+        self._setup_actor_critic_agent(ppo_cfg)
+
+        self.agent.load_state_dict(policy_a_ckpt_dict["state_dict"])
+        self.policy_a_actor_critic = copy.deepcopy(self.agent.actor_critic)
+        
+        self.agent.load_state_dict(policy_b_ckpt_dict["state_dict"])
+        self.policy_b_actor_critic = copy.deepcopy(self.agent.actor_critic)
+
+        del self.agent
+        logger.info("Eval policy initialized")
+
+
+        observations = self.envs.reset()
+        batch = batch_obs(observations, device=self.device)
+        batch = apply_obs_transforms_batch(batch, self.obs_transforms)
+        if self.semantic_predictor is not None:
+            batch["semantic"] = self.semantic_predictor(batch["rgb"], batch["depth"])
+            # Subtract 1 from class labels for THDA YCB categories
+            if self.config.MODEL.SEMANTIC_ENCODER.is_thda:
+                batch["semantic"] = batch["semantic"] - 1
+
+        current_episode_reward = torch.zeros(
+            self.envs.num_envs, 1, device=self.device
+        )
+        current_episode_entropy = torch.zeros(
+            self.envs.num_envs, 1, device=self.device
+        )
+        current_episode_steps = torch.zeros(
+            self.envs.num_envs, 1, device=self.device
+        )
+
+        policy_a_test_recurrent_hidden_states = torch.zeros(
+            self.actor_critic.net.num_recurrent_layers,
+            self.config.NUM_PROCESSES,
+            ppo_cfg.hidden_size,
+            device=self.device,
+        )
+        policy_b_test_recurrent_hidden_states = torch.zeros(
+            self.actor_critic.net.num_recurrent_layers,
+            self.config.NUM_PROCESSES,
+            ppo_cfg.hidden_size,
+            device=self.device,
+        )
+        prev_actions = torch.zeros(
+            self.config.NUM_PROCESSES, 1, device=self.device, dtype=torch.long
+        )
+        not_done_masks = torch.zeros(
+            self.config.NUM_PROCESSES, 1, device=self.device
+        )
+        stats_episodes: Dict[
+            Any, Any
+        ] = {}  # dict of dicts that stores stats per episode
+
+        rgb_frames = [
+            [] for _ in range(self.config.NUM_PROCESSES)
+        ]  # type: List[List[np.ndarray]]
+        if len(self.config.VIDEO_OPTION) > 0:
+            os.makedirs(self.config.VIDEO_DIR, exist_ok=True)
+
+        number_of_eval_episodes = self.config.TEST_EPISODE_COUNT
+        if number_of_eval_episodes == -1:
+            number_of_eval_episodes = sum(self.envs.number_of_episodes)
+        else:
+            total_num_eps = sum(self.envs.number_of_episodes)
+            if total_num_eps < number_of_eval_episodes:
+                logger.warn(
+                    f"Config specified {number_of_eval_episodes} eval episodes"
+                    ", dataset only has {total_num_eps}."
+                )
+                logger.warn(f"Evaluating with {total_num_eps} instead.")
+                number_of_eval_episodes = total_num_eps
+
+        pbar = tqdm.tqdm(total=number_of_eval_episodes)
+        self.actor_critic.eval()
+        logger.info("Start evaluation")
+        step = 0
+        episode_meta = []
+        while (
+            len(stats_episodes) < number_of_eval_episodes
+            and self.envs.num_envs > 0
+        ):
+            current_episodes = self.envs.current_episodes_info()
+
+            with torch.no_grad():
+                if self.semantic_predictor is not None:
+                    batch["semantic"] = self.semantic_predictor(batch["rgb"], batch["depth"])
+                    # Subtract 1 from class labels for THDA YCB categories
+                    if self.config.MODEL.SEMANTIC_ENCODER.is_thda:
+                        batch["semantic"] = batch["semantic"] - 1
+                
+                #logger.info("batch before inference: {}, :{}".format(batch["rgb"].shape, batch["semantic"].shape))
+                (
+                    value,
+                    actions,
+                    _,
+                    policy_a_test_recurrent_hidden_states,
+                    dist_entropy,
+                    policy_a_distribution,
+                ) = self.policy_a_actor_critic.act(
+                    batch,
+                    policy_a_test_recurrent_hidden_states,
+                    prev_actions,
+                    not_done_masks,
+                    deterministic=False,
+                    return_distribution=True
+                )
+                #logger.info("batch: {}, sem :{}".format(batch["rgb"].shape, batch["semantic"].shape))
+
+                (
+                    value,
+                    actions,
+                    _,
+                    policy_b_test_recurrent_hidden_states,
+                    dist_entropy,
+                    policy_b_distribution,
+                ) = self.policy_b_actor_critic.act(
+                    batch,
+                    policy_b_test_recurrent_hidden_states,
+                    prev_actions,
+                    not_done_masks,
+                    deterministic=False,
+                    return_distribution=True
+                )
+
+                ensembled_probs = (0.5 * policy_a_distribution.probs + 0.5 * policy_b_distribution.probs)
+                ensembled_distribution = CustomFixedCategorical(probs=ensembled_probs)
+                actions = ensembled_distribution.sample()
+                # writer.add_scalars(
+                #     "eval_values",
+                #     {"values_{}".format(current_episodes[0].episode_id): value},
+                #     step,
+                # )
+                step += 1
+
+                prev_actions.copy_(actions)  # type: ignore
+
+            # NB: Move actions to CPU.  If CUDA tensors are
+            # sent in to env.step(), that will create CUDA contexts
+            # in the subprocesses.
+            # For backwards compatibility, we also call .item() to convert to
+            # an int
+            step_data = [a.item() for a in actions.to(device="cpu")]
+
+            outputs = self.envs.step(step_data)
+
+            observations, rewards_l, dones, infos = [
+                list(x) for x in zip(*outputs)
+            ]
+            batch = batch_obs(observations, device=self.device)
+            batch = apply_obs_transforms_batch(batch, self.obs_transforms)
+
+            not_done_masks = torch.tensor(
+                [[0.0] if done else [1.0] for done in dones],
+                dtype=torch.float,
+                device=self.device,
+            )
+
+            rewards = torch.tensor(
+                rewards_l, dtype=torch.float, device=self.device
+            ).unsqueeze(1)
+
+            current_episode_reward += rewards
+            current_episode_entropy += dist_entropy
+            current_episode_steps += 1
+
+            next_episodes = self.envs.current_episodes_info()
+            envs_to_pause = []
+            n_envs = self.envs.num_envs
+            for i in range(n_envs):
+                if (
+                    next_episodes[i].scene_id,
+                    next_episodes[i].episode_id,
+                ) in stats_episodes:
+                    envs_to_pause.append(i)
+
+                # episode ended
+                if not_done_masks[i].item() == 0:
+                    pbar.update()
+                    episode_stats = {}
+                    episode_stats["reward"] = current_episode_reward[i].item()
+                    episode_stats["entropy"] = current_episode_entropy[i].item() / current_episode_steps[i].item() # +1 to handle divide by zero
+                    episode_stats.update(
+                        self._extract_scalars_from_info(infos[i])
+                    )
+                    current_episode_reward[i] = 0
+                    current_episode_entropy[i] = 0
+                    current_episode_steps[i] = 0
+                    logger.info("Success: {}, SPL: {}".format(episode_stats["success"], episode_stats["spl"]))
+                    episode_meta.append({
+                        "scene_id": current_episodes[i].scene_id,
+                        "episode_id": current_episodes[i].episode_id,
+                        "metrics": episode_stats
+                    })
+                    write_json(episode_meta, self.config.EVAL.meta_file)
+                    # use scene_id + episode_id as unique id for storing stats
+                    stats_episodes[
+                        (
+                            current_episodes[i].scene_id,
+                            current_episodes[i].episode_id,
+                        )
+                    ] = episode_stats
+
+                    if len(self.config.VIDEO_OPTION) > 0:
+                        generate_video(
+                            video_option=self.config.VIDEO_OPTION,
+                            video_dir=self.config.VIDEO_DIR,
+                            images=rgb_frames[i],
+                            episode_id=current_episodes[i].episode_id,
+                            checkpoint_idx=checkpoint_index,
+                            metrics=self._extract_scalars_from_info(infos[i]),
+                            tb_writer=writer,
+                        )
+
+                        rgb_frames[i] = []
+                    step = 0
+
+                # episode continues
+                elif len(self.config.VIDEO_OPTION) > 0:
+                    # TODO move normalization / channel changing out of the policy and undo it here
+                    frame = observations_to_image(
+                        {k: v[i] for k, v in batch.items()}, infos[i]
+                    )
+                    frame = append_text_to_image(frame, "Find and go to {}".format(current_episodes[i].object_category))
+                    rgb_frames[i].append(frame)
+
+            (
+                self.envs,
+                policy_a_test_recurrent_hidden_states,
+                policy_b_test_recurrent_hidden_states,
+                not_done_masks,
+                current_episode_reward,
+                prev_actions,
+                batch,
+                rgb_frames,
+                current_episode_entropy,
+                current_episode_steps,
+            ) = self._pause_ensemble_envs(
+                envs_to_pause,
+                self.envs,
+                policy_a_test_recurrent_hidden_states,
+                policy_b_test_recurrent_hidden_states,
+                not_done_masks,
+                current_episode_reward,
+                prev_actions,
+                batch,
+                rgb_frames,
+                current_episode_entropy,
+                current_episode_steps,
+            )
+
+        num_episodes = len(stats_episodes)
+        aggregated_stats = {}
+        for stat_key in next(iter(stats_episodes.values())).keys():
+            aggregated_stats[stat_key] = (
+                sum(v[stat_key] for v in stats_episodes.values())
+                / num_episodes
+            )
+
+        for k, v in aggregated_stats.items():
+            logger.info(f"Average episode {k}: {v:.4f}")
+
+        step_id = checkpoint_index
+        if "extra_state" in policy_a_ckpt_dict and "step" in policy_a_ckpt_dict["extra_state"]:
+            step_id = policy_a_ckpt_dict["extra_state"]["step"]
 
         writer.add_scalars(
             "eval_reward",

@@ -177,6 +177,7 @@ class ObjectViewLocation:
     """
     agent_state: AgentState
     iou: Optional[float]
+    within_1m: Optional[bool] = False
 
 
 @attr.s(auto_attribs=True, kw_only=True)

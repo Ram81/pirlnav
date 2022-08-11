@@ -18,11 +18,7 @@ import numpy as np
 import habitat
 from habitat import Config, Dataset, logger
 from habitat_baselines.common.baseline_registry import baseline_registry
-from habitat.tasks.nav.nav import (
-    TopDownMap
-)
 from habitat.tasks.pickplace.pickplace import (
-    GoalObjectVisible,
     AgentToReceptacleDistance,
     ObjectToReceptacleDistance,
     AgentToObjectDistance
@@ -191,18 +187,11 @@ class ObjectNavRLEnv(NavRLEnv):
     """
     def __init__(self, config, dataset=None): # add coverage to the metrics
         super().__init__(config, dataset)
-        self.step_penalty = 1
-        self.visit_bonus = 0
-        self._previous_view = 0
 
     def step(self, *args, **kwargs):
-        self.step_penalty *= self._rl_config.COVERAGE_ATTENUATION
         return super().step(*args, **kwargs)
 
     def reset(self):
-        self.step_penalty = 1
-        self._goal_was_seen = False
-        self._previous_view = 0
         return super().reset()
 
     def get_reward_range(self):
@@ -213,4 +202,28 @@ class ObjectNavRLEnv(NavRLEnv):
         reward = 0
         if self._episode_success():
             reward += self._rl_config.SUCCESS_REWARD
+        return reward
+
+
+@baseline_registry.register_env(name="ObjectNavDenseRewardEnv")
+class ObjectNavDenseRewardEnv(NavRLEnv):
+    r"""
+        ObjectNav RL Env with dense reward measure
+    """
+    def __init__(self, config, dataset=None): # add coverage to the metrics
+        super().__init__(config, dataset)
+        self.config = config
+
+    def step(self, *args, **kwargs):
+        return super().step(*args, **kwargs)
+
+    def reset(self):
+        return super().reset()
+
+    def get_reward_range(self):
+        old_low, old_hi = super().get_reward_range()
+        return old_low, old_hi
+
+    def get_reward(self, observations):
+        reward = self._env.get_metrics()[self.config.RL.REWARD_MEASURE]
         return reward

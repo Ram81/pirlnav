@@ -1,12 +1,13 @@
 #!/bin/bash
 #SBATCH --job-name=onav_ilrl
-#SBATCH --gres gpu:1
-#SBATCH --nodes 1
+#SBATCH --gres gpu:8
+#SBATCH --nodes 2
 #SBATCH --cpus-per-task 6
-#SBATCH --ntasks-per-node 1
+#SBATCH --ntasks-per-node 8
 #SBATCH --signal=USR1@300
-#SBATCH --partition=debug
+#SBATCH --partition=long
 #SBATCH --constraint=a40
+#SBATCH --exclude=robby,chappie
 #SBATCH --output=slurm_logs/ddp-il-rl-%j.out
 #SBATCH --error=slurm_logs/ddp-il-rl-%j.err
 #SBATCH --requeue
@@ -23,8 +24,8 @@ export MASTER_ADDR
 
 config=$1
 
-TENSORBOARD_DIR="tb/objectnav_il_rl_ft/overfitting/sem_seg_pred/dense_reward/train_split/seed_1/"
-CHECKPOINT_DIR="data/new_checkpoints/objectnav_il_rl_ft/overfitting/sem_seg_pred/dense_reward/train_split/seed_1/"
+TENSORBOARD_DIR="tb/objectnav_il_rl_ft/ddppo_hm3d_pt_77k/sem_seg_pred/dtg_reward_ckpt_28_hm3d_v1_fixed/train_split/seed_1/"
+CHECKPOINT_DIR="data/new_checkpoints/objectnav_il_rl_ft/ddppo_hm3d_pt_77k/sem_seg_pred/dtg_reward_ckpt_28_hm3d_v1_fixed/train_split/seed_1/"
 DATA_PATH="data/datasets/objectnav/objectnav_hm3d/objectnav_hm3d_v1_fixed/"
 PRETRAINED_WEIGHTS="data/new_checkpoints/objectnav_il/objectnav_hm3d/objectnav_hm3d_77k/sem_seg_pred/seed_1/ckpt.28.pth"
 set -x

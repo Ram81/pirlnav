@@ -171,6 +171,7 @@ _C.TASK.TOP_DOWN_MAP.DRAW_VIEW_POINTS = True
 _C.TASK.TOP_DOWN_MAP.DRAW_GOAL_POSITIONS = True
 # Axes aligned bounding boxes
 _C.TASK.TOP_DOWN_MAP.DRAW_GOAL_AABBS = True
+_C.TASK.TOP_DOWN_MAP.DRAW_VIEW_POINTS_WITHIN_1M = False
 
 # -----------------------------------------------------------------------------
 # # COVERAGE MEASUREMENT
@@ -195,6 +196,40 @@ _C.TASK.ETN_REWARD.EXPLORE_GOAL_SEEN_THRESHOLD = 0.02
 _C.TASK.ETN_REWARD.REWARD = 0.25
 _C.TASK.ETN_REWARD.ATTENUATION = 0.995
 _C.TASK.ETN_REWARD.VISIT_EXP = 1
+
+# -----------------------------------------------------------------------------
+# SIMPLE REWARD MEASUREMENT
+# -----------------------------------------------------------------------------
+_C.TASK.SIMPLE_REWARD = CN()
+_C.TASK.SIMPLE_REWARD.TYPE = "SimpleReward"
+_C.TASK.SIMPLE_REWARD.SUCCESS_REWARD = 2.5
+_C.TASK.SIMPLE_REWARD.SLACK_PENALTY = 0.0
+_C.TASK.SIMPLE_REWARD.STRICT_SUCCESS_DISTANCE = 0.05
+_C.TASK.SIMPLE_REWARD.DTG_THRESHOLD = 2.0
+_C.TASK.SIMPLE_REWARD.USE_DTG_REWARD = False
+_C.TASK.SIMPLE_REWARD.USE_STRICT_SUCCESS_REWARD = False
+_C.TASK.SIMPLE_REWARD.USE_STRICT_SUCCESS_REWARD_V2 = False
+
+# -----------------------------------------------------------------------------
+# TRAIN SUCCESS MEASUREMENT
+# -----------------------------------------------------------------------------
+_C.TASK.TRAIN_SUCCESS = CN()
+_C.TASK.TRAIN_SUCCESS.TYPE = "TrainSuccess"
+_C.TASK.TRAIN_SUCCESS.SUCCESS_DISTANCE = 0.1
+
+# -----------------------------------------------------------------------------
+# DTG V2 SUCCESS MEASUREMENT
+# -----------------------------------------------------------------------------
+_C.TASK.STRICT_SUCCESS = CN()
+_C.TASK.STRICT_SUCCESS.TYPE = "StrictSuccess"
+_C.TASK.STRICT_SUCCESS.SUCCESS_DISTANCE = 0.1
+_C.TASK.STRICT_SUCCESS.VIEW_POINT_THRESHOLD = 0.1
+
+# -----------------------------------------------------------------------------
+# Exploration Metrics MEASUREMENT
+# -----------------------------------------------------------------------------
+_C.TASK.EXPLORATION_METRICS = CN()
+_C.TASK.EXPLORATION_METRICS.TYPE = "ExplorationMetrics"
 
 # -----------------------------------------------------------------------------
 # COLLISIONS MEASUREMENT

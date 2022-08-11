@@ -41,7 +41,7 @@ IL:
   POLICY:
     name: "ObjectNavILPolicy"
   USE_IW: True
-  distrib_backend: GLOO
+  distrib_backend: NCCL
   BehaviorCloning:
     lr: 0.001
     eps: 1.0e-5

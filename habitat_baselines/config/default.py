@@ -30,6 +30,8 @@ _C.TENSORBOARD_DIR = "tb"
 _C.VIDEO_DIR = "video_dir"
 _C.TEST_EPISODE_COUNT = -1
 _C.EVAL_CKPT_PATH_DIR = "data/checkpoints"  # path to ckpt or path to ckpts dir
+_C.EVAL_CKPT_PATH_DIR_POLICY_A = "data/checkpoints"  # path to ckpt or path to ensemble policy a
+_C.EVAL_CKPT_PATH_DIR_POLICY_B = "data/checkpoints"  # path to ckpt or path to ensemble policy b
 _C.NUM_PROCESSES = 16
 _C.SENSORS = ["RGB_SENSOR", "DEPTH_SENSOR"]
 _C.CHECKPOINT_FOLDER = "data/checkpoints"
@@ -56,6 +58,7 @@ _C.EVAL = CN()
 # The split to evaluate on
 _C.EVAL.SPLIT = "val"
 _C.EVAL.USE_CKPT_CONFIG = True
+_C.EVAL.ENSEMBLE = False
 # -----------------------------------------------------------------------------
 # REINFORCEMENT LEARNING (RL) ENVIRONMENT CONFIG
 # -----------------------------------------------------------------------------
@@ -126,7 +129,7 @@ _C.RL.PPO.hidden_size = 512
 # -----------------------------------------------------------------------------
 _C.RL.DDPPO = CN()
 _C.RL.DDPPO.sync_frac = 0.6
-_C.RL.DDPPO.distrib_backend = "GLOO"
+_C.RL.DDPPO.distrib_backend = "NCCL"
 _C.RL.DDPPO.rnn_type = "LSTM"
 _C.RL.DDPPO.num_recurrent_layers = 2
 _C.RL.DDPPO.backbone = "resnet50"

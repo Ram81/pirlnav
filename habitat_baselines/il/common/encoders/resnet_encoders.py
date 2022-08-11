@@ -264,7 +264,7 @@ class ResnetSemSeqEncoder(nn.Module):
         """
         obs_semantic = observations["semantic"]
         if len(obs_semantic.size()) == 5:
-            observations["semantic"] = obs_semantic.contiguous().view(
+            obs_semantic = obs_semantic.contiguous().view(
                 -1, obs_semantic.size(2), obs_semantic.size(3), obs_semantic.size(4)
             )
 
@@ -273,9 +273,9 @@ class ResnetSemSeqEncoder(nn.Module):
         else:
             # Embed input when using all object categories
             if not self.use_goal_seg:
-                categories = observations["semantic"].long() + 1
-                observations["semantic"] = self.semantic_embedder(categories)
-            x = self.visual_encoder(observations)
+                categories = obs_semantic.long() + 1
+                obs_semantic = self.semantic_embedder(categories)
+            x = self.visual_encoder({"semantic": obs_semantic})
 
         if self.spatial_output:
             b, c, h, w = x.size()

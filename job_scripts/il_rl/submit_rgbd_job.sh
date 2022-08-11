@@ -30,7 +30,7 @@ srun python -u -m habitat_baselines.run \
 --run-type train \
 TENSORBOARD_DIR "tb/objectnav_il_rl_ft/ddppo/rgbd/sparse_reward/policy_warmup_critic_decay_mlp/train_split/seed_1/" \
 CHECKPOINT_FOLDER "data/new_checkpoints/objectnav_il_rl_ft/ddppo/rgbd/sparse_reward/policy_warmup_critic_decay_mlp/train_split/seed_1/" \
-RL.DDPPO.distrib_backend "GLOO" \
+RL.DDPPO.distrib_backend "NCCL" \
 RL.Finetune.start_actor_finetuning_at 1500 \
 RL.Finetune.actor_lr_warmup_update 3000 \
 RL.Finetune.start_critic_warmup_at 1000 \

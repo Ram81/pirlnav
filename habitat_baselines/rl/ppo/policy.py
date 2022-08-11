@@ -57,6 +57,7 @@ class Policy(nn.Module, metaclass=abc.ABCMeta):
         prev_actions,
         masks,
         deterministic=False,
+        return_distribution=False,
     ):
         features, rnn_hidden_states = self.net(
             observations, rnn_hidden_states, prev_actions, masks
@@ -71,9 +72,13 @@ class Policy(nn.Module, metaclass=abc.ABCMeta):
         distribution_entropy = distribution.entropy().mean()
 
         if self.no_critic:
-            return action, rnn_hidden_states            
+            return action, rnn_hidden_states
 
         value = self.critic(features)
+
+        if return_distribution:
+            return value, action, action_log_probs, rnn_hidden_states, distribution_entropy, distribution
+
         return value, action, action_log_probs, rnn_hidden_states, distribution_entropy
 
     def get_value(self, observations, rnn_hidden_states, prev_actions, masks):
