@@ -1,9 +1,9 @@
 #!/bin/bash
 #SBATCH --job-name=onav_il
-#SBATCH --gres gpu:8
-#SBATCH --nodes 2
+#SBATCH --gres gpu:1
+#SBATCH --nodes 1
 #SBATCH --cpus-per-task 6
-#SBATCH --ntasks-per-node 8
+#SBATCH --ntasks-per-node 1
 #SBATCH --signal=USR1@1000
 #SBATCH --partition=long
 #SBATCH --constraint=a40
@@ -24,9 +24,9 @@ export MASTER_ADDR
 
 config=$1
 
-DATA_PATH="data/datasets/objectnav/objectnav_hm3d/objectnav_hm3d_fm_10k"
-TENSORBOARD_DIR="tb/objectnav_il/objectnav_hm3d/objectnav_hm3d_fm_10k/sem_seg_pred/seed_1/"
-CHECKPOINT_DIR="data/new_checkpoints/objectnav_il/objectnav_hm3d/objectnav_hm3d_fm_10k/sem_seg_pred/seed_1/"
+DATA_PATH="data/datasets/objectnav/objectnav_hm3d/objectnav_hm3d_fm_70k"
+TENSORBOARD_DIR="tb/objectnav_il/objectnav_hm3d/objectnav_hm3d_fm_70k/sem_seg_pred/seed_1/"
+CHECKPOINT_DIR="data/new_checkpoints/objectnav_il/objectnav_hm3d/objectnav_hm3d_fm_70k/sem_seg_pred/seed_1/"
 INFLECTION_COEF=2.110154009723525
 set -x
 

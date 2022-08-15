@@ -17,7 +17,7 @@ def sample_dataset(input_path, output_path, episodes_per_scene=100, clear_replay
 
     for f in tqdm(files):
         dataset = load_dataset(f)
-        sampled_episodes = random.sample(dataset["episodes"], episodes_per_scene)
+        sampled_episodes = random.sample(dataset["episodes"], min(len(dataset["episodes"]), episodes_per_scene))
 
         # Clear replay buffer
         if clear_replay:
