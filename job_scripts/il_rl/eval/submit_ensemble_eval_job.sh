@@ -24,9 +24,9 @@ export MASTER_ADDR
 
 config="habitat_baselines/config/objectnav/il_rl/ddppo_semseg_ft_objectnav_ensemble.yaml"
 DATA_PATH="data/datasets/objectnav/objectnav_hm3d/objectnav_hm3d_v1"
-TENSORBOARD_DIR="tb/objectnav_il_rl_ft/ddppo_hm3d_pt_77k/sem_seg_pred/sparse_reward/train_split/seed_1_4node/ensemble/v0_evals/ckpt_4_pt_32_w5_5_val/"
+TENSORBOARD_DIR="tb/objectnav_il_rl_ft/ddppo_hm3d_pt_77k/sem_seg_pred/ensemble/strict_success_ldtg_plus_sparse_success/v0_evals/ckpt_28_pt_ckpt34_ckpt32_w5_5_val/"
 EVAL_CKPT_PATH_DIR_POLICY_A="data/new_checkpoints/objectnav_il_rl_ft/ddppo_hm3d_pt_77k/sem_seg_pred/sparse_reward/train_split/seed_1_4node/ckpt.32.pth"
-EVAL_CKPT_PATH_DIR_POLICY_B="data/new_checkpoints/objectnav_il_rl_ft/ddppo_hm3d_pt_77k/sem_seg_pred/sparse_reward_pt_ckpt_4/train_split/seed_1/ckpt.16.pth"
+EVAL_CKPT_PATH_DIR_POLICY_B="data/new_checkpoints/objectnav_il_rl_ft/ddppo_hm3d_pt_77k/sem_seg_pred/strict_success_v2_last_mile_dtg_reward_ckpt_28/hm3d_v0_1_0/seed_1/ckpt.34.pth"
 # EVAL_CKPT_PATH_DIR_POLICY_B="data/new_checkpoints/objectnav_il_rl_ft/ddppo_hm3d_pt_77k/sem_seg_pred/sparse_reward/train_split/seed_1_4node/ckpt.32.pth"
 
 set -x
@@ -54,3 +54,4 @@ MODEL.SEMANTIC_ENCODER.is_thda True \
 MODEL.embed_sge True \
 MODEL.USE_SEMANTICS True \
 MODEL.USE_PRED_SEMANTICS True \
+MODEL.SEMANTIC_PREDICTOR.name "rednet" \

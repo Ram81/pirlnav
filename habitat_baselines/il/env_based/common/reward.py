@@ -37,6 +37,8 @@ class SimpleReward(Measure):
                 DistanceToGoal.cls_uuid,
                 TrainSuccess.cls_uuid,
                 StrictSuccess.cls_uuid,
+                AngleToGoal.cls_uuid,
+                AngleSuccess.cls_uuid,
             ],
         )
         self._metric = None
@@ -66,11 +68,20 @@ class SimpleReward(Measure):
             if reach_goal_within_1m:
                 success_reward += self._config.SUCCESS_REWARD
 
+        # angle success
+        use_angle_success = self._config.USE_ANGLE_SUCCESS_REWARD
+        angle_success = task.measurements.measures[AngleSuccess.cls_uuid].get_metric()
+        angle_success_reward = (
+            self._config.ANGLE_SUCCESS_REWARD if angle_success and use_angle_success else 0.0
+        )
+
         # slack penalty
-        slack_penalty = self._config.SLACK_PENALTY
+        add_slack_penalty = self._config.USE_SLACK_PENALTY
+        slack_penalty = self._config.SLACK_PENALTY if add_slack_penalty else 0.0
 
         self._metric = (
             success_reward
             + dtg_reward
             + slack_penalty
+            + angle_success_reward
         )

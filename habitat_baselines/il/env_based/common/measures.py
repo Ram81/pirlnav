@@ -12,6 +12,7 @@ from habitat.tasks.nav.nav import NavigationEpisode, Success, DistanceToGoal
 from habitat.utils.geometry_utils import (
     angle_between_quaternions,
     quaternion_from_coeff,
+    quaternion_from_two_vectors
 )
 
 
@@ -36,14 +37,40 @@ class AngleToGoal(Measure):
         task.measurements.check_measure_dependencies(self.uuid, dependencies)
         self.update_metric(episode=episode, *args, **kwargs)  # type: ignore
 
-    def update_metric(self, episode: NavigationEpisode, task: EmbodiedTask, *args: Any, **kwargs: Any):
+    def _euclidean_distance(self, position_a, position_b):
+        return np.linalg.norm(position_b - position_a, ord=2)
+
+    def get_closest_goal_position(self, goals, agent_position):
+        min_dist = 100.0
+        closest_goal_position = None
+        for goal in goals:
+            goal_position = goal.position
+            dist = self._euclidean_distance(goal_position, agent_position)
+            if dist < min_dist:
+                closest_goal_position = goal_position
+        return closest_goal_position
+
+    def direction_to_quaternion(self, direction_vector: np.array):
+        origin_vector = np.array([0, 0, -1])
+        return quaternion_from_two_vectors(origin_vector, direction_vector)
+
+    def get_goal_rotation(self, goal_position, agent_position):
+        goal_direction = goal_position - agent_position
+        goal_direction[1] = 0
+
+        rotation = self.direction_to_quaternion(goal_direction)
+        return rotation
+
+    def update_metric(self, episode: NavigationEpisode, *args: Any, **kwargs: Any):
         current_rotation = self._sim.get_agent_state().rotation
+        current_position = self._sim.get_agent_state().position
         if not isinstance(current_rotation, quaternion.quaternion):
             current_rotation = quaternion_from_coeff(current_rotation)
 
-        goal_rotation = task.measurements.measures[StrictSuccess.cls_uuid].get_metric()["goal_rotation"]
+        goal_position = self.get_closest_goal_position(episode.goals, current_position)
+        goal_rotation = self.get_goal_rotation(goal_position, current_position)
 
-        if goal_rotation is not None:            
+        if goal_rotation is not None:
             if not isinstance(goal_rotation, quaternion.quaternion):
                 goal_rotation = quaternion_from_coeff(goal_rotation)
 

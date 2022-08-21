@@ -203,6 +203,7 @@ _C.TASK.ETN_REWARD.VISIT_EXP = 1
 _C.TASK.SIMPLE_REWARD = CN()
 _C.TASK.SIMPLE_REWARD.TYPE = "SimpleReward"
 _C.TASK.SIMPLE_REWARD.SUCCESS_REWARD = 2.5
+_C.TASK.SIMPLE_REWARD.ANGLE_SUCCESS_REWARD = 2.5
 _C.TASK.SIMPLE_REWARD.SLACK_PENALTY = -0.01
 _C.TASK.SIMPLE_REWARD.STRICT_SUCCESS_DISTANCE = 0.05
 _C.TASK.SIMPLE_REWARD.DTG_THRESHOLD = 2.0
@@ -210,6 +211,7 @@ _C.TASK.SIMPLE_REWARD.USE_DTG_REWARD = False
 _C.TASK.SIMPLE_REWARD.USE_SLACK_PENALTY = False
 _C.TASK.SIMPLE_REWARD.USE_STRICT_SUCCESS_REWARD = False
 _C.TASK.SIMPLE_REWARD.USE_STRICT_SUCCESS_REWARD_V2 = False
+_C.TASK.SIMPLE_REWARD.USE_ANGLE_SUCCESS_REWARD = False
 
 # -----------------------------------------------------------------------------
 # TRAIN SUCCESS MEASUREMENT
@@ -217,6 +219,20 @@ _C.TASK.SIMPLE_REWARD.USE_STRICT_SUCCESS_REWARD_V2 = False
 _C.TASK.TRAIN_SUCCESS = CN()
 _C.TASK.TRAIN_SUCCESS.TYPE = "TrainSuccess"
 _C.TASK.TRAIN_SUCCESS.SUCCESS_DISTANCE = 0.1
+
+# -----------------------------------------------------------------------------
+# ANGLE SUCCESS MEASUREMENT
+# -----------------------------------------------------------------------------
+_C.TASK.ANGLE_SUCCESS = CN()
+_C.TASK.ANGLE_SUCCESS.TYPE = "AngleSuccess"
+_C.TASK.ANGLE_SUCCESS.SUCCESS_ANGLE = 25.0
+_C.TASK.ANGLE_SUCCESS.USE_TRAIN_SUCCESS = True
+
+# -----------------------------------------------------------------------------
+# ANGLE TO GOAL MEASUREMENT
+# -----------------------------------------------------------------------------
+_C.TASK.ANGLE_TO_GOAL = CN()
+_C.TASK.ANGLE_TO_GOAL.TYPE = "AngleToGoal"
 
 # -----------------------------------------------------------------------------
 # DTG V2 SUCCESS MEASUREMENT
