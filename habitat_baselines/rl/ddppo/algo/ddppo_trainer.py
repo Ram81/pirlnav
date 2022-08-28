@@ -116,6 +116,7 @@ class DDPPOTrainer(PPOTrainer):
             logger.info("Loading checkpoint missing keys: {}".format(missing_keys))
 
         self.rl_finetuning = False
+        self.finetune_full_agent = False
         if hasattr(self.config.RL, "Finetune") and self.config.RL.Finetune.finetune:
             logger.info("Start Freeze encoder")
             self.rl_finetuning = True
@@ -126,11 +127,10 @@ class DDPPOTrainer(PPOTrainer):
             self.actor_lr_warmup_update = self.config.RL.Finetune.actor_lr_warmup_update
             self.critic_lr_decay_update = self.config.RL.Finetune.critic_lr_decay_update
             self.start_critic_warmup_at = self.config.RL.Finetune.start_critic_warmup_at
+            self.finetune_full_agent =  self.config.RL.Finetune.finetune_full_agent
 
         if self.config.RL.DDPPO.reset_critic:
             pass
-            # nn.init.orthogonal_(self.actor_critic.critic.fc.weight)
-            # nn.init.constant_(self.actor_critic.critic.fc.bias, 0)
 
         self.agent = DDPPO(
             actor_critic=self.actor_critic,
@@ -144,6 +144,7 @@ class DDPPOTrainer(PPOTrainer):
             max_grad_norm=ppo_cfg.max_grad_norm,
             use_normalized_advantage=ppo_cfg.use_normalized_advantage,
             finetune=self.rl_finetuning,
+            finetune_full_agent=self.finetune_full_agent,
         )
 
     @profiling_wrapper.RangeContext("train")
@@ -293,14 +294,29 @@ class DDPPOTrainer(PPOTrainer):
         prev_time = 0
 
         if self.rl_finetuning:
-            lr_scheduler = LambdaLR(
-                optimizer=self.agent.optimizer,
-                lr_lambda=[
-                    lambda x: critic_linear_decay(x, self.start_critic_warmup_at, self.critic_lr_decay_update, self.config.RL.PPO.lr, self.config.RL.Finetune.policy_ft_lr),
-                    lambda x: linear_warmup(x, self.actor_finetuning_update, self.actor_lr_warmup_update, 0.0, self.config.RL.Finetune.policy_ft_lr),
-                    lambda x: linear_warmup(x, self.actor_finetuning_update, self.actor_lr_warmup_update, 0.0, self.config.RL.Finetune.policy_ft_lr),
-                ]
-            )
+            if self.finetune_full_agent:
+                lr_scheduler = LambdaLR(
+                    optimizer=self.agent.optimizer,
+                    lr_lambda=[
+                        lambda x: critic_linear_decay(x, self.start_critic_warmup_at, self.critic_lr_decay_update, self.config.RL.PPO.lr, self.config.RL.Finetune.policy_ft_lr),
+                        lambda x: linear_warmup(x, self.actor_finetuning_update, self.actor_lr_warmup_update, 0.0, self.config.RL.Finetune.policy_ft_lr),
+                        lambda x: linear_warmup(x, self.actor_finetuning_update, self.actor_lr_warmup_update, 0.0, self.config.RL.Finetune.policy_ft_lr),
+                        lambda x: linear_warmup(x, self.actor_finetuning_update, self.actor_lr_warmup_update, 0.0, self.config.RL.Finetune.policy_ft_lr),
+                        lambda x: linear_warmup(x, self.actor_finetuning_update, self.actor_lr_warmup_update, 0.0, self.config.RL.Finetune.policy_ft_lr),
+                        lambda x: linear_warmup(x, self.actor_finetuning_update, self.actor_lr_warmup_update, 0.0, self.config.RL.Finetune.policy_ft_lr),
+                        lambda x: linear_warmup(x, self.actor_finetuning_update, self.actor_lr_warmup_update, 0.0, self.config.RL.Finetune.policy_ft_lr),
+                        lambda x: linear_warmup(x, self.actor_finetuning_update, self.actor_lr_warmup_update, 0.0, self.config.RL.Finetune.policy_ft_lr),
+                    ]
+                ) 
+            else:   
+                lr_scheduler = LambdaLR(
+                    optimizer=self.agent.optimizer,
+                    lr_lambda=[
+                        lambda x: critic_linear_decay(x, self.start_critic_warmup_at, self.critic_lr_decay_update, self.config.RL.PPO.lr, self.config.RL.Finetune.policy_ft_lr),
+                        lambda x: linear_warmup(x, self.actor_finetuning_update, self.actor_lr_warmup_update, 0.0, self.config.RL.Finetune.policy_ft_lr),
+                        lambda x: linear_warmup(x, self.actor_finetuning_update, self.actor_lr_warmup_update, 0.0, self.config.RL.Finetune.policy_ft_lr),
+                    ]
+                )
         else:
             lr_scheduler = LambdaLR(
                 optimizer=self.agent.optimizer,
@@ -384,7 +400,11 @@ class DDPPOTrainer(PPOTrainer):
                     for param in self.actor_critic.action_distribution.parameters():
                         param.requires_grad_(True)
                     for param in self.actor_critic.net.state_encoder.parameters():
-                        param.requires_grad_(True)                    
+                        param.requires_grad_(True)
+                    # Unfreeze visual encoder when RL-FT
+                    if self.config.RL.Finetune.unfreeze_encoders_after_warmup:
+                        self.actor_critic.unfreeze_visual_encoders()
+
                     for i, param_group in enumerate(self.agent.optimizer.param_groups):
                         param_group["eps"] = self.config.RL.PPO.eps
                         lr_scheduler.base_lrs[i] = 1.0

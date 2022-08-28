@@ -24,8 +24,9 @@ export MASTER_ADDR
 
 config=$1
 DATA_PATH="data/datasets/objectnav/objectnav_hm3d/objectnav_hm3d_v1"
-TENSORBOARD_DIR="tb/objectnav_il_rl_ft/ddppo_hm3d_pt_77k/sem_seg_pred/strict_success_v2_last_mile_dtg_reward_ckpt_28/hm3d_v0_1_0/seed_1/v0_1_0_evals/ckpt_50_val/"
-EVAL_CKPT_PATH_DIR="data/new_checkpoints/objectnav_il_rl_ft/ddppo_hm3d_pt_77k/sem_seg_pred/strict_success_v2_last_mile_dtg_reward_ckpt_28/hm3d_v0_1_0/seed_1/ckpt.50.pth"
+TENSORBOARD_DIR="tb/objectnav_il_rl_ft/ddppo_hm3d_pt_77k/rgb_ovrl/strict_success_v2_last_mile_dtg_reward/hm3d_v0_1_0/seed_1/v0_1_0_evals/ckpt_32_val/"
+EVAL_CKPT_PATH_DIR="data/new_checkpoints/objectnav_il_rl_ft/ddppo_hm3d_pt_77k/rgb_ovrl/strict_success_v2_last_mile_dtg_reward/hm3d_v0_1_0/seed_1/ckpt.32.pth"
+PRETRAINED_WEIGHTS="data/new_checkpoints/objectnav_il/objectnav_hm3d/objectnav_hm3d_77k/rgb_ovrl/seed_1/ObjectNav_omnidata_DINO_02_77k.pth"
 
 set -x
 
@@ -40,14 +41,23 @@ EVAL.SPLIT "val" \
 EVAL.USE_CKPT_CONFIG False \
 EVAL.meta_file "$TENSORBOARD_DIR/evaluation_meta.json" \
 EVAL_CKPT_PATH_DIR $EVAL_CKPT_PATH_DIR \
+RL.DDPPO.pretrained_weights $PRETRAINED_WEIGHTS \
 TASK_CONFIG.TASK.SENSORS "['OBJECTGOAL_SENSOR', 'COMPASS_SENSOR', 'GPS_SENSOR']" \
 TASK_CONFIG.TASK.MEASUREMENTS "['DISTANCE_TO_GOAL', 'SUCCESS', 'SPL', 'SOFT_SPL', 'GOAL_OBJECT_VISIBLE', 'MIN_DISTANCE_TO_GOAL', 'TOP_DOWN_MAP', 'EXPLORATION_METRICS']" \
 TASK_CONFIG.DATASET.TYPE "ObjectNav-v1" \
 TASK_CONFIG.DATASET.DATA_PATH "$DATA_PATH/{split}/{split}.json.gz" \
-MODEL.hm3d_goal True \
+MODEL.hm3d_goal False \
+MODEL.embed_sge False \
+MODEL.USE_SEMANTICS False \
+MODEL.USE_PRED_SEMANTICS False \
 MODEL.SEMANTIC_ENCODER.is_hm3d False \
-MODEL.SEMANTIC_ENCODER.is_thda True \
-MODEL.embed_sge True \
-MODEL.USE_SEMANTICS True \
-MODEL.USE_PRED_SEMANTICS True \
+MODEL.SEMANTIC_ENCODER.is_thda False \
 MODEL.SEMANTIC_PREDICTOR.name "rednet" \
+MODEL.RGB_ENCODER.cnn_type "VisualEncoder" \
+MODEL.RGB_ENCODER.backbone "resnet50" \
+MODEL.RGB_ENCODER.use_augmentations False \
+MODEL.RGB_ENCODER.augmentations_name "+" \
+MODEL.RGB_ENCODER.freeze_backbone False \
+MODEL.RGB_ENCODER.randomize_augmentations_over_envs False \
+MODEL.RGB_ENCODER.pretrained_encoder "data/visual_encoders/omnidata_DINO_02.pth"
+

@@ -695,11 +695,12 @@ class ILEnvTrainer(BaseRLTrainer):
                     current_episode_reward[i] = 0
                     current_episode_steps[i] = 0
                     current_episode_entropy[i] = 0
-                    logger.info("Success: {}, SPL: {}: Episode stats: {}".format(episode_stats["success"], episode_stats["spl"], episode_stats))
+                    logger.info("Success: {}, SPL: {}: Episode stats: {}, Episode id: {}".format(episode_stats["success"], episode_stats["spl"], episode_stats, current_episodes[i].episode_id))
                     episode_meta.append({
                         "scene_id": current_episodes[i].scene_id,
                         "episode_id": current_episodes[i].episode_id,
-                        "metrics": episode_stats
+                        "metrics": episode_stats,
+                        "object_category": current_episodes[i].object_category,
                     })
                     write_json(episode_meta, self.config.EVAL.meta_file)
 

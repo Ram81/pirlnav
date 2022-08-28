@@ -98,6 +98,7 @@ def calculate_inflection_weight_objectnav(path, stats_path):
     total_episodes = 0
     ep_lt_than_1k = 0
     ep_lt_than_500 = 0
+    num_ep_extra_stops = 0
 
     data_stats = {
         "episode_length": [],
@@ -123,12 +124,15 @@ def calculate_inflection_weight_objectnav(path, stats_path):
             data_stats["episode_length"].append(num_actions)
             reference_replay = episode["reference_replay"]
             mx = max(mx, len(reference_replay))
+            num_stop_actions = 0
             for i in range(len(reference_replay)):
                 action = reference_replay[i]["action"]
                 if action not in data_stats["action_frequency"]:
                     data_stats["action_frequency"][action] = 0
                 data_stats["action_frequency"][action] += 1
                 wall_clock_time += 0 #get_action_time(action, "objectnav")
+                if action == "STOP":
+                    num_stop_actions += 1
 
             object_category = episode['object_category']
             if object_category not in data_stats['object_frequency']:
@@ -146,6 +150,9 @@ def calculate_inflection_weight_objectnav(path, stats_path):
             
             if len(reference_replay) <= 500:
                 ep_lt_than_500 += 1
+            
+            if num_stop_actions != 2:
+                num_ep_extra_stops += 1
             actions_per_scene += len(reference_replay)
         per_scene_actions.append(actions_per_scene)
 
@@ -160,11 +167,12 @@ def calculate_inflection_weight_objectnav(path, stats_path):
     print("Wall clock time in hours: {}".format(wall_clock_time / 3600))
     print("Per scene episodes: {}".format(per_scene_episodes))
     print("Avg per scene episodes: {}".format(sum(per_scene_episodes) / len(per_scene_episodes)))
+    print("Total episodes with more than 2 stops: {}".format(num_ep_extra_stops))
 
     f_scenes = []
     filtered_actions = 0
     for i in range(len(scene_ids)):
-        if per_scene_episodes[i] < 800:
+        if per_scene_episodes[i] < 900:
             print(scene_ids[i], per_scene_episodes[i])
             f_scenes.append(scene_ids[i])
             filtered_actions += per_scene_actions[i]

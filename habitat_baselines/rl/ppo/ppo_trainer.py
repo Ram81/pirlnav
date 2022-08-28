@@ -670,6 +670,8 @@ class PPOTrainer(BaseRLTrainer):
         logger.info(f"env config: {config}")
         self.envs = construct_envs(config, get_env_class(config.ENV_NAME))
         self._setup_actor_critic_agent(ppo_cfg)
+        #logger.info("Ckpt: {}".format(checkpoint_path))
+        #logger.info("SHape: {}".format(ckpt_dict["state_dict"]["net.obj_categories_embedding"].shape))
 
         self.agent.load_state_dict(ckpt_dict["state_dict"])
         self.actor_critic = self.agent.actor_critic
@@ -821,11 +823,12 @@ class PPOTrainer(BaseRLTrainer):
                     current_episode_reward[i] = 0
                     current_episode_entropy[i] = 0
                     current_episode_steps[i] = 0
-                    logger.info("Success: {}, SPL: {}".format(episode_stats["success"], episode_stats["spl"]))
+                    logger.info("Success: {}, SPL: {}  Episode id: {}".format(episode_stats["success"], episode_stats["spl"], current_episodes[i].episode_id))
                     episode_meta.append({
                         "scene_id": current_episodes[i].scene_id,
                         "episode_id": current_episodes[i].episode_id,
-                        "metrics": episode_stats
+                        "metrics": episode_stats,
+                        "object_category": current_episodes[i].object_category,
                     })
                     write_json(episode_meta, self.config.EVAL.meta_file)
                     # use scene_id + episode_id as unique id for storing stats
@@ -1139,11 +1142,12 @@ class PPOTrainer(BaseRLTrainer):
                     current_episode_reward[i] = 0
                     current_episode_entropy[i] = 0
                     current_episode_steps[i] = 0
-                    logger.info("Success: {}, SPL: {}".format(episode_stats["success"], episode_stats["spl"]))
+                    logger.info("Success: {}, SPL: {}  Episode id: {}".format(episode_stats["success"], episode_stats["spl"], current_episodes[i].episode_id))
                     episode_meta.append({
                         "scene_id": current_episodes[i].scene_id,
                         "episode_id": current_episodes[i].episode_id,
-                        "metrics": episode_stats
+                        "metrics": episode_stats,
+                        "object_category": current_episodes[i].object_category,
                     })
                     write_json(episode_meta, self.config.EVAL.meta_file)
                     # use scene_id + episode_id as unique id for storing stats

@@ -33,6 +33,7 @@ class PPO(nn.Module):
         use_clipped_value_loss: bool = True,
         use_normalized_advantage: bool = True,
         finetune: bool = False,
+        finetune_full_agent: bool = False,
     ) -> None:
 
         super().__init__()
@@ -55,6 +56,42 @@ class PPO(nn.Module):
                 lr=lr,
                 eps=eps,
             )
+        elif finetune_full_agent:
+            self.optimizer = optim.Adam([
+                {
+                    'params': list(filter(lambda p: p.requires_grad, actor_critic.critic.parameters())),
+                    'lr': lr,
+                    'eps': eps
+                },
+                {
+                    'params': list(actor_critic.net.state_encoder.parameters()),
+                    'lr': 0.0,
+                },
+                {
+                    'params': list(actor_critic.action_distribution.parameters()),
+                    'lr': 0.0,
+                },
+                {
+                    'params': list(actor_critic.net.visual_encoder.parameters()),
+                    'lr': 0.0,
+                },
+                {
+                    'params': list(actor_critic.net.prev_action_embedding.parameters()),
+                    'lr': 0.0,
+                },
+                {
+                    'params': list(actor_critic.net.compass_embedding.parameters()),
+                    'lr': 0.0,
+                },
+                {
+                    'params': list(actor_critic.net.obj_categories_embedding.parameters()),
+                    'lr': 0.0,
+                },
+                {
+                    'params': list(actor_critic.net.gps_embedding.parameters()),
+                    'lr': 0.0,
+                },
+            ])
         else:
             self.optimizer = optim.Adam([
                 {

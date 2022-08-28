@@ -24,7 +24,7 @@ export MASTER_ADDR
 
 config=$1
 
-DATA_PATH="data/datasets/objectnav/objectnav_hm3d/objectnav_hm3d_fm"
+DATA_PATH="data/datasets/objectnav/objectnav_hm3d/objectnav_hm3d_fe_70k_balanced"
 TENSORBOARD_DIR="tb/objectnav_il/overfitting/fronteir_exp/seed_2/"
 CHECKPOINT_DIR="data/new_checkpoints/objectnav_il/overfitting/fronteir_exp/seed_2/"
 INFLECTION_COEF=3.234951275740812
@@ -49,5 +49,6 @@ MODEL.USE_SEMANTICS True \
 MODEL.USE_PRED_SEMANTICS True \
 MODEL.SEMANTIC_ENCODER.is_hm3d False \
 MODEL.SEMANTIC_ENCODER.is_thda True \
-MODEL.SEMANTIC_PREDICTOR.name "rednet"
+MODEL.SEMANTIC_PREDICTOR.name "rednet" \
+TASK_CONFIG.DATASET.CONTENT_SCENES "['MVVzj944atG', 'TSJmdttd2GV', 'qk9eeNeR4vw', 'u9rPN5cHWBg', 'DoSbsoo4EAg', 'gmuS7Wgsbrx', '6imZUJGRUq4', 'vDfkYo5VqEQ', 'ggNAcMh8JPT', 'QN2dRqwd84J', 'b3WpMbPFB6q', 'YHmAkqgwe2p', 'qz3829g1Lzf', 'URjpCob8MGw', 'RaYrxWt5pR1', 'YJDUB7hWg9h', 'gQ3xxshDiCz', 'VoVGtfYrpuQ', 'oEPjPNSPmzL', 'yHLr6bvWsVm', 'LcAd9dhvVwh', '8wJuSPJ9FXG', 'wsAYBFtQaL7', '5biL7VEkByM', 'xAHnY3QzFUN', 'HxmXPBbFCkH', 'fxbzYAGkrtm', '77mMEyxhs44', '226REUyJh2K', 'GtM3JtRvvvR', 'W9YAR9qcuvN', 'gjhYih4upQ9', 'HfMobPm86Xn', 'ACZZiU6BXLz', 'v7DzfFFEpsD', 'YmWinf3mhb5', 'GGBvSFddQgs', 'xWvSkKiWQpC', 'vLpv2VX547B', '3XYAD64HpDr', 'oahi4u45xMf', 'E1NrAhMoqvB', 'GTV2Y73Sn5t', 'NGyoyh91xXJ', 'nS8T59Aw3sf', 'pcpn6mFqFCg', 'CthA7sQNTPK', '1S7LAXRdDqK', 'JptJPosx1Z6', 'TYDavTf8oyy', 'YMNvYDhK8mB', 'ixTj1aTMup2', 'Jfyvj3xn2aJ', 'Z2DQddYp1fn', 'wPLokgvCnuk', 'g7hUFVNac26', 'iKFn6fzyRqs', 'Wo6kuutE9i7', 'U3oQjwTuMX8', 'hWDDQnSDMXb', 'xgLmjqzoAzF', 'h6nwVLpAKQz', '1UnKg1rAb8A', '3CBBjsNkhqW', 'FRQ75PjD278', 'XiJhRLvpKpX', 'j6fHrce9pHR', 'nACV8wLu1u5', 'QVAA6zecMHu', 'FnDDfrBZPhh', '4vwGX7U38Ux', 'HeSYRw7eMtG', 'NtnvZSMK3en', 'DNWbUAJYsPy']" \
 

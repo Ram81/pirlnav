@@ -26,22 +26,24 @@ def list_files(path):
     return glob.glob(path)
 
 
-def merge_episodes(input_path_1, input_path_2, output_path):
+def merge_episodes(input_path_1, output_path):
     files = list_files(os.path.join(input_path_1, "*json.gz"))
+    file_paths = ["../objectnav_sem_exp/data/datasets/objectnav/objectnav_hm3d/objectnav_hm3d_fm_v3/train/content/", "../objectnav_sem_exp/data/datasets/objectnav/objectnav_hm3d/objectnav_hm3d_fm_v2/train/content/"]
 
     count = 0
     for f in tqdm(files):
         scene_id = f.split("/")[-1]
         input_dataset_1 = load_dataset(f)
 
-        input_dataset_2_path = os.path.join(input_path_2, scene_id)
+        for file_path in file_paths:
+            input_dataset_2_path = os.path.join(file_path, scene_id)
 
-        if os.path.exists(input_dataset_2_path):
-            input_dataset_2 = load_dataset(input_dataset_2_path)
+            if os.path.exists(input_dataset_2_path):
+                input_dataset_2 = load_dataset(input_dataset_2_path)
 
-            input_dataset_1["episodes"].extend(input_dataset_2["episodes"])
-        else:
-            count += 1
+                input_dataset_1["episodes"].extend(input_dataset_2["episodes"])
+            else:
+                count += 1
         random.shuffle(input_dataset_1["episodes"])
         
         scene_output_path = os.path.join(output_path, scene_id.replace(".gz", ""))
@@ -72,9 +74,6 @@ if __name__ == "__main__":
         "--input-path", type=str, default="data/datasets/objectnav/objectnav_hm3d/"
     )
     parser.add_argument(
-        "--input-path-2", type=str, default="data/datasets/objectnav/objectnav_hm3d/"
-    )
-    parser.add_argument(
         "--output-path", type=str, default="data/datasets/objectnav/objectnav_hm3d/"
     )
     parser.add_argument(
@@ -83,6 +82,6 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     if args.merge:
-        merge_episodes(args.input_path, args.input_path_2, args.output_path)
+        merge_episodes(args.input_path, args.output_path)
     else:
         convert_actions_to_commands(args.input_path, args.output_path)

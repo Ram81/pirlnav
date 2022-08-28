@@ -32,7 +32,7 @@ RL:
   SLACK_REWARD: -1e-3
 
   POLICY:
-    name: "ObjectNavILPolicy"
+    name: "ObjectNavMAEILPolicy"
 
   PPO:
     # ppo params
@@ -80,6 +80,8 @@ RL:
   Finetune:
     finetune: True
     freeze_encoders: True
+    finetune_full_agent: False
+    unfreeze_encoders_after_warmup: False
 
     policy_ft_lr: 1.5e-5
 
@@ -88,15 +90,12 @@ RL:
     start_critic_warmup_at: 50
     critic_lr_decay_update: 100
 
-    finetune_full_agent: False
-    unfreeze_encoders_after_warmup: False
-
 
 MODEL:
   hm3d_goal: False
-  embed_sge: True
-  USE_SEMANTICS: True
-  USE_PRED_SEMANTICS: True
+  embed_sge: False
+  USE_SEMANTICS: False
+  USE_PRED_SEMANTICS: False
   SWITCH_TO_PRED_SEMANTICS_UPDATE: 0
   SEMANTIC_PREDICTOR:
     name: "rednet"
@@ -128,7 +127,7 @@ MODEL:
     train_encoder: True
     normalize_visual_inputs: False
   DEPTH_ENCODER:
-    cnn_type: "VlnResnetDepthEncoder"
+    cnn_type: "None" # "VlnResnetDepthEncoder"
     output_size: 128
     backbone: "resnet50"
     trainable: False

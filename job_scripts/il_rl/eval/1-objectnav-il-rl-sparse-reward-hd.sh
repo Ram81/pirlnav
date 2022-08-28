@@ -23,9 +23,9 @@ MASTER_ADDR=$(srun --ntasks=1 hostname 2>&1 | tail -n1)
 export MASTER_ADDR
 
 config=$1
-DATA_PATH="data/datasets/objectnav/objectnav_hm3d/objectnav_hm3d_v1"
-TENSORBOARD_DIR="tb/objectnav_il_rl_ft/ddppo_hm3d_pt_77k/sem_seg_pred/strict_success_v2_last_mile_dtg_reward_ckpt_28/hm3d_v0_1_0/seed_1/v0_1_0_evals/ckpt_50_val/"
-EVAL_CKPT_PATH_DIR="data/new_checkpoints/objectnav_il_rl_ft/ddppo_hm3d_pt_77k/sem_seg_pred/strict_success_v2_last_mile_dtg_reward_ckpt_28/hm3d_v0_1_0/seed_1/ckpt.50.pth"
+DATA_PATH="data/datasets/objectnav/objectnav_hm3d/objectnav_hm3d_v1_fixed"
+TENSORBOARD_DIR="tb/objectnav_il_rl_ft/ddppo_hm3d_pt_77k/sem_seg_pred/sparse_reward_pt_ckpt_4/hm3d_v0_1_05/seed_1/v1_fixed_evals/ckpt_16_uuid/"
+EVAL_CKPT_PATH_DIR="data/new_checkpoints/objectnav_il_rl_ft/ddppo_hm3d_pt_77k/sem_seg_pred/sparse_reward_pt_ckpt_4/train_split/seed_1/ckpt.16.pth"
 
 set -x
 
@@ -51,3 +51,6 @@ MODEL.embed_sge True \
 MODEL.USE_SEMANTICS True \
 MODEL.USE_PRED_SEMANTICS True \
 MODEL.SEMANTIC_PREDICTOR.name "rednet" \
+
+
+# 404148 - uuid

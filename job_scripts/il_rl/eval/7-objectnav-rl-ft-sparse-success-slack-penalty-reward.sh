@@ -24,8 +24,8 @@ export MASTER_ADDR
 
 config=$1
 DATA_PATH="data/datasets/objectnav/objectnav_hm3d/objectnav_hm3d_v1"
-TENSORBOARD_DIR="tb/objectnav_il_rl_ft/ddppo_hm3d_pt_77k/sem_seg_pred/sparse_success_slack_penalty_ckpt_28/hm3d_v0_1_0/seed_1/v0_1_0_evals/ckpt_36_val/"
-EVAL_CKPT_PATH_DIR="data/new_checkpoints/objectnav_il_rl_ft/ddppo_hm3d_pt_77k/sem_seg_pred/sparse_success_slack_penalty_ckpt_28/hm3d_v0_1_0/seed_1/ckpt.36.pth"
+TENSORBOARD_DIR="tb/objectnav_il_rl_ft/ddppo_hm3d_pt_77k/sem_seg_pred/sparse_success_slack_penalty_ckpt_28/hm3d_v0_1_0/seed_1/v0_1_0_evals/ckpt_50_val/"
+EVAL_CKPT_PATH_DIR="data/new_checkpoints/objectnav_il_rl_ft/ddppo_hm3d_pt_77k/sem_seg_pred/sparse_success_slack_penalty_ckpt_28/hm3d_v0_1_0/seed_1/ckpt.50.pth"
 
 set -x
 

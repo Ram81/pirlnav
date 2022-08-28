@@ -178,6 +178,29 @@ _C.PROFILING = CN()
 _C.PROFILING.CAPTURE_START_STEP = -1
 _C.PROFILING.NUM_STEPS_TO_CAPTURE = -1
 
+# -----------------------------------------------------------------------------
+# IL Policy Config
+# -----------------------------------------------------------------------------
+_C.MODEL = CN()
+_C.MODEL.RGB_ENCODER = CN()
+_C.MODEL.RGB_ENCODER.image_size = 256
+_C.MODEL.RGB_ENCODER.backbone = "resnet50"
+_C.MODEL.RGB_ENCODER.resnet_baseplanes = 32
+_C.MODEL.RGB_ENCODER.vit_use_fc_norm = False
+_C.MODEL.RGB_ENCODER.vit_global_pool = False
+_C.MODEL.RGB_ENCODER.vit_use_cls = False
+_C.MODEL.RGB_ENCODER.vit_mask_ratio = None
+_C.MODEL.RGB_ENCODER.hidden_size = 512
+_C.MODEL.RGB_ENCODER.use_augmentations = True
+_C.MODEL.RGB_ENCODER.use_augmentations_test_time = True
+_C.MODEL.RGB_ENCODER.randomize_augmentations_over_envs = False
+_C.MODEL.RGB_ENCODER.pretrained_encoder = None
+_C.MODEL.RGB_ENCODER.freeze_backbone = False
+_C.MODEL.RGB_ENCODER.avgpooled_image = False
+_C.MODEL.RGB_ENCODER.augmentations_name = "jitter+shift"
+_C.MODEL.RGB_ENCODER.drop_path_rate = 0.0
+_C.MODEL.RGB_ENCODER.normalize_visual_inputs = False
+
 
 def get_config(
     config_paths: Optional[Union[List[str], str]] = None,

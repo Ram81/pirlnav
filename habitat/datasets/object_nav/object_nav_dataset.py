@@ -143,8 +143,9 @@ class ObjectNavDatasetV1(PointNavDatasetV1):
             self.goals_by_category[k] = [self.__deserialize_goal(g) for g in v]
 
         for i, episode in enumerate(deserialized["episodes"]):
+            start_position = str(episode["start_position"])
             episode = ObjectGoalNavEpisode(**episode)
-            episode.episode_id = "{}_{}".format(episode.scene_id.split("/")[-1].split(".")[0], str(i))
+            episode.episode_id = "{}_{}_{}_{}".format(episode.scene_id.split("/")[-1].split(".")[0], str(i), start_position, episode.object_category)
 
             if scenes_dir is not None:
                 if episode.scene_id.startswith(DEFAULT_SCENE_PATH_PREFIX):
