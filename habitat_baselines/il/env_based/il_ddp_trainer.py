@@ -437,6 +437,11 @@ class ILEnvDDPTrainer(ILEnvTrainer):
                         count_steps,
                     )
 
+                    lrs = {}
+                    for i, param_group in enumerate(self.agent.optimizer.param_groups):
+                        lrs["pg_{}".format(i)] = param_group["lr"]
+                    writer.add_scalars("learning_rate", lrs, count_steps)
+
                     # log stats
                     if update > 0 and update % self.config.LOG_INTERVAL == 0:
                         logger.info(
@@ -453,6 +458,15 @@ class ILEnvDDPTrainer(ILEnvTrainer):
                                 update, env_time, pth_time, batch_end_time, inf_end_time, softmax_time, ent_time, count_steps
                             )
                         )
+
+                        logger.info(
+                            "update: {}\tLR: {}\tPG_LR: {}".format(
+                                update,
+                                lr_scheduler.get_lr(),
+                                [param_group["lr"] for param_group in self.agent.optimizer.param_groups],
+                            )
+                        )
+
                         logger.info(
                             "Average window size: {}  {}".format(
                                 len(window_episode_stats["count"]),
