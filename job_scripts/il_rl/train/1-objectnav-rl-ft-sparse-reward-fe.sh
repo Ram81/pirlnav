@@ -7,7 +7,7 @@
 #SBATCH --signal=USR1@300
 #SBATCH --partition=long
 #SBATCH --constraint=a40
-#SBATCH --exclude=robby
+#SBATCH --exclude=robby,xaea-12
 #SBATCH --output=slurm_logs/ddp-il-rl-%j.out
 #SBATCH --error=slurm_logs/ddp-il-rl-%j.err
 #SBATCH --requeue
@@ -24,10 +24,10 @@ export MASTER_ADDR
 
 config=$1
 
-TENSORBOARD_DIR="tb/objectnav_il_rl_ft/ddppo_hm3d_pt_fm_70k/sem_seg_pred/sparse_reward_ckpt_12/hm3d_v0_1_0/seed_2/"
-CHECKPOINT_DIR="data/new_checkpoints/objectnav_il_rl_ft/ddppo_hm3d_pt_fm_70k/sem_seg_pred/sparse_reward_ckpt_12/hm3d_v0_1_0/seed_2/"
+TENSORBOARD_DIR="tb/objectnav_il_rl_ft/ddppo_hm3d_pt_fe_70k/sem_seg_pred/sparse_reward_ckpt_3/hm3d_v0_1_0/seed_1/"
+CHECKPOINT_DIR="data/new_checkpoints/objectnav_il_rl_ft/ddppo_hm3d_pt_fe_70k/sem_seg_pred/sparse_reward_ckpt_3/hm3d_v0_1_0/seed_1/"
 DATA_PATH="data/datasets/objectnav/objectnav_hm3d/objectnav_hm3d_v1_fixed/"
-PRETRAINED_WEIGHTS="data/new_checkpoints/objectnav_il/objectnav_hm3d/objectnav_hm3d_fm_70k/sem_seg_pred/seed_1/ckpt.12.pth"
+PRETRAINED_WEIGHTS="data/new_checkpoints/objectnav_il/objectnav_hm3d/objectnav_hm3d_fe_70k_balanced/sem_seg_pred/seed_1/ckpt.3.pth"
 set -x
 
 echo "In ObjectNav IL+RL DDP"

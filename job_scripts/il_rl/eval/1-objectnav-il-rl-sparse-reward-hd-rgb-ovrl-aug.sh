@@ -24,8 +24,8 @@ export MASTER_ADDR
 
 config=$1
 DATA_PATH="data/datasets/objectnav/objectnav_hm3d/objectnav_hm3d_v1"
-TENSORBOARD_DIR="tb/objectnav_il_rl_ft/ddppo_hm3d_pt_77k/rgb_ovrl_with_augs/sparse_reward/hm3d_v0_1_0/seed_2/v0_1_0_evals/ckpt_20_val/"
-EVAL_CKPT_PATH_DIR="data/new_checkpoints/objectnav_il_rl_ft/ddppo_hm3d_pt_77k/rgb_ovrl_with_augs/sparse_reward/hm3d_v0_1_0/seed_2/ckpt.20.pth"
+TENSORBOARD_DIR="tb/objectnav_il_rl_ft/ddppo_hm3d_pt_77k/rgb_ovrl_with_augs/sparse_reward/hm3d_v0_1_0/seed_2/v0_1_0_evals/ckpt_38_val/"
+EVAL_CKPT_PATH_DIR="data/new_checkpoints/objectnav_il_rl_ft/ddppo_hm3d_pt_77k/rgb_ovrl_with_augs/sparse_reward/hm3d_v0_1_0/seed_2/ckpt.38.pth"
 PRETRAINED_WEIGHTS="data/new_checkpoints/objectnav_il/objectnav_hm3d/objectnav_hm3d_77k/rgb_ovrl/seed_1/ObjectNav_omnidata_DINO_02_77k_with_augs.pth"
 
 set -x

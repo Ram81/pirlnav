@@ -25,8 +25,8 @@ export MASTER_ADDR
 config=$1
 
 DATA_PATH="data/datasets/objectnav/objectnav_hm3d/objectnav_hm3d_fe_20k_balanced/"
-TENSORBOARD_DIR="tb/objectnav_il/objectnav_hm3d/objectnav_hm3d_fe_20k_balanced/sem_seg_pred/seed_2/"
-CHECKPOINT_DIR="data/new_checkpoints/objectnav_il/objectnav_hm3d/objectnav_hm3d_fe_20k_balanced/sem_seg_pred/seed_2/"
+TENSORBOARD_DIR="tb/objectnav_il/objectnav_hm3d/objectnav_hm3d_fe_20k_balanced/sem_seg_pred/seed_3_40k/"
+CHECKPOINT_DIR="data/new_checkpoints/objectnav_il/objectnav_hm3d/objectnav_hm3d_fe_20k_balanced/sem_seg_pred/seed_3_40k/"
 INFLECTION_COEF=2.106159015778148
 set -x
 
@@ -37,7 +37,7 @@ srun python -u -m habitat_baselines.run \
 TENSORBOARD_DIR $TENSORBOARD_DIR \
 CHECKPOINT_FOLDER $CHECKPOINT_DIR \
 CHECKPOINT_INTERVAL 500 \
-NUM_UPDATES 20000 \
+NUM_UPDATES 40000 \
 NUM_PROCESSES 8 \
 IL.BehaviorCloning.num_steps 64 \
 TASK_CONFIG.TASK.INFLECTION_WEIGHT_SENSOR.INFLECTION_COEF $INFLECTION_COEF \

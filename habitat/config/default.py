@@ -184,6 +184,7 @@ _C.TASK.COVERAGE.EGOCENTRIC = False # Agent will spawn centered on a tile, as op
 
 _C.TASK.GOAL_OBJECT_VISIBLE = CN() # nb: this is fraction of view, not pixels
 _C.TASK.GOAL_OBJECT_VISIBLE.TYPE = "GoalObjectVisible"
+_C.TASK.GOAL_OBJECT_VISIBLE.INSERTED_OBJECTS = False
 
 # -----------------------------------------------------------------------------
 # ETN REWARD MEASUREMENT
