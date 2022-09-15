@@ -120,6 +120,7 @@ class ILEnvTrainer(BaseRLTrainer):
             lr=il_cfg.lr,
             eps=il_cfg.eps,
             max_grad_norm=il_cfg.max_grad_norm,
+            wd=il_cfg.wd,
         )
 
     @profiling_wrapper.RangeContext("save_checkpoint")
@@ -632,19 +633,30 @@ class ILEnvTrainer(BaseRLTrainer):
                     batch["semantic"], batch_end_time, inf_end_time, softmax_time = self.semantic_predictor(batch)
                     if self.config.MODEL.SEMANTIC_ENCODER.is_thda and self.config.MODEL.SEMANTIC_PREDICTOR.name == "rednet":
                         batch["semantic"] = batch["semantic"] - 1
+                # (
+                #     logits,
+                #     test_recurrent_hidden_states,
+                #     dist_entropy
+                # ) = self.policy(
+                #     batch,
+                #     test_recurrent_hidden_states,
+                #     prev_actions,
+                #     not_done_masks,
+                # )
                 (
-                    logits,
+                    actions,
                     test_recurrent_hidden_states,
                     dist_entropy
-                ) = self.policy(
+                ) = self.policy.act(
                     batch,
                     test_recurrent_hidden_states,
                     prev_actions,
                     not_done_masks,
+                    deterministic=config.MODEL.deterministic_eval,
                 )
 
-                actions = torch.argmax(logits, dim=1)
-                prev_actions.copy_(actions.unsqueeze(1))  # type: ignore
+                # actions = torch.argmax(logits, dim=1)
+                prev_actions.copy_(actions)  # type: ignore
 
             # NB: Move actions to CPU.  If CUDA tensors are
             # sent in to env.step(), that will create CUDA contexts

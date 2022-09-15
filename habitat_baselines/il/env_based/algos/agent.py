@@ -24,6 +24,8 @@ class ILAgent(nn.Module):
         lr: Optional[float] = None,
         eps: Optional[float] = None,
         max_grad_norm: Optional[float] = None,
+        wd: Optional[float] = None,
+        optimizer: Optional[str] = "AdamW"
     ) -> None:
 
         super().__init__()
@@ -35,11 +37,19 @@ class ILAgent(nn.Module):
         self.max_grad_norm = max_grad_norm
         self.num_envs = num_envs
 
-        self.optimizer = optim.Adam(
-            list(filter(lambda p: p.requires_grad, model.parameters())),
-            lr=lr,
-            eps=eps,
-        )
+        if optimizer == "AdamW":
+            self.optimizer = optim.AdamW(
+                list(filter(lambda p: p.requires_grad, model.parameters())),
+                lr=lr,
+                eps=eps,
+                weight_decay=wd,
+            )
+        else:
+            self.optimizer = optim.Adam(
+                list(filter(lambda p: p.requires_grad, model.parameters())),
+                lr=lr,
+                eps=eps,
+            )
         self.device = next(model.parameters()).device
 
     def forward(self, *x):

@@ -72,7 +72,7 @@ class Policy(nn.Module, metaclass=abc.ABCMeta):
         distribution_entropy = distribution.entropy().mean()
 
         if self.no_critic:
-            return action, rnn_hidden_states
+            return action, rnn_hidden_states, distribution_entropy
 
         value = self.critic(features)
 

@@ -128,6 +128,7 @@ class ILEnvDDPTrainer(ILEnvTrainer):
             lr=il_cfg.lr,
             eps=il_cfg.eps,
             max_grad_norm=il_cfg.max_grad_norm,
+            wd=il_cfg.wd,
         )
 
     @profiling_wrapper.RangeContext("train")

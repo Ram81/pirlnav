@@ -24,8 +24,8 @@ export MASTER_ADDR
 
 config=$1
 DATA_PATH="data/datasets/objectnav/objectnav_hm3d/objectnav_hm3d_v1_fixed"
-TENSORBOARD_DIR="tb/objectnav_il_rl_ft/ddppo_hm3d_pt_fm_70k/sem_seg_pred/sparse_reward_ckpt_12/hm3d_v0_1_0/seed_1/v0_1_05_evals/ckpt_22_val/"
-EVAL_CKPT_PATH_DIR="data/new_checkpoints/objectnav_il_rl_ft/ddppo_hm3d_pt_fm_70k/sem_seg_pred/sparse_reward_ckpt_12/hm3d_v0_1_0/seed_1/ckpt.22.pth"
+TENSORBOARD_DIR="tb/objectnav_il_rl_ft/ddppo_hm3d_pt_fm_70k/sem_seg_pred/sparse_reward_ckpt_2/hm3d_v0_1_0/seed_2/v0_1_05_evals/ckpt_38_train_sample_4k_random/"
+EVAL_CKPT_PATH_DIR="data/new_checkpoints/objectnav_il_rl_ft/ddppo_hm3d_pt_fm_70k/sem_seg_pred/sparse_reward_ckpt_2/hm3d_v0_1_0/seed_2/ckpt.38.pth"
 
 set -x
 
@@ -36,7 +36,7 @@ srun python -u -m habitat_baselines.run \
 NUM_PROCESSES 20 \
 TENSORBOARD_DIR $TENSORBOARD_DIR \
 TEST_EPISODE_COUNT -1 \
-EVAL.SPLIT "val" \
+EVAL.SPLIT "train_sample_4k_random" \
 EVAL.USE_CKPT_CONFIG False \
 EVAL.meta_file "$TENSORBOARD_DIR/evaluation_meta.json" \
 EVAL_CKPT_PATH_DIR $EVAL_CKPT_PATH_DIR \

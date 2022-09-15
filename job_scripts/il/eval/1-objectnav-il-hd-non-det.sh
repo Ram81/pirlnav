@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=onav_ilrl
+#SBATCH --job-name=onav_il
 #SBATCH --gres gpu:1
 #SBATCH --nodes 1
 #SBATCH --cpus-per-task 6
@@ -7,9 +7,9 @@
 #SBATCH --signal=USR1@300
 #SBATCH --partition=short
 #SBATCH --constraint=a40
-#SBATCH --exclude=robby
-#SBATCH --output=slurm_logs/eval/ddp-il-rl-%j.out
-#SBATCH --error=slurm_logs/eval/ddp-il-rl-%j.err
+#SBATCH --exclude=robby,hk47
+#SBATCH --output=slurm_logs/eval/ddpil-%j.out
+#SBATCH --error=slurm_logs/eval/ddpil-%j.err
 #SBATCH --requeue
 
 source /srv/flash1/rramrakhya6/miniconda3/etc/profile.d/conda.sh
@@ -24,20 +24,18 @@ export MASTER_ADDR
 
 config=$1
 DATA_PATH="data/datasets/objectnav/objectnav_hm3d/objectnav_hm3d_v1_fixed"
-TENSORBOARD_DIR="tb/objectnav_il_rl_ft/ddppo_hm3d_pt_77k/sem_seg_pred/sparse_reward_pt_ckpt_1/hm3d_v0_1_05/seed_1/v1_fixed_evals/ckpt_30_val/"
-EVAL_CKPT_PATH_DIR="data/new_checkpoints/objectnav_il_rl_ft/ddppo_hm3d_pt_77k/sem_seg_pred/sparse_reward_pt_ckpt_1/train_split/seed_1/ckpt.30.pth"
-
+TENSORBOARD_DIR="tb/objectnav_il/objectnav_hm3d/objectnav_hm3d_77k/sem_seg_pred/seed_1/v1_fixed_evals/ckpt_4_train_sample_4k_random_sample_action/"
+EVAL_CKPT_PATH_DIR="data/new_checkpoints/objectnav_il/objectnav_hm3d/objectnav_hm3d_77k/sem_seg_pred/seed_1/ckpt.4.pth"
 set -x
 
-echo "In ObjectNav IL+RL DDP"
+echo "In ObjectNav IL DDP"
 srun python -u -m habitat_baselines.run \
 --exp-config $config \
 --run-type eval \
 NUM_PROCESSES 20 \
 TENSORBOARD_DIR $TENSORBOARD_DIR \
 TEST_EPISODE_COUNT -1 \
-EVAL.SPLIT "val" \
-EVAL.USE_CKPT_CONFIG False \
+EVAL.SPLIT "train_sample_4k_random" \
 EVAL.meta_file "$TENSORBOARD_DIR/evaluation_meta.json" \
 EVAL_CKPT_PATH_DIR $EVAL_CKPT_PATH_DIR \
 TASK_CONFIG.TASK.SENSORS "['OBJECTGOAL_SENSOR', 'COMPASS_SENSOR', 'GPS_SENSOR']" \
@@ -45,12 +43,11 @@ TASK_CONFIG.TASK.MEASUREMENTS "['DISTANCE_TO_GOAL', 'SUCCESS', 'SPL', 'SOFT_SPL'
 TASK_CONFIG.DATASET.TYPE "ObjectNav-v1" \
 TASK_CONFIG.DATASET.DATA_PATH "$DATA_PATH/{split}/{split}.json.gz" \
 MODEL.hm3d_goal True \
-MODEL.SEMANTIC_ENCODER.is_hm3d False \
-MODEL.SEMANTIC_ENCODER.is_thda True \
-MODEL.embed_sge True \
 MODEL.USE_SEMANTICS True \
 MODEL.USE_PRED_SEMANTICS True \
+MODEL.SEMANTIC_ENCODER.is_hm3d False \
+MODEL.SEMANTIC_ENCODER.is_thda True \
 MODEL.SEMANTIC_PREDICTOR.name "rednet" \
+MODEL.deterministic_eval False \
 
-
-# 404148 - uuid
+# 404140 - uuid

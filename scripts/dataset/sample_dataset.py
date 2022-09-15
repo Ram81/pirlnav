@@ -39,8 +39,13 @@ def sample_dataset(input_path, output_path, episodes_per_scene=100, clear_replay
 
 
 def sample_filtered_dataset(input_path, output_path, episodes_per_scene=100, clear_replay=False, sample_dataset_path=None):
-    #sample_dataset_path = ["data/datasets/objectnav/objectnav_hm3d/objectnav_hm3d_77k/train/content/", "data/datasets/objectnav/objectnav_hm3d/objectnav_hm3d_s_path/train/content/"]
-    sample_dataset_path = ["../objectnav_sem_exp/habitat-challenge-data/objectgoal_hm3d/train/content/", "../objectnav_sem_exp/habitat-challenge-data/objectgoal_hm3d/train_v2/content/", "data/datasets/objectnav/objectnav_hm3d/objectnav_hm3d_v1_fixed/train_sample_4k_random/content/", "data/datasets/objectnav/objectnav_hm3d/objectnav_hm3d_v1_fixed/train_sample_4k_unseen/content/"]
+    # sample_dataset_path = ["data/datasets/objectnav/objectnav_hm3d/objectnav_hm3d_77k/train/content/", "data/datasets/objectnav/objectnav_hm3d/objectnav_hm3d_s_path/train/content/"]
+    # sample_dataset_path = ["../objectnav_sem_exp/habitat-challenge-data/objectgoal_hm3d/train/content/", "../objectnav_sem_exp/habitat-challenge-data/objectgoal_hm3d/train_v2/content/", "data/datasets/objectnav/objectnav_hm3d/objectnav_hm3d_v1_fixed/train_sample_4k_random/content/", "data/datasets/objectnav/objectnav_hm3d/objectnav_hm3d_v1_fixed/train_sample_4k_unseen/content/"]
+    sample_dataset_path = [
+        "data/datasets/objectnav/objectnav_hm3d/objectnav_hm3d_77k/train/content/",
+        "data/datasets/objectnav/objectnav_hm3d/objectnav_hm3d_s_path_240k/train/content/",
+        "data/datasets/objectnav/objectnav_hm3d/objectnav_hm3d_fe_70k_balanced/train/content/",
+    ]
     total_existing_episodes = 0
     VISITED_POINT_DICT = {}
     for sample_path in sample_dataset_path:
