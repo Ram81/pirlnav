@@ -24,9 +24,9 @@ export MASTER_ADDR
 
 config="habitat_baselines/config/objectnav/il/il_rgb_ddp_objectnav.yaml"
 
-DATA_PATH="data/datasets/objectnav/objectnav_hm3d/objectnav_hm3d_fe_70k_balanced/"
-TENSORBOARD_DIR="tb/objectnav_il/objectnav_hm3d/objectnav_hm3d_fe_70k_balanced/rgb_ovrl/seed_1/"
-CHECKPOINT_DIR="data/new_checkpoints/objectnav_il/objectnav_hm3d/objectnav_hm3d_fe_70k_balanced/rgb_ovrl/seed_1/"
+DATA_PATH="data/datasets/objectnav/objectnav_hm3d/objectnav_hm3d_s_path_240k/"
+TENSORBOARD_DIR="tb/objectnav_il/objectnav_hm3d/objectnav_hm3d_s_path_240k/rgb_ovrl/seed_1/"
+CHECKPOINT_DIR="data/new_checkpoints/objectnav_il/objectnav_hm3d/objectnav_hm3d_s_path_240k/rgb_ovrl/seed_1/"
 INFLECTION_COEF=3.234951275740812
 set -x
 

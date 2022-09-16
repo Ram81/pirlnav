@@ -1,13 +1,13 @@
 #!/bin/bash
 #SBATCH --job-name=onav_il
 #SBATCH --gres gpu:8
-#SBATCH --nodes 2
+#SBATCH --nodes 1
 #SBATCH --cpus-per-task 6
 #SBATCH --ntasks-per-node 8
 #SBATCH --signal=USR1@1000
-#SBATCH --partition=short
+#SBATCH --partition=long
 #SBATCH --constraint=a40
-#SBATCH --exclude=robby
+#SBATCH --exclude=nestor
 #SBATCH --output=slurm_logs/ddpil-%j.out
 #SBATCH --error=slurm_logs/ddpil-%j.err
 #SBATCH --requeue
@@ -24,10 +24,10 @@ export MASTER_ADDR
 
 config="habitat_baselines/config/objectnav/il/il_rgb_ddp_objectnav.yaml"
 
-DATA_PATH="data/datasets/objectnav/objectnav_hm3d/objectnav_hm3d_10k/"
-TENSORBOARD_DIR="tb/objectnav_il/objectnav_hm3d/objectnav_hm3d_10k/rgb_ovrl/seed_1/"
-CHECKPOINT_DIR="data/new_checkpoints/objectnav_il/objectnav_hm3d/objectnav_hm3d_10k/rgb_ovrl/seed_1/"
-INFLECTION_COEF=3.234951275740812
+DATA_PATH="data/datasets/objectnav/objectnav_hm3d/objectnav_hm3d_20k/"
+TENSORBOARD_DIR="tb/objectnav_il/objectnav_hm3d/objectnav_hm3d_20k/rgb_ovrl/seed_1/"
+CHECKPOINT_DIR="data/new_checkpoints/objectnav_il/objectnav_hm3d/objectnav_hm3d_20k/rgb_ovrl/seed_1/"
+INFLECTION_COEF=3.2080078220377883
 set -x
 
 echo "In ObjectNav IL DDP"
