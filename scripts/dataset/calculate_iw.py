@@ -178,10 +178,10 @@ def calculate_inflection_weight_objectnav(path, stats_path):
     filtered_actions = 0
     for i in range(len(scene_ids)):
         if per_scene_episodes[i] < 900:
-            print(scene_ids[i], per_scene_episodes[i])
+            #print(scene_ids[i], per_scene_episodes[i])
             f_scenes.append(scene_ids[i])
             filtered_actions += per_scene_actions[i]
-    print(f_scenes)
+    # print(f_scenes)
     print("Actions after filtering: {}".format(filtered_actions))
 
 

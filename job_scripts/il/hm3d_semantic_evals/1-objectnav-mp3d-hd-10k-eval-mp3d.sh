@@ -23,26 +23,26 @@ MASTER_ADDR=$(srun --ntasks=1 hostname 2>&1 | tail -n1)
 export MASTER_ADDR
 
 config=$1
-DATA_PATH="data/datasets/objectnav/objectnav_hm3d/objectnav_hm3d_v1"
-TENSORBOARD_DIR="tb/objectnav_il/objectnav_hm3d/objectnav_hm3d_20k_remap_scratch/sem_seg_pred/seed_1/hm3d_v0_1_0_evals/ckpt_32_val/"
-EVAL_CKPT_PATH_DIR="data/new_checkpoints/objectnav_il/objectnav_hm3d/objectnav_hm3d_20k_remap_scratch/sem_seg_pred/seed_1/ckpt.32.pth"
+DATA_PATH="data/datasets/objectnav/objectnav_mp3d/objectnav_mp3d_6cat_full"
+TENSORBOARD_DIR="tb/objectnav_il/objectnav_mp3d/objectnav_mp3d_6_cat_10k/seed_1/mp3d_6cat_evals/ckpt_38_val/"
+EVAL_CKPT_PATH_DIR="data/new_checkpoints/objectnav_il/objectnav_mp3d/objectnav_mp3d_6_cat_10k/seed_1/ckpt.38.pth"
 set -x
 
 echo "In ObjectNav IL DDP"
 srun python -u -m habitat_baselines.run \
 --exp-config $config \
 --run-type eval \
-NUM_PROCESSES 20 \
+NUM_PROCESSES 5 \
 TENSORBOARD_DIR $TENSORBOARD_DIR \
 TEST_EPISODE_COUNT -1 \
 EVAL.SPLIT "val" \
 EVAL.meta_file "$TENSORBOARD_DIR/evaluation_meta.json" \
 EVAL_CKPT_PATH_DIR $EVAL_CKPT_PATH_DIR \
 TASK_CONFIG.TASK.SENSORS "['OBJECTGOAL_SENSOR', 'COMPASS_SENSOR', 'GPS_SENSOR']" \
-TASK_CONFIG.TASK.MEASUREMENTS "['DISTANCE_TO_GOAL', 'SUCCESS', 'SPL', 'SOFT_SPL', 'GOAL_OBJECT_VISIBLE', 'MIN_DISTANCE_TO_GOAL', 'TOP_DOWN_MAP', 'EXPLORATION_METRICS']" \
+TASK_CONFIG.TASK.MEASUREMENTS "['DISTANCE_TO_GOAL', 'SUCCESS', 'SPL', 'SOFT_SPL', 'GOAL_OBJECT_VISIBLE', 'MIN_DISTANCE_TO_GOAL']" \
 TASK_CONFIG.DATASET.TYPE "ObjectNav-v1" \
 TASK_CONFIG.DATASET.DATA_PATH "$DATA_PATH/{split}/{split}.json.gz" \
-MODEL.hm3d_goal True \
+MODEL.hm3d_goal False \
 MODEL.USE_SEMANTICS True \
 MODEL.USE_PRED_SEMANTICS True \
 MODEL.SEMANTIC_ENCODER.is_hm3d False \

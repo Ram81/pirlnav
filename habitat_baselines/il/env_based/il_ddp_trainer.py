@@ -486,7 +486,7 @@ class ILEnvDDPTrainer(ILEnvTrainer):
                         )
 
                     # checkpoint model
-                    if update % self.config.CHECKPOINT_INTERVAL == 0:
+                    if update % self.config.CHECKPOINT_INTERVAL == 0 or (update <= 5000 and update % 100 == 0):
                         self.save_checkpoint(
                             f"ckpt.{count_checkpoints}.pth",
                             dict(step=count_steps),

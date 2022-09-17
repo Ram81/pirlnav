@@ -40,6 +40,7 @@ _C.LOG_INTERVAL = 10
 _C.LOG_FILE = "train.log"
 _C.CHECKPOINT_INTERVAL = 50
 _C.FORCE_BLIND_POLICY = False
+_C.RESUME_STATE_FILE = None
 # -----------------------------------------------------------------------------
 # WANDB CONFIG
 # -----------------------------------------------------------------------------
@@ -201,6 +202,24 @@ _C.MODEL.RGB_ENCODER.augmentations_name = "jitter+shift"
 _C.MODEL.RGB_ENCODER.drop_path_rate = 0.0
 _C.MODEL.RGB_ENCODER.normalize_visual_inputs = False
 
+_C.IL = CN()
+_C.IL.BehaviorCloning = CN()
+_C.IL.BehaviorCloning.wd = 0.0
+_C.IL.BehaviorCloning.lr = 0.001
+_C.IL.BehaviorCloning.eps = 1.0e-5
+_C.IL.BehaviorCloning.wd = 0.0
+_C.IL.BehaviorCloning.clip_param = 0.2
+_C.IL.BehaviorCloning.num_mini_batch = 2
+_C.IL.BehaviorCloning.max_grad_norm = 0.2
+_C.IL.BehaviorCloning.num_steps = 64
+_C.IL.BehaviorCloning.use_linear_clip_decay = False
+_C.IL.BehaviorCloning.use_linear_lr_decay = True
+_C.IL.BehaviorCloning.reward_window_size = 50
+_C.IL.BehaviorCloning.sync_frac = 0.6
+
+_C.IL.BehaviorCloning.pretrained = False
+_C.IL.BehaviorCloning.pretrained_weights = "None"
+  
 
 def get_config(
     config_paths: Optional[Union[List[str], str]] = None,

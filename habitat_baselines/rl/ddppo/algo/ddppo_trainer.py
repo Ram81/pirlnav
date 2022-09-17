@@ -163,9 +163,19 @@ class DDPPOTrainer(PPOTrainer):
             capture_start_step=self.config.PROFILING.CAPTURE_START_STEP,
             num_steps_to_capture=self.config.PROFILING.NUM_STEPS_TO_CAPTURE,
         )
-        interrupted_state_file = os.path.join(self.config.CHECKPOINT_FOLDER, "{}.pth".format(SLURM_JOBID))
 
-        interrupted_state = load_interrupted_state(interrupted_state_file)
+        interrupted_state = None
+
+        # Check resume state file in config
+        resume_state_file = self.config.RESUME_STATE_FILE
+        if resume_state_file is not None and os.path.exists(resume_state_file):
+            interrupted_state = load_interrupted_state(resume_state_file)
+
+        interrupted_state_file = os.path.join(self.config.CHECKPOINT_FOLDER, "{}.pth".format(SLURM_JOBID))
+        # Override resume state file if the current job interrupted state exists
+        if interrupted_state_file is not None and os.path.exists(interrupted_state_file):
+            interrupted_state = load_interrupted_state(interrupted_state_file)
+
         if interrupted_state is not None:
             logger.info("Overriding current config with interrupted state config")
             self.config = interrupted_state["config"]
@@ -345,6 +355,9 @@ class DDPPOTrainer(PPOTrainer):
                 for param in self.actor_critic.net.state_encoder.parameters():
                     param.requires_grad_(True)      
                 logger.info("unfreezing params")
+            logger.info("Loaded state from interrupted state")
+        
+        logger.info("Current update: {}, Max updates: {}".format(self.current_update, self.config.NUM_UPDATES))
 
         with (
             TensorboardWriter(
