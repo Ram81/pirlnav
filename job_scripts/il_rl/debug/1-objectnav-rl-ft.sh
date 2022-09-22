@@ -1,9 +1,9 @@
 #!/bin/bash
 #SBATCH --job-name=onav_ilrl
-#SBATCH --gres gpu:8
-#SBATCH --nodes 2
+#SBATCH --gres gpu:1
+#SBATCH --nodes 1
 #SBATCH --cpus-per-task 6
-#SBATCH --ntasks-per-node 8
+#SBATCH --ntasks-per-node 1
 #SBATCH --signal=USR1@300
 #SBATCH --partition=long
 #SBATCH --constraint=a40
@@ -38,13 +38,13 @@ SENSORS "['RGB_SENSOR', 'DEPTH_SENSOR', 'SEMANTIC_SENSOR']" \
 TENSORBOARD_DIR $TENSORBOARD_DIR \
 CHECKPOINT_FOLDER $CHECKPOINT_DIR \
 NUM_UPDATES 40000 \
-NUM_PROCESSES 8 \
+NUM_PROCESSES 16 \
 RL.DDPPO.pretrained_weights $PRETRAINED_WEIGHTS \
 RL.DDPPO.distrib_backend "NCCL" \
-RL.Finetune.start_actor_finetuning_at 750 \
-RL.Finetune.actor_lr_warmup_update 1500 \
-RL.Finetune.start_critic_warmup_at 500 \
-RL.Finetune.critic_lr_decay_update 1000 \
+RL.Finetune.start_actor_finetuning_at 325 \
+RL.Finetune.actor_lr_warmup_update 750 \
+RL.Finetune.start_critic_warmup_at 250 \
+RL.Finetune.critic_lr_decay_update 500 \
 TASK_CONFIG.DATASET.SPLIT "train" \
 TASK_CONFIG.DATASET.DATA_PATH "$DATA_PATH/{split}/{split}.json.gz" \
 TASK_CONFIG.TASK.SUCCESS.SUCCESS_DISTANCE 0.1 \

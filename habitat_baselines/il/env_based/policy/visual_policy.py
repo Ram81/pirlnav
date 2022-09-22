@@ -109,7 +109,7 @@ class ObjectNavMAEILNet(Net):
                 output_size=model_config.RGB_ENCODER.output_size,
                 backbone=model_config.RGB_ENCODER.backbone,
                 trainable=model_config.RGB_ENCODER.train_encoder,
-                normalize_visual_inputs=model_config.normalize_visual_inputs,
+                normalize_visual_inputs=model_config.RGB_ENCODER.normalize_visual_inputs,
             )
             rnn_input_size += model_config.RGB_ENCODER.output_size
         else:
@@ -196,14 +196,13 @@ class ObjectNavMAEILNet(Net):
         depth_embedding: [batch_size x DEPTH_ENCODER.output_size]
         rgb_embedding: [batch_size x RGB_ENCODER.output_size]
         """
-        rgb_obs = observations["rgb"]
-        depth_obs = observations["depth"]
 
         N = rnn_hidden_states.size(1)
 
         x = []
 
         if self.depth_encoder is not None:
+            depth_obs = observations["depth"]
             if len(depth_obs.size()) == 5:
                 observations["depth"] = depth_obs.contiguous().view(
                     -1, depth_obs.size(2), depth_obs.size(3), depth_obs.size(4)
@@ -213,6 +212,7 @@ class ObjectNavMAEILNet(Net):
             x.append(depth_embedding)
 
         if self.visual_encoder is not None:
+            rgb_obs = observations["rgb"]
             if len(rgb_obs.size()) == 5:
                 observations["rgb"] = rgb_obs.contiguous().view(
                     -1, rgb_obs.size(2), rgb_obs.size(3), rgb_obs.size(4)

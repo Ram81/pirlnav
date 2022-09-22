@@ -131,7 +131,7 @@ def calculate_inflection_weight_objectnav(path, stats_path):
                 if action not in data_stats["action_frequency"]:
                     data_stats["action_frequency"][action] = 0
                 data_stats["action_frequency"][action] += 1
-                wall_clock_time += 0 #get_action_time(action, "objectnav")
+                wall_clock_time += get_action_time(action, "objectnav")
                 if action == "STOP":
                     num_stop_actions += 1
 

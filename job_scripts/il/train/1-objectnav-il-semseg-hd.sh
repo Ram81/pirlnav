@@ -22,12 +22,12 @@ export MAGNUM_LOG=quiet
 MASTER_ADDR=$(srun --ntasks=1 hostname 2>&1 | tail -n1)
 export MASTER_ADDR
 
-config="habitat_baselines/config/objectnav/il/il_rgb_ddp_objectnav.yaml"
+config="habitat_baselines/config/objectnav/il_ddp_objectnav.yaml"
 
-DATA_PATH="data/datasets/objectnav/objectnav_hm3d/objectnav_hm3d_2k/"
-TENSORBOARD_DIR="tb/objectnav_il/objectnav_hm3d/objectnav_hm3d_2k/rgb_ovrl/seed_1/"
-CHECKPOINT_DIR="data/new_checkpoints/objectnav_il/objectnav_hm3d/objectnav_hm3d_2k/rgb_ovrl/seed_1/"
-INFLECTION_COEF=3.1915100047989653
+DATA_PATH="data/datasets/objectnav/objectnav_hm3d/objectnav_hm3d_8k/"
+TENSORBOARD_DIR="tb/objectnav_il/objectnav_hm3d/objectnav_hm3d_8k/sem_seg_pred/seed_1/"
+CHECKPOINT_DIR="data/new_checkpoints/objectnav_il/objectnav_hm3d/objectnav_hm3d_8k/sem_seg_pred/seed_1/"
+INFLECTION_COEF=3.1774161811846344
 set -x
 
 echo "In ObjectNav IL DDP"
@@ -36,11 +36,16 @@ srun python -u -m habitat_baselines.run \
 --run-type train \
 TENSORBOARD_DIR $TENSORBOARD_DIR \
 CHECKPOINT_FOLDER $CHECKPOINT_DIR \
-CHECKPOINT_INTERVAL 250 \
+CHECKPOINT_INTERVAL 500 \
 NUM_UPDATES 20000 \
-NUM_PROCESSES 16 \
-IL.BehaviorCloning.num_steps 32 \
-IL.BehaviorCloning.num_mini_batch 2 \
+NUM_PROCESSES 8 \
+IL.BehaviorCloning.num_steps 64 \
 TASK_CONFIG.TASK.INFLECTION_WEIGHT_SENSOR.INFLECTION_COEF $INFLECTION_COEF \
 TASK_CONFIG.DATASET.SPLIT "train" \
 TASK_CONFIG.DATASET.DATA_PATH "$DATA_PATH/{split}/{split}.json.gz" \
+MODEL.hm3d_goal True \
+MODEL.USE_SEMANTICS True \
+MODEL.USE_PRED_SEMANTICS True \
+MODEL.SEMANTIC_ENCODER.is_hm3d False \
+MODEL.SEMANTIC_ENCODER.is_thda True \
+MODEL.SEMANTIC_PREDICTOR.name "rednet" \

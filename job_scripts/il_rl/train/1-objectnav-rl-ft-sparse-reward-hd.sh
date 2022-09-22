@@ -24,8 +24,8 @@ export MASTER_ADDR
 
 config=$1
 
-TENSORBOARD_DIR="tb/objectnav_il_rl_ft/ddppo_hm3d_pt_77k/sem_seg_pred/sparse_reward_pt_ckpt_28_0.05x_entropy/hm3d_v0_1_0/seed_1/"
-CHECKPOINT_DIR="data/new_checkpoints/objectnav_il_rl_ft/ddppo_hm3d_pt_77k/sem_seg_pred/sparse_reward_pt_ckpt_28_0.05x_entropy/hm3d_v0_1_0/seed_1/"
+TENSORBOARD_DIR="tb/objectnav_il_rl_ft/ddppo_hm3d_pt_77k/sem_seg_pred/sparse_reward_pt_ckpt_28_0.02x_entropy/hm3d_v0_1_0/seed_1/"
+CHECKPOINT_DIR="data/new_checkpoints/objectnav_il_rl_ft/ddppo_hm3d_pt_77k/sem_seg_pred/sparse_reward_pt_ckpt_28_0.02x_entropy/hm3d_v0_1_0/seed_1/"
 DATA_PATH="data/datasets/objectnav/objectnav_hm3d/objectnav_hm3d_v1/"
 PRETRAINED_WEIGHTS="data/new_checkpoints/objectnav_il/objectnav_hm3d/objectnav_hm3d_77k/sem_seg_pred/seed_1/ckpt.28.pth"
 set -x
@@ -44,7 +44,7 @@ RL.Finetune.start_actor_finetuning_at 750 \
 RL.Finetune.actor_lr_warmup_update 1500 \
 RL.Finetune.start_critic_warmup_at 500 \
 RL.Finetune.critic_lr_decay_update 1000 \
-RL.PPO.entropy_coef 0.05 \
+RL.PPO.entropy_coef 0.02 \
 TASK_CONFIG.DATASET.SPLIT "train" \
 TASK_CONFIG.DATASET.DATA_PATH "$DATA_PATH/{split}/{split}.json.gz" \
 TASK_CONFIG.TASK.SUCCESS.SUCCESS_DISTANCE 0.1 \
