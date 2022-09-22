@@ -1,38 +1,29 @@
 import argparse
-import boto3
-import glob
-import os
+import sys
 
-from tqdm import tqdm
+import subprocess
 
 S3_BUCKET = "habitat-on-web"
 S3_CHECKPOINT_PATH = "checkpoints"
 
 
-def get_s3_client():
-    aws_access_key_id = os.environ.get("S3_AWS_ACCESS_KEY_ID")
-    aws_secret_access_key = os.environ.get("S3_AWS_SECRET_ACCESS_KEY")
-    client = boto3.client(
-        "s3",
-        region_name="us-east-1",
-        aws_access_key_id=aws_access_key_id,
-        aws_secret_access_key=aws_secret_access_key
-    )
-    return client
+def get_s3_path(path):
+    return "s3://{}/{}/{}".format(S3_BUCKET, S3_CHECKPOINT_PATH, path)
+
+
+def get_command(local_path, s3_path):
+    return "aws s3 sync {} {}".format(local_path, s3_path)
 
 
 def upload_file(path):
-    client = get_s3_client()
+    s3_path = get_s3_path(path)
+    command = get_command(path, s3_path)
+    print("Executing command: {}".format(command))
 
-    checkpoints = glob.glob(os.path.join(path, "*pth"))
+    proc = subprocess.Popen(command, shell=True, stdout=sys.stdout)
+    proc.wait()
 
-    count = 0
-    for ckpt_file in tqdm(checkpoints):
-        checkpoint_s3_path = os.path.join(S3_CHECKPOINT_PATH, ckpt_file)
-        response = client.upload_file(ckpt_file, S3_BUCKET, checkpoint_s3_path, ExtraArgs={'ACL':'public-read'})
-        count += 1
-
-    print("Successfully uploaded {} checkpoints!".format(count))
+    print("Checkpoints uploaded: {}!".format(proc.returncode))
 
 
 if __name__ == "__main__":
