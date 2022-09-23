@@ -38,6 +38,7 @@ from habitat_baselines.rl.ddppo.algo.ddp_utils import (
     load_interrupted_state,
     requeue_job,
     save_interrupted_state,
+    SLURM_JOBID
 )
 from habitat_baselines.utils.common import batch_obs, linear_decay
 from habitat_baselines.utils.env_utils import construct_envs
@@ -147,10 +148,20 @@ class ILEnvDDPTrainer(ILEnvTrainer):
             capture_start_step=self.config.PROFILING.CAPTURE_START_STEP,
             num_steps_to_capture=self.config.PROFILING.NUM_STEPS_TO_CAPTURE,
         )
-        SLURM_JOBID = os.environ.get("SLURM_JOB_ID", None)
-        interrupted_state_file = os.path.join(self.config.CHECKPOINT_FOLDER, "{}.pth".format(SLURM_JOBID))
+        interrupted_state = None
 
-        interrupted_state = load_interrupted_state(interrupted_state_file)
+        # Check resume state file in config
+        resume_state_file = self.config.RESUME_STATE_FILE
+        if resume_state_file is not None and os.path.exists(resume_state_file):
+            logger.info("Loading interrupted state from resume state: {}".format(resume_state_file))
+            interrupted_state = load_interrupted_state(resume_state_file)
+
+        interrupted_state_file = os.path.join(self.config.CHECKPOINT_FOLDER, "{}.pth".format(SLURM_JOBID))
+        # Override resume state file if the current job interrupted state exists
+        if interrupted_state_file is not None and os.path.exists(interrupted_state_file):
+            logger.info("Loading interrupted state from requeued state: {}".format(interrupted_state_file))
+            interrupted_state = load_interrupted_state(interrupted_state_file)
+
         if interrupted_state is not None:
             logger.info("Overriding current config with interrupted state config")
             self.config = interrupted_state["config"]
@@ -290,6 +301,7 @@ class ILEnvDDPTrainer(ILEnvTrainer):
             count_checkpoints = requeue_stats["count_checkpoints"]
             start_update = requeue_stats["start_update"]
             prev_time = requeue_stats["prev_time"]
+            logger.info("Configs in interrupted state: {}".format(interrupted_state["requeue_stats"]))
 
         with (
             TensorboardWriter(

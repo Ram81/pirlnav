@@ -28,6 +28,7 @@ DATA_PATH="data/datasets/objectnav/objectnav_hm3d/objectnav_hm3d_fe_70k_balanced
 TENSORBOARD_DIR="tb/objectnav_il/objectnav_hm3d/objectnav_hm3d_fe_70k_balanced/rgb_ovrl/seed_1/"
 CHECKPOINT_DIR="data/new_checkpoints/objectnav_il/objectnav_hm3d/objectnav_hm3d_fe_70k_balanced/rgb_ovrl/seed_1/"
 INFLECTION_COEF=3.234951275740812
+RESUME_STATE_FILE="data/new_checkpoints/objectnav_il/objectnav_hm3d/objectnav_hm3d_fe_70k_balanced/rgb_ovrl/seed_1/418706.pth"
 set -x
 
 echo "In ObjectNav IL DDP"
