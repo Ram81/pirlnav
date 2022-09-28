@@ -1,13 +1,13 @@
 #!/bin/bash
 #SBATCH --job-name=onav_il
-#SBATCH --gres gpu:8
+#SBATCH --gres gpu:1
 #SBATCH --nodes 1
 #SBATCH --cpus-per-task 6
-#SBATCH --ntasks-per-node 8
+#SBATCH --ntasks-per-node 1
 #SBATCH --signal=USR1@1000
-#SBATCH --partition=long
+#SBATCH --partition=debug
 #SBATCH --constraint=a40
-#SBATCH --exclude=nestor
+#SBATCH --exclude=robby
 #SBATCH --output=slurm_logs/ddpil-%j.out
 #SBATCH --error=slurm_logs/ddpil-%j.err
 #SBATCH --requeue
@@ -24,11 +24,10 @@ export MASTER_ADDR
 
 config="habitat_baselines/config/objectnav/il/il_rgb_ddp_objectnav.yaml"
 
-DATA_PATH="data/datasets/objectnav/objectnav_hm3d/objectnav_hm3d_fe_20k_balanced/"
-TENSORBOARD_DIR="tb/objectnav_il/objectnav_hm3d/objectnav_hm3d_fe_20k_balanced/rgb_ovrl/seed_1/"
-CHECKPOINT_DIR="data/new_checkpoints/objectnav_il/objectnav_hm3d/objectnav_hm3d_fe_20k_balanced/rgb_ovrl/seed_1/"
-INFLECTION_COEF=2.106159015778148
-RESUME_STATE_FILE="data/new_checkpoints/objectnav_il/objectnav_hm3d/objectnav_hm3d_fe_20k_balanced/rgb_ovrl/seed_1/418706.pth"
+DATA_PATH="data/datasets/objectnav/objectnav_hm3d/objectnav_hm3d_fe_100k/"
+TENSORBOARD_DIR="tb/objectnav_il/objectnav_hm3d/objectnav_hm3d_fe_100k/rgb_ovrl/debug_seed_1/"
+CHECKPOINT_DIR="data/new_checkpoints/objectnav_il/objectnav_hm3d/objectnav_hm3d_fe_100k/rgb_ovrl/debug_seed_1/"
+INFLECTION_COEF=2.110868651022293
 set -x
 
 echo "In ObjectNav IL DDP"
@@ -45,3 +44,4 @@ IL.BehaviorCloning.num_mini_batch 2 \
 TASK_CONFIG.TASK.INFLECTION_WEIGHT_SENSOR.INFLECTION_COEF $INFLECTION_COEF \
 TASK_CONFIG.DATASET.SPLIT "train" \
 TASK_CONFIG.DATASET.DATA_PATH "$DATA_PATH/{split}/{split}.json.gz" \
+

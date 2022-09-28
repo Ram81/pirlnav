@@ -97,35 +97,12 @@ MODEL:
   USE_SEMANTICS: False
   USE_PRED_SEMANTICS: False
   SWITCH_TO_PRED_SEMANTICS_UPDATE: 0
-  SEMANTIC_PREDICTOR:
-    name: "rednet"
-    REDNET:
-      pretrained_weights: "data/rednet-models/rednet_semmap_mp3d_40_v2_vince.pth"
-      # pretrained_weights: "data/rednet-models/rednet_semmap_hm3d_6.pth"
-      num_classes: 29
-    DETIC:
-      pretrained_weights: "Detic/models/Detic_LbaseI_CLIP_R5021k_640b64_4x_ft4x_max-size.pth"
-      config: "Detic/configs/Detic_LbaseI_CLIP_R5021k_640b64_4x_ft4x_max-size.yaml"
-      score_threshold: 0.3
-    SHAPECONV:
-      config: "configs/semantic_predictor/shapeconv/hm3d_deeplabv3plus_resnet101_baseline.py"
-      pretrained_weights: "data/new_checkpoints/mmdet/semantic_predictor/shapeconv/shapeconv_23cat_best_class_acc_with_bg.pth"
-  SEMANTIC_ENCODER:
-    rednet_ckpt: "data/rednet-models/rednet_semmap_mp3d_40_v2_vince.pth"
-    cnn_type: "ResnetSemSegEncoder"
-    output_size: 256
-    backbone: "resnet18"
-    train_encoder: True
-    embedding_size: 4
-    is_hm3d: False
-    is_thda: True
-    num_classes: 29
   RGB_ENCODER:
-    cnn_type: "ResnetRGBEncoder"
+    cnn_type: "VisualEncoder"
     output_size: 256
-    backbone: "resnet18"
-    train_encoder: True
-    normalize_visual_inputs: False
+    backbone: "resnet50"
+    freeze_backbone: False
+    pretrained_encoder: "data/visual_encoders/omnidata_DINO_02.pth"
   DEPTH_ENCODER:
     cnn_type: "None" # "VlnResnetDepthEncoder"
     output_size: 128

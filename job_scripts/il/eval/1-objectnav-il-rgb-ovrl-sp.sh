@@ -22,32 +22,28 @@ export MAGNUM_LOG=quiet
 MASTER_ADDR=$(srun --ntasks=1 hostname 2>&1 | tail -n1)
 export MASTER_ADDR
 
-config=$1
-DATA_PATH="data/datasets/objectnav/objectnav_hm3d/objectnav_hm3d_v0.2"
-TENSORBOARD_DIR="tb/objectnav_il/objectnav_hm3d/objectnav_hm3d_8k/sem_seg_pred/seed_1/hm3d_v0.2_evals/ckpt_70_val_easy/"
-EVAL_CKPT_PATH_DIR="data/new_checkpoints/objectnav_il/objectnav_hm3d/objectnav_hm3d_8k/sem_seg_pred/seed_1/ckpt.70.pth"
+config="habitat_baselines/config/objectnav/il/il_rgb_ddp_objectnav.yaml"
+
+DATA_PATH="data/datasets/objectnav/objectnav_hm3d/objectnav_hm3d_v1"
+TENSORBOARD_DIR="tb/objectnav_il/objectnav_hm3d/objectnav_hm3d_s_path_240k/rgb_ovrl/seed_1/hm3d_v0_1_0_evals/ckpt_98_train_sample_4k_unseen/"
+EVAL_CKPT_PATH_DIR="data/new_checkpoints/objectnav_il/objectnav_hm3d/objectnav_hm3d_s_path_240k/rgb_ovrl/seed_1/ckpt.98.pth"
 set -x
 
 echo "In ObjectNav IL DDP"
+echo $config
 srun python -u -m habitat_baselines.run \
 --exp-config $config \
 --run-type eval \
 NUM_PROCESSES 20 \
 TENSORBOARD_DIR $TENSORBOARD_DIR \
 TEST_EPISODE_COUNT -1 \
-EVAL.SPLIT "val_easy" \
+EVAL.SPLIT "train_sample_4k_unseen" \
 EVAL.meta_file "$TENSORBOARD_DIR/evaluation_meta.json" \
 EVAL_CKPT_PATH_DIR $EVAL_CKPT_PATH_DIR \
 TASK_CONFIG.TASK.SENSORS "['OBJECTGOAL_SENSOR', 'COMPASS_SENSOR', 'GPS_SENSOR']" \
-TASK_CONFIG.TASK.MEASUREMENTS "['DISTANCE_TO_GOAL', 'SUCCESS', 'SPL', 'SOFT_SPL', 'GOAL_OBJECT_VISIBLE', 'MIN_DISTANCE_TO_GOAL']" \
+TASK_CONFIG.TASK.MEASUREMENTS "['DISTANCE_TO_GOAL', 'SUCCESS', 'SPL', 'SOFT_SPL', 'GOAL_OBJECT_VISIBLE', 'MIN_DISTANCE_TO_GOAL', 'TOP_DOWN_MAP', 'EXPLORATION_METRICS']" \
 TASK_CONFIG.DATASET.TYPE "ObjectNav-v1" \
 TASK_CONFIG.DATASET.DATA_PATH "$DATA_PATH/{split}/{split}.json.gz" \
-MODEL.hm3d_goal True \
-MODEL.USE_SEMANTICS True \
-MODEL.USE_PRED_SEMANTICS True \
-MODEL.SEMANTIC_ENCODER.is_hm3d False \
-MODEL.SEMANTIC_ENCODER.is_thda True \
-MODEL.SEMANTIC_PREDICTOR.name "rednet" \
 
 
 # 404140 - uuid
