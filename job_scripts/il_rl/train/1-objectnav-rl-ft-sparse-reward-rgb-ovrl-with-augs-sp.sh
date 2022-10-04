@@ -7,7 +7,7 @@
 #SBATCH --signal=USR1@300
 #SBATCH --partition=long
 #SBATCH --constraint=a40
-#SBATCH --exclude=dave
+#SBATCH --exclude=nestor,sonny
 #SBATCH --output=slurm_logs/ddp-il-rl-%j.out
 #SBATCH --error=slurm_logs/ddp-il-rl-%j.err
 #SBATCH --requeue
@@ -24,10 +24,10 @@ export MASTER_ADDR
 
 config="habitat_baselines/config/objectnav/il_rl/ddppo_rgb_ovrl_ft_objectnav.yaml"
 
-TENSORBOARD_DIR="tb/objectnav_il_rl_ft/ddppo_hm3d_pt_77k/rgb_ovrl_with_augs/sparse_reward_128gpu_ckpt_114/hm3d_v0_1_0/seed_1/"
-CHECKPOINT_DIR="data/new_checkpoints/objectnav_il_rl_ft/ddppo_hm3d_pt_77k/rgb_ovrl_with_augs/sparse_reward_128gpu_ckpt_114/hm3d_v0_1_0/seed_1/"
+TENSORBOARD_DIR="tb/objectnav_il_rl_ft/ddppo_hm3d_pt_s_path_240k/rgb_ovrl_with_augs/sparse_reward_ckpt_114/hm3d_v0_1_0/seed_1/"
+CHECKPOINT_DIR="data/new_checkpoints/objectnav_il_rl_ft/ddppo_hm3d_pt_s_path_240k/rgb_ovrl_with_augs/sparse_reward_ckpt_114/hm3d_v0_1_0/seed_1/"
 DATA_PATH="data/datasets/objectnav/objectnav_hm3d/objectnav_hm3d_v1/"
-PRETRAINED_WEIGHTS="data/new_checkpoints/objectnav_il/objectnav_hm3d/objectnav_hm3d_77k/rgb_ovrl/seed_2_128gpus/ckpt.114.pth"
+PRETRAINED_WEIGHTS="data/new_checkpoints/objectnav_il/objectnav_hm3d/objectnav_hm3d_s_path_240k/rgb_ovrl/seed_1/ckpt.114.pth"
 set -x
 
 echo "In ObjectNav IL+RL DDP"

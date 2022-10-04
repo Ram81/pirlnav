@@ -127,6 +127,7 @@ class ILEnvDDPTrainer(ILEnvTrainer):
             num_envs=self.envs.num_envs,
             num_mini_batch=il_cfg.num_mini_batch,
             lr=il_cfg.lr,
+            encoder_lr=il_cfg.encoder_lr,
             eps=il_cfg.eps,
             max_grad_norm=il_cfg.max_grad_norm,
             wd=il_cfg.wd,
