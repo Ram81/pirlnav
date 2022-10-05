@@ -212,6 +212,7 @@ _C.IL.BehaviorCloning.clip_param = 0.2
 _C.IL.BehaviorCloning.num_mini_batch = 2
 _C.IL.BehaviorCloning.max_grad_norm = 0.2
 _C.IL.BehaviorCloning.num_steps = 64
+_C.IL.BehaviorCloning.entropy_coef = 0.0
 _C.IL.BehaviorCloning.use_linear_clip_decay = False
 _C.IL.BehaviorCloning.use_linear_lr_decay = True
 _C.IL.BehaviorCloning.reward_window_size = 50

@@ -26,7 +26,8 @@ class ILAgent(nn.Module):
         eps: Optional[float] = None,
         max_grad_norm: Optional[float] = None,
         wd: Optional[float] = None,
-        optimizer: Optional[str] = "AdamW"
+        optimizer: Optional[str] = "AdamW",
+        entropy_coef: Optional[float] = 0.0,
     ) -> None:
 
         super().__init__()
@@ -37,6 +38,7 @@ class ILAgent(nn.Module):
 
         self.max_grad_norm = max_grad_norm
         self.num_envs = num_envs
+        self.entropy_coef = entropy_coef
 
         # use different lr for visual encoder and other networks
         visual_encoder_params, other_params = [], []
@@ -72,6 +74,8 @@ class ILAgent(nn.Module):
 
     def update(self, rollouts) -> Tuple[float, float, float]:
         total_loss_epoch = 0.0
+        total_entropy = 0.0
+        total_action_loss = 0.0
 
         profiling_wrapper.range_push("BC.update epoch")
         data_generator = rollouts.recurrent_generator(
@@ -106,11 +110,13 @@ class ILAgent(nn.Module):
             logits = logits.view(T, N, -1)
 
             action_loss = cross_entropy_loss(logits.permute(0, 2, 1), actions_batch.squeeze(-1))
+            entropy_term = dist_entropy * self.entropy_coef
 
             self.optimizer.zero_grad()
             inflections_batch = obs_batch["inflection_weight"]
 
-            total_loss = ((inflections_batch * action_loss).sum(0) / inflections_batch.sum(0)).mean()
+            action_loss_term = ((inflections_batch * action_loss).sum(0) / inflections_batch.sum(0)).mean()
+            total_loss = action_loss_term - entropy_term
 
             self.before_backward(total_loss)
             total_loss.backward()
@@ -121,6 +127,8 @@ class ILAgent(nn.Module):
             self.after_step()
 
             total_loss_epoch += total_loss.item()
+            total_action_loss += action_loss_term.item()
+            total_entropy += dist_entropy.item()
             hidden_states.append(rnn_hidden_states)
 
         profiling_wrapper.range_pop()
@@ -128,8 +136,10 @@ class ILAgent(nn.Module):
         hidden_states = torch.cat(hidden_states, dim=1)
 
         total_loss_epoch /= self.num_mini_batch
+        total_entropy /= self.num_mini_batch
+        total_action_loss /= self.num_mini_batch
 
-        return total_loss_epoch, hidden_states
+        return total_loss_epoch, hidden_states, total_entropy, total_action_loss
 
     def before_backward(self, loss: Tensor) -> None:
         pass

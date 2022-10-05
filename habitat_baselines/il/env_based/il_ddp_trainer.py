@@ -131,6 +131,7 @@ class ILEnvDDPTrainer(ILEnvTrainer):
             eps=il_cfg.eps,
             max_grad_norm=il_cfg.max_grad_norm,
             wd=il_cfg.wd,
+            entropy_coef=il_cfg.entropy_coef,
         )
 
     @profiling_wrapper.RangeContext("train")
@@ -393,7 +394,9 @@ class ILEnvDDPTrainer(ILEnvTrainer):
                 self.agent.train()
                 (
                     delta_pth_time,
-                    total_loss
+                    total_loss,
+                    total_entropy,
+                    total_action_loss,
                 ) = self._update_agent(il_cfg, rollouts)
                 pth_time += delta_pth_time
 
@@ -407,7 +410,7 @@ class ILEnvDDPTrainer(ILEnvTrainer):
                     window_episode_stats[k].append(stats[i].clone())
 
                 stats = torch.tensor(
-                    [total_loss, count_steps_delta],
+                    [total_loss, count_steps_delta, total_entropy, total_action_loss],
                     device=self.device,
                 )
                 distrib.all_reduce(stats)
@@ -418,7 +421,9 @@ class ILEnvDDPTrainer(ILEnvTrainer):
 
                     losses = [
                         stats[0].item() / self.world_size,
+                        stats[3].item() / self.world_size
                     ]
+                    entropy = stats[2].item() / self.world_size
                     deltas = {
                         k: (
                             (v[-1] - v[0]).sum().item()
@@ -447,9 +452,10 @@ class ILEnvDDPTrainer(ILEnvTrainer):
 
                     writer.add_scalars(
                         "losses",
-                        {k: l for l, k in zip(losses, ["action"])},
+                        {k: l for l, k in zip(losses, ["total", "action"])},
                         count_steps,
                     )
+                    writer.add_scalar("entropy", entropy, count_steps)
 
                     lrs = {}
                     for i, param_group in enumerate(self.agent.optimizer.param_groups):
@@ -459,10 +465,12 @@ class ILEnvDDPTrainer(ILEnvTrainer):
                     # log stats
                     if update > 0 and update % self.config.LOG_INTERVAL == 0:
                         logger.info(
-                            "update: {}\tfps: {:.3f}\tloss: {:.3f}".format(
+                            "update: {}\tfps: {:.3f}\tloss: {:.3f}\taction loss: {:.3f}\tentropy: {:.3f}".format(
                                 update,
                                 count_steps
-                                / ((time.time() - t_start) + prev_time), losses[0]
+                                / ((time.time() - t_start) + prev_time), losses[0],
+                                losses[1],
+                                entropy
                             )
                         )
 

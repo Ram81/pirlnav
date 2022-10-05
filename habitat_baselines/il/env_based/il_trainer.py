@@ -122,6 +122,7 @@ class ILEnvTrainer(BaseRLTrainer):
             eps=il_cfg.eps,
             max_grad_norm=il_cfg.max_grad_norm,
             wd=il_cfg.wd,
+            entropy_coef=il_cfg.entropy_coef,
         )
 
     @profiling_wrapper.RangeContext("save_checkpoint")
@@ -316,13 +317,20 @@ class ILEnvTrainer(BaseRLTrainer):
     def _update_agent(self, ppo_cfg, rollouts):
         t_update_model = time.time()
 
-        total_loss, rnn_hidden_states = self.agent.update(rollouts)
+        (
+            total_loss,
+            rnn_hidden_states,
+            total_entropy,
+            total_action_loss,
+        ) = self.agent.update(rollouts)
 
         rollouts.after_update(rnn_hidden_states)
 
         return (
             time.time() - t_update_model,
             total_loss,
+            total_entropy,
+            total_action_loss,
         )
 
     @profiling_wrapper.RangeContext("train")
@@ -443,7 +451,9 @@ class ILEnvTrainer(BaseRLTrainer):
 
                 (
                     delta_pth_time,
-                    total_loss
+                    total_loss,
+                    total_entropy,
+                    total_action_loss,
                 ) = self._update_agent(il_cfg, rollouts)
                 pth_time += delta_pth_time
 
@@ -474,9 +484,11 @@ class ILEnvTrainer(BaseRLTrainer):
                 if len(metrics) > 0:
                     writer.add_scalars("metrics", metrics, count_steps)
 
-                losses = [total_loss]
-                losses = {k: l for l, k in zip(losses, ["action"])}
+                losses = [total_loss, total_action_loss]
+                losses = {k: l for l, k in zip(losses, ["total", "action"])}
                 writer.add_scalars("losses", losses, count_steps)
+
+                writer.add_scalar("entropy", total_entropy, count_steps)
 
                 # log stats
                 if update % self.config.LOG_INTERVAL == 0:

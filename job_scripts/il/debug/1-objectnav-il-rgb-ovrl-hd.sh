@@ -25,8 +25,8 @@ export MASTER_ADDR
 config="habitat_baselines/config/objectnav/il/il_rgb_ddp_objectnav.yaml"
 
 DATA_PATH="data/datasets/objectnav/objectnav_hm3d/objectnav_hm3d_10k/"
-TENSORBOARD_DIR="tb/objectnav_il/objectnav_hm3d/objectnav_hm3d_10k/debug_rgb_ovrl/seed_1/"
-CHECKPOINT_DIR="data/new_checkpoints/objectnav_il/objectnav_hm3d/objectnav_hm3d_10k/debug_rgb_ovrl/seed_1/"
+TENSORBOARD_DIR="tb/objectnav_il/objectnav_hm3d/objectnav_hm3d_10k/debug_entropy_rgb_ovrl/seed_1/"
+CHECKPOINT_DIR="data/new_checkpoints/objectnav_il/objectnav_hm3d/objectnav_hm3d_10k/debug_entropy_rgb_ovrl/seed_1/"
 INFLECTION_COEF=3.1915100047989653
 set -x
 
@@ -42,11 +42,12 @@ NUM_PROCESSES 8 \
 IL.BehaviorCloning.encoder_lr 1e-4 \
 IL.BehaviorCloning.num_steps 32 \
 IL.BehaviorCloning.num_mini_batch 2 \
+IL.BehaviorCloning.entropy_coef 0.02 \
 TASK_CONFIG.TASK.INFLECTION_WEIGHT_SENSOR.INFLECTION_COEF $INFLECTION_COEF \
 TASK_CONFIG.DATASET.SPLIT "overfitting" \
 TASK_CONFIG.DATASET.DATA_PATH "$DATA_PATH/{split}/{split}.json.gz" \
 MODEL.RGB_ENCODER.backbone "vit_small_patch16" \
 MODEL.RGB_ENCODER.pretrained_encoder "data/visual_encoders/mae_vit_small_decoder_large_HGPS_RE10K_100.pth" \
 TASK_CONFIG.DATASET.CONTENT_SCENES "['XiJhRLvpKpX', 'xWvSkKiWQpC', 'yHLr6bvWsVm', 'YHmAkqgwe2p', 'YJDUB7hWg9h', 'YMNvYDhK8mB', 'YmWinf3mhb5', 'Z2DQddYp1fn']" \
-TASK_CONFIG.DATASET.MAX_EPISODE_STEPS 1000 
+TASK_CONFIG.DATASET.MAX_EPISODE_STEPS 1000
 
