@@ -322,6 +322,7 @@ class ObjectNavILPolicy(Policy):
             no_critic=model_config.CRITIC.no_critic,
             mlp_critic=model_config.CRITIC.mlp_critic,
             critic_hidden_dim=model_config.CRITIC.hidden_dim,
+            detach_critic_input=model_config.CRITIC.detach_critic_input,
         )
 
     @classmethod

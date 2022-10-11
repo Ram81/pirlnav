@@ -7,7 +7,7 @@
 #SBATCH --signal=USR1@300
 #SBATCH --partition=short
 #SBATCH --constraint=a40
-#SBATCH --exclude=robby,chappie
+#SBATCH --exclude=nestor,ig-88
 #SBATCH --output=slurm_logs/eval/ddp-il-rl-%j.out
 #SBATCH --error=slurm_logs/eval/ddp-il-rl-%j.err
 #SBATCH --requeue
@@ -25,9 +25,9 @@ export MASTER_ADDR
 config="habitat_baselines/config/objectnav/il_rl/ddppo_rgb_ovrl_ft_objectnav.yaml"
 
 DATA_PATH="data/datasets/objectnav/objectnav_hm3d/objectnav_hm3d_v1"
-TENSORBOARD_DIR="tb/objectnav_il_rl_ft/ddppo_hm3d_pt_77k/rgb_ovrl_with_augs/sparse_reward/hm3d_v0_1_0/seed_2/v0_1_0_evals/ckpt_38_val/"
-EVAL_CKPT_PATH_DIR="data/new_checkpoints/objectnav_il_rl_ft/ddppo_hm3d_pt_77k/rgb_ovrl_with_augs/sparse_reward/hm3d_v0_1_0/seed_2/ckpt.38.pth"
-PRETRAINED_WEIGHTS="data/new_checkpoints/objectnav_il/objectnav_hm3d/objectnav_hm3d_77k/rgb_ovrl/seed_1/ObjectNav_omnidata_DINO_02_77k_with_augs.pth"
+TENSORBOARD_DIR="tb/objectnav_il_rl_ft/ddppo_hm3d_pt_fe_70k/rgb_ovrl_with_augs/sparse_reward_ckpt_118/hm3d_v0_1_0/seed_1/hm3d_v0_1_0_evals/ckpt_62_val/"
+EVAL_CKPT_PATH_DIR="data/new_checkpoints/objectnav_il_rl_ft/ddppo_hm3d_pt_fe_70k/rgb_ovrl_with_augs/sparse_reward_ckpt_118/hm3d_v0_1_0/seed_1/ckpt.62.pth"
+PRETRAINED_WEIGHTS="data/new_checkpoints/objectnav_il/objectnav_hm3d/objectnav_hm3d_fe_70k_balanced/rgb_ovrl/seed_1/ckpt.34.pth"
 
 set -x
 

@@ -25,9 +25,9 @@ export MASTER_ADDR
 config="habitat_baselines/config/objectnav/il_rl/ddppo_rgb_ovrl_ft_objectnav.yaml"
 
 DATA_PATH="data/datasets/objectnav/objectnav_hm3d/objectnav_hm3d_v1"
-TENSORBOARD_DIR="tb/objectnav_il_rl_ft/ddppo_hm3d_pt_1k/rgb_ovrl_with_augs/sparse_reward_ckpt_110/hm3d_v0_1_0/seed_1/hm3d_v0_1_0_evals/ckpt_66_val/"
-EVAL_CKPT_PATH_DIR="data/new_checkpoints/objectnav_il_rl_ft/ddppo_hm3d_pt_1k/rgb_ovrl_with_augs/sparse_reward_ckpt_110/hm3d_v0_1_0/seed_1/ckpt.66.pth"
-PRETRAINED_WEIGHTS="data/new_checkpoints/objectnav_il/objectnav_hm3d/objectnav_hm3d_8k/rgb_ovrl/seed_1/ckpt.110.pth"
+TENSORBOARD_DIR="tb/objectnav_il_rl_ft/ddppo_hm3d_pt_77k/rgb_ovrl_with_augs/sparse_reward_128gpu_ckpt_114/hm3d_v0_1_0/seed_1/hm3d_v0_1_0_evals/ckpt_62_val/"
+EVAL_CKPT_PATH_DIR="data/new_checkpoints/objectnav_il_rl_ft/ddppo_hm3d_pt_77k/rgb_ovrl_with_augs/sparse_reward_128gpu_ckpt_114/hm3d_v0_1_0/seed_1/ckpt.62.pth"
+PRETRAINED_WEIGHTS="data/new_checkpoints/objectnav_il/objectnav_hm3d/objectnav_hm3d_77k/rgb_ovrl/seed_2_128gpus/ckpt.110.pth"
 
 set -x
 

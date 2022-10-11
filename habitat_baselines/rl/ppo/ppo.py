@@ -52,7 +52,7 @@ class PPO(nn.Module):
 
         if not finetune:
             self.optimizer = optim.Adam(
-                list(filter(lambda p: p.requires_grad, actor_critic.critic.parameters())),
+                list(filter(lambda p: p.requires_grad, actor_critic.parameters())),
                 lr=lr,
                 eps=eps,
             )

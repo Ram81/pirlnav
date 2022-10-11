@@ -23,9 +23,9 @@ MASTER_ADDR=$(srun --ntasks=1 hostname 2>&1 | tail -n1)
 export MASTER_ADDR
 
 config=$1
-DATA_PATH="data/datasets/objectnav/objectnav_gibson/objectnav_gibson_v2"
-TENSORBOARD_DIR="tb/objectnav_il/objectnav_mp3d/objectnav_mp3d_6_cat_10k/seed_1/gibson_evals/ckpt_38_val/"
-EVAL_CKPT_PATH_DIR="data/new_checkpoints/objectnav_il/objectnav_mp3d/objectnav_mp3d_6_cat_10k/seed_1/ckpt.38.pth"
+DATA_PATH="data/datasets/objectnav/objectnav_gibson/objectnav_gibson_v3"
+TENSORBOARD_DIR="tb/objectnav_il/objectnav_mp3d/objectnav_mp3d_6_cat_10k/seed_1/gibson_v3_evals/ckpt_34_val/"
+EVAL_CKPT_PATH_DIR="data/new_checkpoints/objectnav_il/objectnav_mp3d/objectnav_mp3d_6_cat_10k/seed_1/ckpt.34.pth"
 set -x
 
 echo "In ObjectNav IL DDP"

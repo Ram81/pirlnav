@@ -9,6 +9,7 @@ import torch
 from gym import spaces
 from torch import nn as nn
 
+from habitat import logger
 from habitat.config import Config
 from habitat.tasks.nav.nav import (
     ImageGoalSensor,
@@ -22,7 +23,15 @@ from habitat_baselines.utils.common import CategoricalNet
 
 
 class Policy(nn.Module, metaclass=abc.ABCMeta):
-    def __init__(self, net, dim_actions, no_critic=False, mlp_critic=False, critic_hidden_dim=512):
+    def __init__(
+        self,
+        net,
+        dim_actions,
+        no_critic=False,
+        mlp_critic=False,
+        critic_hidden_dim=512,
+        detach_critic_input=False,
+    ):
         super().__init__()
         self.net = net
         self.dim_actions = dim_actions
@@ -31,15 +40,18 @@ class Policy(nn.Module, metaclass=abc.ABCMeta):
         self.action_distribution = CategoricalNet(
             self.net.output_size, self.dim_actions
         )
-        if not self.no_critic:
-            self.critic = CriticHead(self.net.output_size)
-        elif self.no_critic:
+        logger.info("MLP critic: {} - {}".format(mlp_critic, detach_critic_input))
+        if self.no_critic:
             pass
         else:
             if not mlp_critic:
                 self.critic = CriticHead(self.net.output_size)
             else:
-                self.critic = MLPCriticHead(self.net.output_size, critic_hidden_dim)
+                self.critic = MLPCriticHead(
+                    self.net.output_size,
+                    critic_hidden_dim,
+                    detach=detach_critic_input
+                )
 
     def forward(self, *x):
         features, rnn_hidden_states = self.net(
@@ -119,7 +131,7 @@ class CriticHead(nn.Module):
 
 
 class MLPCriticHead(nn.Module):
-    def __init__(self, input_size, hidden_dim=512):
+    def __init__(self, input_size, hidden_dim=512, detach=False):
         super().__init__()
         self.fc = nn.Sequential(
             nn.Linear(input_size, hidden_dim),
@@ -132,8 +144,15 @@ class MLPCriticHead(nn.Module):
         nn.init.orthogonal_(self.fc[2].weight)
         nn.init.constant_(self.fc[2].bias, 0)
 
+        self.detach = detach
+        logger.info("Detach critic: {}".format(self.detach))
+        print("Detach critic: {}".format(self.detach))
+
     def forward(self, x):
-        return self.fc(x.detach())
+        if self.detach:
+            logger.info("detach")
+            x = x.detach()
+        return self.fc(x)
 
 
 @baseline_registry.register_policy

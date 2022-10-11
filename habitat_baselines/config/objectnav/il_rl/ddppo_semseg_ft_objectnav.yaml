@@ -141,5 +141,5 @@ MODEL:
     use_prev_action: True
   CRITIC:
     no_critic: False
-    mlp_critic: True
+    mlp_critic: False
     hidden_dim: 512

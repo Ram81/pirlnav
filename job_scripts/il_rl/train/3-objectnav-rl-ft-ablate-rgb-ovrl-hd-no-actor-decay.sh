@@ -24,10 +24,10 @@ export MASTER_ADDR
 
 config="habitat_baselines/config/objectnav/il_rl/ddppo_rgb_ovrl_ft_objectnav.yaml"
 
-TENSORBOARD_DIR="tb/objectnav_il_rl_ft/ddppo_hm3d_pt_50k/rgb_ovrl_with_augs/sparse_reward_ckpt_110/hm3d_v0_1_0/seed_1/"
-CHECKPOINT_DIR="data/new_checkpoints/objectnav_il_rl_ft/ddppo_hm3d_pt_50k/rgb_ovrl_with_augs/sparse_reward_ckpt_110/hm3d_v0_1_0/seed_1/"
+TENSORBOARD_DIR="tb/objectnav_il_rl_ft/ddppo_hm3d_pt_77k/rgb_ovrl_with_augs/sparse_reward_128gpu_ckpt_114_no_actor_lr_decay/hm3d_v0_1_0/seed_1/"
+CHECKPOINT_DIR="data/new_checkpoints/objectnav_il_rl_ft/ddppo_hm3d_pt_77k/rgb_ovrl_with_augs/sparse_reward_128gpu_ckpt_114_no_actor_lr_decay/hm3d_v0_1_0/seed_1/"
 DATA_PATH="data/datasets/objectnav/objectnav_hm3d/objectnav_hm3d_v1/"
-PRETRAINED_WEIGHTS="data/new_checkpoints/objectnav_il/objectnav_hm3d/objectnav_hm3d_50k/rgb_ovrl/seed_1/ckpt.110.pth"
+PRETRAINED_WEIGHTS="data/new_checkpoints/objectnav_il/objectnav_hm3d/objectnav_hm3d_77k/rgb_ovrl/seed_2_128gpus/ckpt.114.pth"
 set -x
 
 echo "In ObjectNav IL+RL DDP"
@@ -41,8 +41,8 @@ NUM_UPDATES 40000 \
 NUM_PROCESSES 8 \
 RL.DDPPO.pretrained_weights $PRETRAINED_WEIGHTS \
 RL.DDPPO.distrib_backend "NCCL" \
-RL.Finetune.start_actor_finetuning_at 750 \
-RL.Finetune.actor_lr_warmup_update 1500 \
+RL.Finetune.start_actor_finetuning_at 1000 \
+RL.Finetune.actor_lr_warmup_update 1000 \
 RL.Finetune.start_critic_warmup_at 500 \
 RL.Finetune.critic_lr_decay_update 1000 \
 TASK_CONFIG.DATASET.SPLIT "train" \

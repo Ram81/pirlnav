@@ -201,11 +201,14 @@ _C.MODEL.RGB_ENCODER.avgpooled_image = False
 _C.MODEL.RGB_ENCODER.augmentations_name = "jitter+shift"
 _C.MODEL.RGB_ENCODER.drop_path_rate = 0.0
 _C.MODEL.RGB_ENCODER.normalize_visual_inputs = False
+_C.MODEL.CRITIC = CN()
+_C.MODEL.CRITIC.detach_critic_input = False
 
 _C.IL = CN()
 _C.IL.BehaviorCloning = CN()
 _C.IL.BehaviorCloning.wd = 0.0
 _C.IL.BehaviorCloning.lr = 0.001
+_C.IL.BehaviorCloning.encoder_lr = 0.001
 _C.IL.BehaviorCloning.eps = 1.0e-5
 _C.IL.BehaviorCloning.wd = 0.0
 _C.IL.BehaviorCloning.clip_param = 0.2
