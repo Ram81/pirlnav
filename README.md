@@ -1,15 +1,11 @@
 # Not all demonstrations are created equal
 
-### Upload Checkpoints
+## Citation
+If you use this work, please cite using:
 
-To upload the checkpoints for a baseline use the `scripts/utils/upload_checkpoints_to_s3.py`. Here's an example of script usage:
-
-```
-python scripts/utils/upload_checkpoints_to_s3.py --path path/to/checkpoints/dir/
-```
-
-where `path/to/checkpoints/dir/` should have files with `.pth` extension. 
-
-This will upload the checkpoints to `habitat-on-web` S3 bucket in CloudCV AWS account.
-
-NOTE: Before you run the script ensure that environment variables `S3_AWS_ACCESS_KEY_ID` and `S3_AWS_SECRET_ACCESS_KEY` are set with appropriate values.
+@misc{ilrl_baselines,
+  title = {Not all Demonstrations are Created Equal: An ObjectNav Case Study for Effectively Combining Imitation and Reinforcement Learning},
+  author = {Ram Ramrakhya, Erik Wijmans, Dhruv Batra, Abhishek Das},
+  howpublished = {\url{https://github.com/Ram81/il_rl_baselines}},
+  year = {2022}
+}
