@@ -6,7 +6,7 @@
 #SBATCH --ntasks-per-node 1
 #SBATCH --signal=USR1@300
 #SBATCH --partition=short
-#SBATCH --constraint=a40
+#SBATCH --constraint="rtx_6000|a40"
 #SBATCH --exclude=nestor
 #SBATCH --output=slurm_logs/eval/ddpil-%j.out
 #SBATCH --error=slurm_logs/eval/ddpil-%j.err
@@ -25,8 +25,8 @@ export MASTER_ADDR
 config="habitat_baselines/config/objectnav/il/il_rgb_ddp_objectnav.yaml"
 
 DATA_PATH="data/datasets/objectnav/objectnav_hm3d/objectnav_hm3d_v1"
-TENSORBOARD_DIR="tb/objectnav_il/objectnav_hm3d/objectnav_hm3d_77k/rgb_ovrl_mae/seed_1/hm3d_v0_1_0_evals/ckpt_102_val/"
-EVAL_CKPT_PATH_DIR="data/new_checkpoints/objectnav_il/objectnav_hm3d/objectnav_hm3d_77k/rgb_ovrl_mae/seed_1/ckpt.102.pth"
+TENSORBOARD_DIR="tb/objectnav_il/objectnav_hm3d/objectnav_hm3d_77k/rgb_ovrl/seed_2_128gpus/hm3d_v0_1_0_evals/ckpt_114_train_sample_4k_unseen/"
+EVAL_CKPT_PATH_DIR="data/new_checkpoints/objectnav_il/objectnav_hm3d/objectnav_hm3d_77k/rgb_ovrl/seed_2_128gpus/ckpt.114.pth"
 set -x
 
 echo "In ObjectNav IL DDP"
@@ -36,7 +36,7 @@ srun python -u -m habitat_baselines.run \
 NUM_PROCESSES 20 \
 TENSORBOARD_DIR $TENSORBOARD_DIR \
 TEST_EPISODE_COUNT -1 \
-EVAL.SPLIT "val" \
+EVAL.SPLIT "train_sample_4k_unseen" \
 EVAL.meta_file "$TENSORBOARD_DIR/evaluation_meta.json" \
 EVAL_CKPT_PATH_DIR $EVAL_CKPT_PATH_DIR \
 TASK_CONFIG.TASK.SENSORS "['OBJECTGOAL_SENSOR', 'COMPASS_SENSOR', 'GPS_SENSOR']" \

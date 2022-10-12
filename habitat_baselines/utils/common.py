@@ -105,6 +105,9 @@ def linear_warmup(epoch: int, start_update: int, max_updates: int, start_lr: int
     if epoch > max_updates:
         return end_lr
 
+    if max_updates == start_update:
+        return end_lr
+
     pct_step = (epoch - start_update) / (max_updates - start_update)
     step_lr = (end_lr - start_lr) * pct_step + start_lr
     if step_lr > end_lr:
@@ -127,7 +130,10 @@ def critic_linear_decay(epoch: int, start_update: int, max_updates: int, start_l
     if epoch <= start_update:
         return 1
     
-    if epoch > max_updates:
+    if epoch >= max_updates:
+        return end_lr
+    
+    if max_updates == start_update:
         return end_lr
 
     pct_step = (epoch - start_update) / (max_updates - start_update)
