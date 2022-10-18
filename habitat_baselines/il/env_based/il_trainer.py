@@ -791,6 +791,7 @@ class ILEnvTrainer(BaseRLTrainer):
 
         for k, v in aggregated_stats.items():
             logger.info(f"Average episode {k}: {v:.4f}")
+        logger.info("Checkpoint path: {}".format(checkpoint_path))
 
         step_id = int(checkpoint_index)
         if "extra_state" in ckpt_dict and "step" in ckpt_dict["extra_state"]:

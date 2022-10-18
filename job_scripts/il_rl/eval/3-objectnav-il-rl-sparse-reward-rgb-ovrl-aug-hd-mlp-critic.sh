@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=onav_il
+#SBATCH --job-name=onav_ilrl
 #SBATCH --gres gpu:1
 #SBATCH --nodes 1
 #SBATCH --cpus-per-task 6
@@ -7,9 +7,9 @@
 #SBATCH --signal=USR1@300
 #SBATCH --partition=short
 #SBATCH --constraint=a40
-#SBATCH --exclude=nestor
-#SBATCH --output=slurm_logs/eval/ddpil-%j.out
-#SBATCH --error=slurm_logs/eval/ddpil-%j.err
+#SBATCH --exclude=spd-13
+#SBATCH --output=slurm_logs/eval/ddp-il-rl-%j.out
+#SBATCH --error=slurm_logs/eval/ddp-il-rl-%j.err
 #SBATCH --requeue
 
 source /srv/flash1/rramrakhya6/miniconda3/etc/profile.d/conda.sh
@@ -22,30 +22,33 @@ export MAGNUM_LOG=quiet
 MASTER_ADDR=$(srun --ntasks=1 hostname 2>&1 | tail -n1)
 export MASTER_ADDR
 
-config="habitat_baselines/config/objectnav/il/il_rgb_ddp_objectnav.yaml"
+config="habitat_baselines/config/objectnav/il_rl/ddppo_rgb_ovrl_ft_objectnav.yaml"
 
-DATA_PATH="data/datasets/objectnav/objectnav_hm3d/objectnav_hm3d_10k"
-TENSORBOARD_DIR="tb/objectnav_il/objectnav_hm3d/objectnav_hm3d_10k/debug_entropy_rgb_ovrl/seed_1/ckpt_7_val/"
-EVAL_CKPT_PATH_DIR="data/new_checkpoints/objectnav_il/objectnav_hm3d/objectnav_hm3d_10k/debug_entropy_rgb_ovrl/seed_1/ckpt.60.pth"
+DATA_PATH="data/datasets/objectnav/objectnav_hm3d/objectnav_hm3d_v1"
+TENSORBOARD_DIR="tb/objectnav_il_rl_ft/ddppo_hm3d_pt_77k/rgb_ovrl_with_augs/sparse_reward_128gpu_ckpt_114_mlp_critic/hm3d_v0_1_0/seed_1/hm3d_v0_1_0_evals/ckpt_58_78_val/"
+EVAL_CKPT_PATH_DIR="data/new_checkpoints/objectnav_il_rl_ft/ddppo_hm3d_pt_77k/rgb_ovrl_with_augs/sparse_reward_128gpu_ckpt_114_mlp_critic/hm3d_v0_1_0/seed_1/"
+PRETRAINED_WEIGHTS="data/new_checkpoints/objectnav_il/objectnav_hm3d/objectnav_hm3d_77k/rgb_ovrl/seed_2/ckpt.110.pth"
+
 set -x
 
-echo "In ObjectNav IL DDP"
+echo "In ObjectNav IL+RL DDP"
 srun python -u -m habitat_baselines.run \
 --exp-config $config \
 --run-type eval \
-NUM_PROCESSES 8 \
+NUM_PROCESSES 20 \
 TENSORBOARD_DIR $TENSORBOARD_DIR \
 TEST_EPISODE_COUNT -1 \
-EVAL.SPLIT "overfitting" \
+EVAL.SPLIT "val" \
+EVAL.USE_CKPT_CONFIG False \
 EVAL.meta_file "$TENSORBOARD_DIR/evaluation_meta.json" \
 EVAL_CKPT_PATH_DIR $EVAL_CKPT_PATH_DIR \
+EVAL.EVAL_FREQ 4 \
+EVAL.FIRST_EVAL_INDEX 58 \
+RL.DDPPO.pretrained_weights $PRETRAINED_WEIGHTS \
 TASK_CONFIG.TASK.SENSORS "['OBJECTGOAL_SENSOR', 'COMPASS_SENSOR', 'GPS_SENSOR']" \
 TASK_CONFIG.TASK.MEASUREMENTS "['DISTANCE_TO_GOAL', 'SUCCESS', 'SPL', 'SOFT_SPL', 'GOAL_OBJECT_VISIBLE', 'MIN_DISTANCE_TO_GOAL', 'TOP_DOWN_MAP', 'EXPLORATION_METRICS']" \
 TASK_CONFIG.DATASET.TYPE "ObjectNav-v1" \
 TASK_CONFIG.DATASET.DATA_PATH "$DATA_PATH/{split}/{split}.json.gz" \
-MODEL.RGB_ENCODER.backbone "vit_small_patch16" \
-MODEL.RGB_ENCODER.pretrained_encoder "data/visual_encoders/mae_vit_small_decoder_large_HGPS_RE10K_100.pth" \
-TASK_CONFIG.DATASET.CONTENT_SCENES "['XiJhRLvpKpX', 'xWvSkKiWQpC', 'yHLr6bvWsVm', 'YHmAkqgwe2p', 'YJDUB7hWg9h', 'YMNvYDhK8mB', 'YmWinf3mhb5', 'Z2DQddYp1fn']" \
+MODEL.CRITIC.mlp_critic True
 
-
-# 404140 - uuid
+# 404148 - uuid

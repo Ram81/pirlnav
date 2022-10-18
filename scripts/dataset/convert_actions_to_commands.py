@@ -9,6 +9,8 @@ from habitat.sims.habitat_simulator.actions import HabitatSimActions
 
 
 def get_habitat_sim_action_str(action):
+    if action in ["TURN_RIGHT", "TURN_LEFT", "MOVE_FORWARD", "LOOK_UP", "LOOK_DOWN", "STOP"]:
+        return action
     if action == HabitatSimActions.TURN_RIGHT:
         return "TURN_RIGHT"
     elif action == HabitatSimActions.TURN_LEFT:
@@ -28,7 +30,12 @@ def list_files(path):
 
 def merge_episodes(input_path_1, output_path):
     files = list_files(os.path.join(input_path_1, "*json.gz"))
-    file_paths = ["../objectnav_sem_exp/data/datasets/objectnav/objectnav_hm3d/objectnav_hm3d_fm_v3/train/content/", "../objectnav_sem_exp/data/datasets/objectnav/objectnav_hm3d/objectnav_hm3d_fm_v2/train/content/"]
+    file_paths = [
+        # "../objectnav_sem_exp/data/datasets/objectnav/objectnav_hm3d/objectnav_hm3d_fm_v3/train/content/",
+        # "../objectnav_sem_exp/data/datasets/objectnav/objectnav_hm3d/objectnav_hm3d_fm_v2/train/content/",
+        # "../objectnav_sem_exp/data/datasets/objectnav/objectnav_hm3d/objectnav_hm3d_fm_v1/train/content/",
+        "../objectnav_sem_exp/data/datasets/objectnav/objectnav_hm3d/objectnav_hm3d_fm_v4/train/content/",
+    ]
 
     count = 0
     for f in tqdm(files):

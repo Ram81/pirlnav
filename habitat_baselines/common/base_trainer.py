@@ -125,22 +125,45 @@ class BaseTrainer:
                     checkpoint_index=ckpt_idx,
                 )
             else:
+                logger.info("Running eval from directory....")
                 # evaluate multiple checkpoints in order
                 prev_ckpt_ind = -1
+                eval_iter_filename = os.path.join(
+                    self.config.TENSORBOARD_DIR,
+                    "eval_iter_" + str(self.config.EVAL.SPLIT) + ".txt"
+                )
+
+                if os.path.exists(eval_iter_filename):
+                    with open(eval_iter_filename, 'r') as file:
+                        prev_ckpt_ind = file.read().rstrip('\n')
+                        prev_ckpt_ind = int(prev_ckpt_ind)
+                else:
+                    prev_ckpt_ind = -1
+
                 while True:
                     current_ckpt = None
                     while current_ckpt is None:
-                        current_ckpt = poll_checkpoint_folder(
-                            self.config.EVAL_CKPT_PATH_DIR, prev_ckpt_ind
+                        num_checkpoints = self.config.NUM_UPDATES // self.config.CHECKPOINT_INTERVAL
+                        current_ckpt, current_ckpt_idx = poll_checkpoint_folder(
+                            self.config.EVAL_CKPT_PATH_DIR, prev_ckpt_ind, self.config.EVAL.EVAL_FREQ, \
+                                num_checkpoints, self.config.EVAL.FIRST_EVAL_INDEX
                         )
                         time.sleep(2)  # sleep for 2 secs before polling again
                     logger.info(f"=======current_ckpt: {current_ckpt}=======")
-                    prev_ckpt_ind += 1
+                    prev_ckpt_ind = current_ckpt_idx
+                    prev_ckpt_ind = current_ckpt_idx
+                    with open(eval_iter_filename, 'w') as file:
+                        file.write(str(prev_ckpt_ind))
+
                     self._eval_checkpoint(
                         checkpoint_path=current_ckpt,
                         writer=writer,
                         checkpoint_index=prev_ckpt_ind,
                     )
+
+                    if num_checkpoints - 4 <= prev_ckpt_ind:
+                        break
+
                     print("eval deone!!!")
                 print("eval complete!!!")
 

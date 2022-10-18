@@ -1,11 +1,11 @@
 #!/bin/bash
 #SBATCH --job-name=onav_il
-#SBATCH --gres gpu:8
+#SBATCH --gres gpu:1
 #SBATCH --nodes 1
 #SBATCH --cpus-per-task 6
-#SBATCH --ntasks-per-node 8
+#SBATCH --ntasks-per-node 1
 #SBATCH --signal=USR1@1000
-#SBATCH --partition=long
+#SBATCH --partition=short
 #SBATCH --constraint=a40
 #SBATCH --exclude=nestor
 #SBATCH --output=slurm_logs/ddpil-%j.out
@@ -38,10 +38,13 @@ TENSORBOARD_DIR $TENSORBOARD_DIR \
 CHECKPOINT_FOLDER $CHECKPOINT_DIR \
 CHECKPOINT_INTERVAL 250 \
 NUM_UPDATES 20000 \
-NUM_PROCESSES 20 \
+NUM_PROCESSES 8 \
 IL.BehaviorCloning.num_steps 32 \
 IL.BehaviorCloning.num_mini_batch 2 \
-IL.BehaviorCloning.entropy_coef 0.05 \
+IL.BehaviorCloning.encoder_lr 1e-3 \
+IL.BehaviorCloning.entropy_coef 0.03 \
 TASK_CONFIG.TASK.INFLECTION_WEIGHT_SENSOR.INFLECTION_COEF $INFLECTION_COEF \
 TASK_CONFIG.DATASET.SPLIT "train" \
 TASK_CONFIG.DATASET.DATA_PATH "$DATA_PATH/{split}/{split}.json.gz" \
+MODEL.RGB_ENCODER.backbone "resnet50" \
+MODEL.RGB_ENCODER.pretrained_encoder "data/visual_encoders/omnidata_DINO_02.pth" \

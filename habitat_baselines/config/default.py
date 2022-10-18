@@ -60,12 +60,14 @@ _C.EVAL = CN()
 _C.EVAL.SPLIT = "val"
 _C.EVAL.USE_CKPT_CONFIG = True
 _C.EVAL.ENSEMBLE = False
+_C.EVAL.EVAL_FREQ = 1
+_C.EVAL.FIRST_EVAL_INDEX = 0
 # -----------------------------------------------------------------------------
 # REINFORCEMENT LEARNING (RL) ENVIRONMENT CONFIG
 # -----------------------------------------------------------------------------
 _C.RL = CN()
 _C.RL.REWARD_MEASURE = "distance_to_goal"
-_C.RL.SUCCESS_MEASURE = "spl"
+_C.RL.SUCCESS_MEASURE = "success"
 _C.RL.SUCCESS_REWARD = 2.5
 _C.RL.SLACK_REWARD = -0.01
 _C.RL.COVERAGE_REWARD = 0.25

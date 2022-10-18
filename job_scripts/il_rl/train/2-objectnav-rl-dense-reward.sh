@@ -1,9 +1,9 @@
 #!/bin/bash
 #SBATCH --job-name=onav_rl
-#SBATCH --gres gpu:4
+#SBATCH --gres gpu:2
 #SBATCH --nodes 1
 #SBATCH --cpus-per-task 6
-#SBATCH --ntasks-per-node 4
+#SBATCH --ntasks-per-node 2
 #SBATCH --signal=USR1@300
 #SBATCH --partition=short
 #SBATCH --constraint=a40
@@ -24,8 +24,8 @@ export MASTER_ADDR
 
 config="habitat_baselines/config/objectnav/rl/ddppo_rgb_ovrl_objectnav.yaml"
 
-TENSORBOARD_DIR="tb/objectnav_rl/ddppo_hm3d/rgb_ovrl_with_augs/dtg_reward/hm3d_v0_1_0/seed_1_debug_4_action/"
-CHECKPOINT_DIR="data/new_checkpoints/objectnav_rl/ddppo_hm3d/rgb_ovrl_with_augs/dtg_reward/hm3d_v0_1_0/seed_1_debug_4_action/"
+TENSORBOARD_DIR="tb/objectnav_rl/ddppo_hm3d/rgb_ovrl_with_augs/dtg_reward/hm3d_v0_1_0/seed_2_debug_4_action/"
+CHECKPOINT_DIR="data/new_checkpoints/objectnav_rl/ddppo_hm3d/rgb_ovrl_with_augs/dtg_reward/hm3d_v0_1_0/seed_2_debug_4_action/"
 DATA_PATH="data/datasets/objectnav/objectnav_hm3d/objectnav_hm3d_v1/"
 set -x
 
@@ -39,7 +39,6 @@ CHECKPOINT_FOLDER $CHECKPOINT_DIR \
 NUM_UPDATES 40000 \
 NUM_PROCESSES 16 \
 ENV_NAME "NavRLEnv" \
-RL.SLACK_REWARD 1e-1 \
 RL.DDPPO.distrib_backend "NCCL" \
 TASK_CONFIG.DATASET.SPLIT "train" \
 TASK_CONFIG.DATASET.DATA_PATH "$DATA_PATH/{split}/{split}.json.gz" \
