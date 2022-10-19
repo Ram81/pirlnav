@@ -119,7 +119,7 @@ def run_reference_replay(
                 total_reward += info["simple_reward"]
                 # is_in_range = find_closest_view_point(env, info["strict_success"]["reached_goal_within_1m"], info["strict_success"]["dtg"])
 
-                print(info["simple_reward"], info["distance_to_goal"], info["strict_success"]["reached_goal_within_1m"], info["strict_success"]["dtg"])
+                # print(info["simple_reward"], info["distance_to_goal"], info["strict_success"]["reached_goal_within_1m"], info["strict_success"]["dtg"])
 
                 if append_instruction:
                     frame = append_text_to_image(frame, "Find and go to {}".format(episode.object_category))
@@ -138,6 +138,7 @@ def run_reference_replay(
             if len(episode.reference_replay) <= 500 and episode.attempts == 1:
                 total_success += info["success"]
                 spl += info["spl"]
+            print(episode.scene_id, info)
 
             episode_meta.append({
                 "scene_id": episode.scene_id,

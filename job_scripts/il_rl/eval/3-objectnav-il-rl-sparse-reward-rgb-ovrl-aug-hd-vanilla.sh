@@ -5,7 +5,7 @@
 #SBATCH --cpus-per-task 6
 #SBATCH --ntasks-per-node 1
 #SBATCH --signal=USR1@300
-#SBATCH --partition=short
+#SBATCH --partition=long
 #SBATCH --constraint=a40
 #SBATCH --exclude=spd-13
 #SBATCH --output=slurm_logs/eval/ddp-il-rl-%j.out
@@ -25,9 +25,9 @@ export MASTER_ADDR
 config="habitat_baselines/config/objectnav/il_rl/ddppo_rgb_ovrl_ft_objectnav.yaml"
 
 DATA_PATH="data/datasets/objectnav/objectnav_hm3d/objectnav_hm3d_v1"
-TENSORBOARD_DIR="tb/objectnav_il_rl_ft/ddppo_hm3d_pt_77k/rgb_ovrl_with_augs/sparse_reward_128gpu_ckpt_114_vanilla/hm3d_v0_1_0/seed_1/hm3d_v0_1_0_evals/ckpt_58_78_val/"
-EVAL_CKPT_PATH_DIR="data/new_checkpoints/objectnav_il_rl_ft/ddppo_hm3d_pt_77k/rgb_ovrl_with_augs/sparse_reward_128gpu_ckpt_114_vanilla/hm3d_v0_1_0/seed_1/"
-PRETRAINED_WEIGHTS="data/new_checkpoints/objectnav_il/objectnav_hm3d/objectnav_hm3d_77k/rgb_ovrl/seed_2/ckpt.110.pth"
+TENSORBOARD_DIR="tb/objectnav_il_rl_ft/ddppo_hm3d_pt_20k/rgb_ovrl_with_augs/sparse_reward_ckpt_38_vanilla/hm3d_v0_1_0/seed_1/hm3d_v0_1_0_evals/ckpt_20_78_val/"
+EVAL_CKPT_PATH_DIR="data/new_checkpoints/objectnav_il_rl_ft/ddppo_hm3d_pt_20k/rgb_ovrl_with_augs/sparse_reward_ckpt_38_vanilla/hm3d_v0_1_0/seed_1/"
+PRETRAINED_WEIGHTS="data/new_checkpoints/objectnav_il/objectnav_hm3d/objectnav_hm3d_20k/rgb_ovrl/seed_1/ckpt.38.pth"
 
 set -x
 
@@ -42,7 +42,7 @@ EVAL.SPLIT "val" \
 EVAL.USE_CKPT_CONFIG False \
 EVAL.meta_file "$TENSORBOARD_DIR/evaluation_meta.json" \
 EVAL.EVAL_FREQ 4 \
-EVAL.FIRST_EVAL_INDEX 58 \
+EVAL.FIRST_EVAL_INDEX 20 \
 EVAL_CKPT_PATH_DIR $EVAL_CKPT_PATH_DIR \
 RL.DDPPO.pretrained_weights $PRETRAINED_WEIGHTS \
 TASK_CONFIG.TASK.SENSORS "['OBJECTGOAL_SENSOR', 'COMPASS_SENSOR', 'GPS_SENSOR']" \

@@ -114,7 +114,7 @@ class PPOTrainer(BaseRLTrainer):
             logger.info("Loading checkpoint missing keys: {}".format(missing_keys))
 
         logger.info("Freeze encoder")
-        if hasattr(self.config.RL, "Finetune"):
+        if hasattr(self.config.RL, "Finetune") and self.config.RL.Finetune.finetune:
             logger.info("Start Freeze encoder")
             self.warm_up_critic = True
             if self.config.RL.Finetune.freeze_encoders:
@@ -895,6 +895,7 @@ class PPOTrainer(BaseRLTrainer):
 
         for k, v in aggregated_stats.items():
             logger.info(f"Average episode {k}: {v:.4f}")
+        logger.info("Checkpoint path: {}".format(checkpoint_path))
 
         step_id = checkpoint_index
         if "extra_state" in ckpt_dict and "step" in ckpt_dict["extra_state"]:
@@ -1216,6 +1217,7 @@ class PPOTrainer(BaseRLTrainer):
 
         for k, v in aggregated_stats.items():
             logger.info(f"Average episode {k}: {v:.4f}")
+        logger.info("Checkpoint path: {}".format(checkpoint_path))
 
         step_id = checkpoint_index
         if "extra_state" in policy_a_ckpt_dict and "step" in policy_a_ckpt_dict["extra_state"]:

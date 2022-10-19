@@ -34,7 +34,7 @@ def merge_episodes(input_path_1, output_path):
         # "../objectnav_sem_exp/data/datasets/objectnav/objectnav_hm3d/objectnav_hm3d_fm_v3/train/content/",
         # "../objectnav_sem_exp/data/datasets/objectnav/objectnav_hm3d/objectnav_hm3d_fm_v2/train/content/",
         # "../objectnav_sem_exp/data/datasets/objectnav/objectnav_hm3d/objectnav_hm3d_fm_v1/train/content/",
-        "../objectnav_sem_exp/data/datasets/objectnav/objectnav_hm3d/objectnav_hm3d_fm_v4/train/content/",
+        "data/datasets/objectnav/objectnav_hm3d/objectnav_hm3d_fe_150k_balanced/train_50k/content/",
     ]
 
     count = 0
