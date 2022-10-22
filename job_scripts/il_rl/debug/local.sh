@@ -1,27 +1,4 @@
 #!/bin/bash
-#SBATCH --job-name=onav_ilrl
-#SBATCH --gres gpu:1
-#SBATCH --nodes 1
-#SBATCH --cpus-per-task 6
-#SBATCH --ntasks-per-node 1
-#SBATCH --signal=USR1@300
-#SBATCH --partition=long
-#SBATCH --constraint=a40
-#SBATCH --exclude=robby
-#SBATCH --output=slurm_logs/ddp-il-rl-%j.out
-#SBATCH --error=slurm_logs/ddp-il-rl-%j.err
-#SBATCH --requeue
-
-source /srv/flash1/rramrakhya6/miniconda3/etc/profile.d/conda.sh
-conda deactivate
-conda activate il-rl
-
-export GLOG_minloglevel=2
-export MAGNUM_LOG=quiet
-
-MASTER_ADDR=$(srun --ntasks=1 hostname 2>&1 | tail -n1)
-export MASTER_ADDR
-
 config="habitat_baselines/config/objectnav/il_rl/ddppo_rgb_ovrl_ft_objectnav.yaml"
 
 DATA_PATH="data/datasets/objectnav/objectnav_hm3d/objectnav_hm3d_v1"
@@ -32,7 +9,7 @@ PRETRAINED_WEIGHTS="data/new_checkpoints/objectnav_il/objectnav_hm3d/objectnav_h
 set -x
 
 echo "In ObjectNav IL+RL DDP"
-srun python -u -m habitat_baselines.run \
+python -m habitat_baselines.run \
 --exp-config $config \
 --run-type eval \
 NUM_PROCESSES 20 \
@@ -48,3 +25,4 @@ TASK_CONFIG.TASK.MEASUREMENTS "['DISTANCE_TO_GOAL', 'SUCCESS', 'SPL', 'SOFT_SPL'
 TASK_CONFIG.DATASET.TYPE "ObjectNav-v1" \
 TASK_CONFIG.DATASET.DATA_PATH "$DATA_PATH/{split}/{split}.json.gz" \
 
+# 404148 - uuid

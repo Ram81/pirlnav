@@ -7,6 +7,7 @@ import glob
 import numpy as np
 
 from PIL import Image
+from scripts.utils.utils import load_json_dataset, write_json
 from tqdm import tqdm
 
 config = habitat.get_config("configs/tasks/objectnav_mp3d_il.yaml")
@@ -40,15 +41,26 @@ def iterate_scenes(cfg, input_path, output_path):
     files = glob.glob(os.path.join(input_path, "*json.gz"))
     invalid_count_map = defaultdict(int)
     total_episodes = defaultdict(int)
+
+    failed_so_far = load_json_dataset(os.path.join(input_path, "done_so_far.json"))
+
     for path in files:
+        if path in failed_so_far:
+            continue
         cfg.defrost()
         cfg.DATASET.DATA_PATH = path
         cfg.freeze()
         print("Working on scene: {}".format(path))
 
-        num_episodes, invalid_episodes = validate_in_sim(cfg, output_path, path.split("/")[-1])
-        invalid_count_map[path] = invalid_episodes
-        total_episodes[path] = num_episodes
+        try:
+            num_episodes, invalid_episodes = validate_in_sim(cfg, output_path, path.split("/")[-1])
+            invalid_count_map[path] = invalid_episodes
+            total_episodes[path] = num_episodes
+        except Exception as e:
+            print(path, e)
+            failed_so_far.append(path)
+            write_json(failed_so_far, os.path.join(input_path, "done_so_far.json"))
+    
     print("invalid episodes: {}".format(invalid_count_map))
     print("all episodes: {}".format(total_episodes))
 

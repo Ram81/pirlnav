@@ -250,6 +250,12 @@ _C.TASK.EXPLORATION_METRICS = CN()
 _C.TASK.EXPLORATION_METRICS.TYPE = "ExplorationMetrics"
 
 # -----------------------------------------------------------------------------
+# Behavior Metrics MEASUREMENT
+# -----------------------------------------------------------------------------
+_C.TASK.BEHAVIOR_METRICS = CN()
+_C.TASK.BEHAVIOR_METRICS.TYPE = "BehaviorMetrics"
+
+# -----------------------------------------------------------------------------
 # COLLISIONS MEASUREMENT
 # -----------------------------------------------------------------------------
 _C.TASK.COLLISIONS = CN()

@@ -134,6 +134,7 @@ def run_reference_replay(
             if save_videos:
                 make_videos([observation_list], output_prefix, ep_id)
             print("Total reward: {}, Success: {}, Steps: {}, Attempts: {}".format(total_reward, info["success"], len(episode.reference_replay), episode.attempts))
+            del info["top_down_map"]
 
             if len(episode.reference_replay) <= 500 and episode.attempts == 1:
                 total_success += info["success"]
@@ -189,7 +190,7 @@ def main():
     cfg.DATASET.DATA_PATH = args.path
     cfg.DATASET.MAX_EPISODE_STEPS = args.max_steps
     cfg.ENVIRONMENT.MAX_EPISODE_STEPS = args.max_steps
-    cfg.TASK.MEASUREMENTS = ["DISTANCE_TO_GOAL", "SUCCESS", "SPL", "SOFT_SPL", "TRAIN_SUCCESS",  "STRICT_SUCCESS", "ANGLE_TO_GOAL", "ANGLE_SUCCESS", "SIMPLE_REWARD"] #, "TOP_DOWN_MAP"]
+    cfg.TASK.MEASUREMENTS = ["DISTANCE_TO_GOAL", "SUCCESS", "SPL", "SOFT_SPL", "TRAIN_SUCCESS",  "STRICT_SUCCESS", "ANGLE_TO_GOAL", "ANGLE_SUCCESS", "SIMPLE_REWARD", "TOP_DOWN_MAP", "BEHAVIOR_METRICS"]
     cfg.TASK.TOP_DOWN_MAP.DRAW_VIEW_POINTS_WITHIN_1M = False
     cfg.TASK.SIMPLE_REWARD.USE_STRICT_SUCCESS_REWARD = False
     cfg.TASK.SIMPLE_REWARD.USE_STRICT_SUCCESS_REWARD_V2 = False
