@@ -44,6 +44,7 @@ IL:
   distrib_backend: NCCL
   BehaviorCloning:
     lr: 0.001
+    encoder_lr: 0.001
     eps: 1.0e-5
     clip_param: 0.2
     num_mini_batch: 2
