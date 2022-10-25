@@ -25,8 +25,8 @@ export MASTER_ADDR
 config="habitat_baselines/config/objectnav/il/il_rgb_ddp_objectnav.yaml"
 
 DATA_PATH="data/datasets/objectnav/objectnav_hm3d/objectnav_hm3d_v1"
-TENSORBOARD_DIR="tb/objectnav_il/objectnav_hm3d/objectnav_hm3d_77k/rgb_ovrl/seed_2_128gpus/hm3d_v0_1_0_evals/ckpt_114_val_behavior_metrics/"
-EVAL_CKPT_PATH_DIR="data/new_checkpoints/objectnav_il/objectnav_hm3d/objectnav_hm3d_77k/rgb_ovrl/seed_2_128gpus/ckpt.114.pth"
+TENSORBOARD_DIR="tb/objectnav_il/objectnav_hm3d/objectnav_hm3d_77k/rgb_ovrl/seed_1/hm3d_v0_1_0_evals/ckpt_best_val_behavior_metrics/"
+EVAL_CKPT_PATH_DIR="data/new_checkpoints/objectnav_il/objectnav_hm3d/objectnav_hm3d_77k/rgb_ovrl/seed_1/ObjectNav_omnidata_DINO_02_77k_with_augs.pth"
 set -x
 
 echo "In ObjectNav IL DDP"
@@ -39,6 +39,8 @@ TEST_EPISODE_COUNT -1 \
 EVAL.SPLIT "val" \
 EVAL.meta_file "$TENSORBOARD_DIR/evaluation_meta.json" \
 EVAL_CKPT_PATH_DIR $EVAL_CKPT_PATH_DIR \
+EVAL.EVAL_FREQ 4 \
+EVAL.FIRST_EVAL_INDEX 98 \
 TASK_CONFIG.TASK.SENSORS "['OBJECTGOAL_SENSOR', 'COMPASS_SENSOR', 'GPS_SENSOR']" \
 TASK_CONFIG.TASK.MEASUREMENTS "['DISTANCE_TO_GOAL', 'SUCCESS', 'SPL', 'SOFT_SPL', 'GOAL_OBJECT_VISIBLE', 'MIN_DISTANCE_TO_GOAL', 'TOP_DOWN_MAP', 'EXPLORATION_METRICS', 'BEHAVIOR_METRICS']" \
 TASK_CONFIG.DATASET.TYPE "ObjectNav-v1" \

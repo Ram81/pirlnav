@@ -27,7 +27,7 @@ config="habitat_baselines/config/objectnav/il_ddp_objectnav.yaml"
 DATA_PATH="data/datasets/objectnav/objectnav_hm3d/objectnav_hm3d_tiny/"
 TENSORBOARD_DIR="tb/objectnav_il/objectnav_hm3d/objectnav_hm3d_tiny/sem_seg_pred/seed_1/"
 CHECKPOINT_DIR="data/new_checkpoints/objectnav_il/objectnav_hm3d/objectnav_hm3d_tiny/sem_seg_pred/seed_1/"
-INFLECTION_COEF=3.1774161811846344
+INFLECTION_COEF=3.307944497885069
 set -x
 
 echo "In ObjectNav IL DDP"

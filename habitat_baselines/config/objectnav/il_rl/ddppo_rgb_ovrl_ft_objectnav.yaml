@@ -83,6 +83,10 @@ RL:
     finetune_full_agent: False
     unfreeze_encoders_after_warmup: False
 
+    vpt_finetuning: False
+    kl_coef: 0.2
+    zero_critic_weights: False
+
     policy_ft_lr: 1.5e-5
 
     start_actor_finetuning_at: 50

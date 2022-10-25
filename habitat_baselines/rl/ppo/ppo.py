@@ -34,6 +34,9 @@ class PPO(nn.Module):
         use_normalized_advantage: bool = True,
         finetune: bool = False,
         finetune_full_agent: bool = False,
+        vpt_finetuning: bool = False,
+        pretrained_policy: Policy = None,
+        kl_coef: float = 0.0,
     ) -> None:
 
         super().__init__()
@@ -49,6 +52,11 @@ class PPO(nn.Module):
 
         self.max_grad_norm = max_grad_norm
         self.use_clipped_value_loss = use_clipped_value_loss
+
+        # VPT style finetuning parameters
+        self.pretrained_policy = pretrained_policy
+        self.kl_coef = kl_coef
+        self.vpt_finetuning = vpt_finetuning
 
         if not finetune:
             self.optimizer = optim.Adam(
@@ -129,6 +137,9 @@ class PPO(nn.Module):
         action_loss_epoch = 0.0
         dist_entropy_epoch = 0.0
         avg_grad_norm = 0.0
+        aux_kl_constraint_epoch = 0.0
+
+
 
         for _e in range(self.ppo_epoch):
             profiling_wrapper.range_push("PPO.update epoch")
@@ -155,6 +166,7 @@ class PPO(nn.Module):
                     action_log_probs,
                     dist_entropy,
                     _,
+                    aux_loss_meta
                 ) = self.actor_critic.evaluate_actions(
                     obs_batch,
                     recurrent_hidden_states_batch,
@@ -191,11 +203,35 @@ class PPO(nn.Module):
                     value_loss = 0.5 * (return_batch - values).pow(2).mean()
 
                 self.optimizer.zero_grad()
+
+                aux_kl_constraint = 0.0
+                if self.vpt_finetuning:
+                    with torch.no_grad():
+                        (
+                            _,
+                            _,
+                            _,
+                            _,
+                            pretrained_policy_aux_loss_meta
+                        ) = self.pretrained_policy.evaluate_actions(
+                            obs_batch,
+                            recurrent_hidden_states_batch,
+                            prev_actions_batch,
+                            masks_batch,
+                            actions_batch,
+                        )
+
+                        aux_kl_constraint = torch.distributions.kl.kl_divergence(
+                            pretrained_policy_aux_loss_meta["action_distribution"],
+                            aux_loss_meta["action_distribution"]
+                        ).mean()
+
                 total_loss = (
                     value_loss * self.value_loss_coef
                     + action_loss
                     - dist_entropy * self.entropy_coef
-                )
+                    + aux_kl_constraint * self.kl_coef
+                )            
 
                 self.before_backward(total_loss)
                 total_loss.backward()
@@ -209,6 +245,7 @@ class PPO(nn.Module):
                 value_loss_epoch += value_loss.item()
                 action_loss_epoch += action_loss.item()
                 dist_entropy_epoch += dist_entropy.item()
+                aux_kl_constraint_epoch += aux_kl_constraint
 
             profiling_wrapper.range_pop()  # PPO.update epoch
 
@@ -218,8 +255,9 @@ class PPO(nn.Module):
         action_loss_epoch /= num_updates
         dist_entropy_epoch /= num_updates
         avg_grad_norm /= num_updates
+        aux_kl_constraint_epoch /= num_updates
 
-        return value_loss_epoch, action_loss_epoch, dist_entropy_epoch, avg_grad_norm
+        return value_loss_epoch, action_loss_epoch, dist_entropy_epoch, avg_grad_norm, aux_kl_constraint_epoch
 
     def before_backward(self, loss: Tensor) -> None:
         pass

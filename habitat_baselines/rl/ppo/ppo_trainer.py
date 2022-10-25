@@ -386,7 +386,7 @@ class PPOTrainer(BaseRLTrainer):
             current_episode_gae["max"][rollouts.masks[i] == 0] = -100.0
             current_episode_gae["min"][rollouts.masks[i] == 0] = 100.0
 
-        value_loss, action_loss, dist_entropy, avg_grad_norm = self.agent.update(rollouts)
+        value_loss, action_loss, dist_entropy, avg_grad_norm, aux_kl_constraint = self.agent.update(rollouts)
 
         rollouts.after_update()
 
@@ -396,6 +396,7 @@ class PPOTrainer(BaseRLTrainer):
             action_loss,
             dist_entropy,
             avg_grad_norm,
+            aux_kl_constraint,
         )
 
     @profiling_wrapper.RangeContext("train")
@@ -829,6 +830,7 @@ class PPOTrainer(BaseRLTrainer):
                         "episode_id": current_episodes[i].episode_id,
                         "metrics": episode_stats,
                         "object_category": current_episodes[i].object_category,
+                        "behavior_metrics": infos[i]["behavior_metrics"],
                     })
                     write_json(episode_meta, self.config.EVAL.meta_file)
                     # use scene_id + episode_id as unique id for storing stats
@@ -1217,7 +1219,6 @@ class PPOTrainer(BaseRLTrainer):
 
         for k, v in aggregated_stats.items():
             logger.info(f"Average episode {k}: {v:.4f}")
-        logger.info("Checkpoint path: {}".format(checkpoint_path))
 
         step_id = checkpoint_index
         if "extra_state" in policy_a_ckpt_dict and "step" in policy_a_ckpt_dict["extra_state"]:

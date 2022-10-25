@@ -117,6 +117,9 @@ class DDPPOTrainer(PPOTrainer):
 
         self.rl_finetuning = False
         self.finetune_full_agent = False
+        self.vpt_finetuning = False
+        self.kl_coef = 0.0
+        self.pretrained_policy = None
         if hasattr(self.config.RL, "Finetune") and self.config.RL.Finetune.finetune:
             logger.info("Start Freeze encoder")
             self.rl_finetuning = True
@@ -128,6 +131,29 @@ class DDPPOTrainer(PPOTrainer):
             self.critic_lr_decay_update = self.config.RL.Finetune.critic_lr_decay_update
             self.start_critic_warmup_at = self.config.RL.Finetune.start_critic_warmup_at
             self.finetune_full_agent =  self.config.RL.Finetune.finetune_full_agent
+
+        # TODO: Refactor VPT finetuning config
+        if hasattr(self.config.RL.Finetune, "vpt_finetuning") and self.config.RL.Finetune.vpt_finetuning:
+            self.pretrained_policy = policy.from_config(
+                self.config, observation_space, self.envs.action_spaces[0]
+            )
+            self.pretrained_policy.to(self.device)
+
+            missing_keys = self.pretrained_policy.load_state_dict(
+                {
+                    k.replace("model.", ""): v
+                    for k, v in pretrained_state["state_dict"].items()
+                }, strict=False
+            )
+
+            self.pretrained_policy.eval()
+
+            self.kl_coef = self.config.RL.Finetune.kl_coef
+            self.vpt_finetuning = self.config.RL.Finetune.vpt_finetuning
+
+            if self.config.RL.Finetune.zero_critic_weights:
+                logger.info("Initialize critic weights to zero")
+                self.actor_critic.critic.fc.weight.data.fill_(0.0)
 
         if self.config.RL.DDPPO.reset_critic:
             pass
@@ -145,6 +171,9 @@ class DDPPOTrainer(PPOTrainer):
             use_normalized_advantage=ppo_cfg.use_normalized_advantage,
             finetune=self.rl_finetuning,
             finetune_full_agent=self.finetune_full_agent,
+            vpt_finetuning=self.vpt_finetuning,
+            kl_coef=self.kl_coef,
+            pretrained_policy=self.pretrained_policy
         )
 
     @profiling_wrapper.RangeContext("train")
@@ -475,6 +504,7 @@ class DDPPOTrainer(PPOTrainer):
                     action_loss,
                     dist_entropy,
                     grad_norm,
+                    aux_kl_constraint_epoch,
                 ) = self._update_agent(ppo_cfg, rollouts, current_episode_gae, running_episode_stats)
                 pth_time += delta_pth_time
 
@@ -488,7 +518,7 @@ class DDPPOTrainer(PPOTrainer):
                     window_episode_stats[k].append(stats[i].clone())
 
                 stats = torch.tensor(
-                    [value_loss, action_loss, count_steps_delta, dist_entropy, grad_norm],
+                    [value_loss, action_loss, count_steps_delta, dist_entropy, grad_norm, aux_kl_constraint_epoch],
                     device=self.device,
                 )
                 distrib.all_reduce(stats)
@@ -500,6 +530,7 @@ class DDPPOTrainer(PPOTrainer):
                     losses = [
                         stats[0].item() / self.world_size,
                         stats[1].item() / self.world_size,
+                        
                     ]
                     deltas = {
                         k: (
@@ -536,7 +567,8 @@ class DDPPOTrainer(PPOTrainer):
                     writer.add_scalars("losses", losses, count_steps)
 
                     writer.add_scalar("entropy", stats[3].item() / self.world_size, count_steps)
-                    writer.add_scalar("grad_norm", stats[4].item() / self.world_size, count_steps)                    
+                    writer.add_scalar("grad_norm", stats[4].item() / self.world_size, count_steps)
+                    writer.add_scalar("kl_constraint", stats[5].item() / self.world_size, count_steps)
 
                     # log stats
                     if update > 0 and update % self.config.LOG_INTERVAL == 0:

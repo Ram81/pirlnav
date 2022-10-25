@@ -25,8 +25,8 @@ export MASTER_ADDR
 config="habitat_baselines/config/objectnav/il_rl/ddppo_rgb_ovrl_ft_objectnav.yaml"
 
 DATA_PATH="data/datasets/objectnav/objectnav_hm3d/objectnav_hm3d_v1"
-TENSORBOARD_DIR="tb/objectnav_il_rl_ft/ddppo_hm3d_pt_fe_70k/rgb_ovrl_with_augs/sparse_reward_ckpt_118/hm3d_v0_1_0/seed_1/hm3d_v0_1_0_evals/ckpt_66_val_behavior_metrics/"
-EVAL_CKPT_PATH_DIR="data/new_checkpoints/objectnav_il_rl_ft/ddppo_hm3d_pt_fe_70k/rgb_ovrl_with_augs/sparse_reward_ckpt_118/hm3d_v0_1_0/seed_1/ckpt.66.pth"
+TENSORBOARD_DIR="tb/objectnav_il_rl_ft/ddppo_hm3d_pt_fe_70k/rgb_ovrl_with_augs/sparse_reward_ckpt_34/hm3d_v0_1_0/seed_1/hm3d_v0_1_0_evals/ckpt_70_val_behavior_metrics_2/"
+EVAL_CKPT_PATH_DIR="data/new_checkpoints/objectnav_il_rl_ft/ddppo_hm3d_pt_fe_70k/rgb_ovrl_with_augs/sparse_reward_ckpt_34/hm3d_v0_1_0/seed_1/ckpt.70.pth"
 PRETRAINED_WEIGHTS="data/new_checkpoints/objectnav_il/objectnav_hm3d/objectnav_hm3d_fe_70k_balanced/rgb_ovrl/seed_1/ckpt.34.pth"
 
 set -x
