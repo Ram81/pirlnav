@@ -85,6 +85,7 @@ RL:
 
     vpt_finetuning: False
     kl_coef: 0.2
+    kl_decay_coef: 0.9995
     zero_critic_weights: False
 
     policy_ft_lr: 1.5e-5

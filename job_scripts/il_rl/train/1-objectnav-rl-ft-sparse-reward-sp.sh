@@ -1,9 +1,9 @@
 #!/bin/bash
 #SBATCH --job-name=onav_ilrl
-#SBATCH --gres gpu:1
+#SBATCH --gres gpu:4
 #SBATCH --nodes 1
 #SBATCH --cpus-per-task 6
-#SBATCH --ntasks-per-node 1
+#SBATCH --ntasks-per-node 4
 #SBATCH --signal=USR1@300
 #SBATCH --partition=short
 #SBATCH --constraint=a40
@@ -46,6 +46,7 @@ RL.Finetune.start_critic_warmup_at 0 \
 RL.Finetune.critic_lr_decay_update 0 \
 RL.Finetune.policy_ft_lr 2.5e-4 \
 RL.PPO.use_linear_lr_decay False \
+RL.Finetune.finetune False \
 TASK_CONFIG.DATASET.SPLIT "train" \
 TASK_CONFIG.DATASET.DATA_PATH "$DATA_PATH/{split}/{split}.json.gz" \
 TASK_CONFIG.TASK.SUCCESS.SUCCESS_DISTANCE 0.1 \

@@ -88,6 +88,19 @@ def linear_decay(epoch: int, total_num_updates: int) -> float:
     return 1 - (epoch / float(total_num_updates))
 
 
+def exponential_decay(coef: float, decay_coef: float) -> float:
+    r"""Decays value exponentially
+
+    Args:
+        epoch: current epoch number
+        total_num_updates: total number of
+
+    Returns:
+        multiplicative factor that decreases param value linearly
+    """
+    return coef * decay_coef
+
+
 def linear_warmup(epoch: int, start_update: int, max_updates: int, start_lr: int, end_lr: int) -> float:
     r"""Returns a multiplicative factor for linear value decay
 

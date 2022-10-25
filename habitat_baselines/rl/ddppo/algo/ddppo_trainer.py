@@ -7,6 +7,7 @@
 import contextlib
 import os
 import random
+from re import L
 import time
 import wandb
 from collections import defaultdict, deque
@@ -41,7 +42,7 @@ from habitat_baselines.rl.ddppo.algo.ddp_utils import (
 )
 from habitat_baselines.rl.ddppo.algo.ddppo import DDPPO
 from habitat_baselines.rl.ppo.ppo_trainer import PPOTrainer
-from habitat_baselines.utils.common import batch_obs, linear_decay, linear_warmup, critic_linear_decay
+from habitat_baselines.utils.common import batch_obs, linear_decay, linear_warmup, critic_linear_decay, exponential_decay
 from habitat_baselines.utils.env_utils import construct_envs
 from habitat_baselines.il.env_based.policy.rednet import load_rednet
 
@@ -120,6 +121,7 @@ class DDPPOTrainer(PPOTrainer):
         self.vpt_finetuning = False
         self.kl_coef = 0.0
         self.pretrained_policy = None
+        self.kl_decay_coef = 0.0
         if hasattr(self.config.RL, "Finetune") and self.config.RL.Finetune.finetune:
             logger.info("Start Freeze encoder")
             self.rl_finetuning = True
@@ -134,6 +136,8 @@ class DDPPOTrainer(PPOTrainer):
 
         # TODO: Refactor VPT finetuning config
         if hasattr(self.config.RL.Finetune, "vpt_finetuning") and self.config.RL.Finetune.vpt_finetuning:
+            self.actor_critic.freeze_visual_encoders()
+            logger.info("Freeze actor weights")
             self.pretrained_policy = policy.from_config(
                 self.config, observation_space, self.envs.action_spaces[0]
             )
@@ -146,9 +150,13 @@ class DDPPOTrainer(PPOTrainer):
                 }, strict=False
             )
 
+            for param in self.pretrained_policy.parameters():
+                param.requires_grad = False
+
             self.pretrained_policy.eval()
 
             self.kl_coef = self.config.RL.Finetune.kl_coef
+            self.kl_decay_coef = self.config.RL.Finetune.kl_decay_coef
             self.vpt_finetuning = self.config.RL.Finetune.vpt_finetuning
 
             if self.config.RL.Finetune.zero_critic_weights:
@@ -407,6 +415,9 @@ class DDPPOTrainer(PPOTrainer):
                     self.agent.clip_param = ppo_cfg.clip_param * linear_decay(
                         update, self.config.NUM_UPDATES
                     )
+                
+                if self.kl_decay_coef > 0:
+                    self.agent.kl_coef = exponential_decay(self.agent.kl_coef, self.kl_decay_coef)
 
                 if EXIT.is_set():
                     profiling_wrapper.range_pop()  # train update
@@ -552,6 +563,7 @@ class DDPPOTrainer(PPOTrainer):
                         count_steps,
                     )
                     writer.add_scalars("learning_rate", lrs, count_steps)
+                    writer.add_scalar("kl_coef", self.agent.kl_coef, count_steps)
 
                     # Check to see if there are any metrics
                     # that haven't been logged yet

@@ -225,6 +225,21 @@ _C.IL.BehaviorCloning.sync_frac = 0.6
 
 _C.IL.BehaviorCloning.pretrained = False
 _C.IL.BehaviorCloning.pretrained_weights = "None"
+
+_C.RL.Finetune = CN()
+_C.RL.Finetune.finetune = True
+_C.RL.Finetune.freeze_encoders = True
+_C.RL.Finetune.finetune_full_agent = False
+_C.RL.Finetune.unfreeze_encoders_after_warmup = False
+_C.RL.Finetune.vpt_finetuning = False
+_C.RL.Finetune.kl_coef = 0.2
+_C.RL.Finetune.kl_decay_coef = 0.9995
+_C.RL.Finetune.zero_critic_weights = False
+_C.RL.Finetune.policy_ft_lr = 1.5e-5
+_C.RL.Finetune.start_actor_finetuning_at = 50
+_C.RL.Finetune.actor_lr_warmup_update = 100
+_C.RL.Finetune.start_critic_warmup_at = 50
+_C.RL.Finetune.critic_lr_decay_update = 100
   
 
 def get_config(
