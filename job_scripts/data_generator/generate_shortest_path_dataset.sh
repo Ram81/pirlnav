@@ -6,7 +6,7 @@
 #SBATCH --ntasks-per-node 1
 #SBATCH --signal=USR1@1000
 #SBATCH --partition=short
-#SBATCH --constraint=a40
+#SBATCH --constraint="a40|rtx_6000"
 #SBATCH --output=slurm_logs/data/gen-%j.out
 #SBATCH --error=slurm_logs/data/gen-%j.err
 #SBATCH --requeue
@@ -31,9 +31,36 @@ CONTENT_SCENES="1UnKg1rAb8A,ACZZiU6BXLz,fxbzYAGkrtm,GTV2Y73Sn5t,j6fHrce9pHR,Ntnv
 # CONTENT_SCENES="6imZUJGRUq4,E1NrAhMoqvB,gmuS7Wgsbrx,iigzG1rtanx,NEVASPhcrxR,QN2dRqwd84J,v7DzfFFEpsD,xAHnY3QzFUN,Z2DQddYp1fn" # split 8
 # CONTENT_SCENES="77mMEyxhs44,FnDDfrBZPhh,gQ3xxshDiCz,iKFn6fzyRqs,NGyoyh91xXJ,QVAA6zecMHu,vDfkYo5VqEQ,xgLmjqzoAzF" # split 9
 
-NUM_EPISODES=1000
-INPUT_PATH="data/datasets/objectnav/objectnav_hm3d/objectnav_hm3d_v1/s_path_exclude/content/"
-OUTPUT_PATH="data/datasets/objectnav/objectnav_hm3d/objectnav_hm3d_s_path/train_v2/content/"
+
+# Gibson dataset
+# job id : 462816
+# CONTENT_SCENES="Klickitat,Marstons,Hanson,Lakeville,Merom,Lindenwood,Pinesdale,Forkland,Wainscott,Newfields"
+# job id : 462817
+# CONTENT_SCENES="Ranchester,Hiteman,Leonardo,Onaga,Pomaria,Stockman,Tolstoy,Cosmos,Benevolence,Woodbine"
+# job id : 462818
+# CONTENT_SCENES="Beechwood,Shelbyville,Mifflinburg,Coffeen,Allensville,Goodyear,Winooski,Annona,Maida,Bohemia"
+# job id : 462819
+# CONTENT_SCENES="Thrall,Sunshine,Pamelia,Goodfield,Stilwell,Duarte,Airport,Martinville,Hillsdale,Adairsville"
+# job id : 462820
+# CONTENT_SCENES="Globe,Readsboro,Micanopy,Marland,Brown,Ancor,Arkansaw,Tilghmanton,Sugarville,Irvine"
+# job id : 462821
+# CONTENT_SCENES="Soldier,Churchton,Sussex,Bautista,Timberon,Emmaus,Newcomb,Sweatman,Goffs,Hainesburg"
+# job id : 462822
+# CONTENT_SCENES="Neibert,Athens,Bonesteel,Lynchburg,Nuevo,Browntown,Castor,Maugansville,Eagan,Cottonport"
+# job id : 462823
+# CONTENT_SCENES="Kemblesville,Neshkoro,Tyler,Oyens,Highspire,Clairton,Frankfort,Hildebran,Goodwine,Bonnie"
+# job id : 462875
+# CONTENT_SCENES="Touhy,Rosser,Potterville,Springerville,Wilseyville,Broseley,Tokeland,Albertville,Chilhowie"
+# job id : 462876
+CONTENT_SCENES="Hominy,Shelbiana,Silas,Parole,Anaheim,Musicks,Rogue,Victorville,Byers,Willow,Andover"
+
+
+NUM_EPISODES=400
+# INPUT_PATH="data/datasets/objectnav/objectnav_hm3d/objectnav_hm3d_v1/s_path_exclude/content/"
+# OUTPUT_PATH="data/datasets/objectnav/objectnav_hm3d/objectnav_hm3d_s_path/train_v2/content/"
+
+INPUT_PATH="data/datasets/objectnav/objectnav_gibson/objectnav_gibson_hd_sampled/train/content/"
+OUTPUT_PATH="data/datasets/objectnav/objectnav_gibson/objectnav_gibson_hd_40k/train/content/"
 
 set -x
 

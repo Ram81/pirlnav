@@ -87,7 +87,6 @@ def run_reference_replay(
 
         num_episodes = min(num_episodes, len(env.episodes))
         episode_meta = []
-        dists = []
         print("Replaying {}/{} episodes".format(num_episodes, len(env.episodes)))
         for ep_id in range(num_episodes):
             observation_list = []
@@ -139,7 +138,6 @@ def run_reference_replay(
             if len(episode.reference_replay) <= 500 and episode.attempts == 1:
                 total_success += info["success"]
                 spl += info["spl"]
-            print(episode.scene_id, info)
 
             episode_meta.append({
                 "scene_id": episode.scene_id,
@@ -149,7 +147,6 @@ def run_reference_replay(
                 "attempts": episode.attempts,
                 "object_category": episode.object_category
             })
-        print("Avg distances: {}".format(sum(dists) / len(dists)))
 
         print("SPL: {}, {}, {}".format(spl/num_episodes, spl, num_episodes))
         print("Success: {}, {}, {}".format(total_success/num_episodes, total_success, num_episodes))

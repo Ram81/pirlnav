@@ -12,9 +12,10 @@ def list_files(path):
     return glob.glob(path)
 
 
-def sample_dataset(input_path, output_path, episodes_per_scene=100, clear_replay=False):
+def sample_dataset(input_path, output_path, episodes_per_scene=100, clear_replay=False, change_scene_path=False):
     files = list_files(os.path.join(input_path, "*json.gz"))
 
+    scene_paths = {}
     for f in tqdm(files):
         dataset = load_dataset(f)
         sampled_episodes = random.sample(dataset["episodes"], min(len(dataset["episodes"]), episodes_per_scene))
@@ -29,6 +30,11 @@ def sample_dataset(input_path, output_path, episodes_per_scene=100, clear_replay
                     del episode["scene_dataset"]
                     del episode["scene_state"]
                     del episode["is_thda"]
+        
+        if change_scene_path:
+            for episode in sampled_episodes:
+                episode["scene_id"] = "gibson_semantic/{}".format(episode["scene_id"].split("/")[-1])
+                scene_paths[episode["scene_id"]] = 1
 
         dataset["episodes"] = sampled_episodes
 
@@ -36,6 +42,7 @@ def sample_dataset(input_path, output_path, episodes_per_scene=100, clear_replay
         scene_output_path = os.path.join(output_path, scene_id.replace(".gz", ""))
         write_json(dataset, scene_output_path)
         write_gzip(scene_output_path, scene_output_path)
+    print("Scene paths: {}".format(scene_paths.keys()))
 
 
 def sample_filtered_dataset(input_path, output_path, episodes_per_scene=100, clear_replay=False, sample_dataset_path=None):
@@ -129,9 +136,12 @@ if __name__ == "__main__":
     parser.add_argument(
         "--filter", dest="filter", action="store_true"
     )
+    parser.add_argument(
+        "--change-scene-path", dest="change_scene_path", action="store_true"
+    )
     args = parser.parse_args()
 
     if args.filter:
         sample_filtered_dataset(args.input_path, args.output_path, args.episodes_per_scene, args.clear_replay)
     else:
-        sample_dataset(args.input_path, args.output_path, args.episodes_per_scene, args.clear_replay)
+        sample_dataset(args.input_path, args.output_path, args.episodes_per_scene, args.clear_replay, args.change_scene_path)

@@ -134,7 +134,7 @@ def generate_trajectories(cfg, episode_path, output_path="", num_episodes=100):
             if success:
                 dataset["episodes"].append(ep_data)
         
-        print("Total episodes: {}".format(total_episodes))
+        print("Total episodes DONE: {}".format(total_episodes))
 
         print("\n\nEpisode success: {}".format(total_success / total_episodes))
         print("SPL: {}, {}, {}".format(spl/total_episodes, spl, total_episodes))

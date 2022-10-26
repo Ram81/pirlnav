@@ -74,6 +74,27 @@ def copy_goals(input_path, output_path):
         write_gzip(scene_output_path, scene_output_path)
 
 
+def copy_category_mapping(input_path, output_path):
+    input_dataset = load_dataset(input_path)
+    files = list_files(os.path.join(output_path, "*json.gz"))
+
+    for scene_output_path in tqdm(files):
+        if not os.path.exists(scene_output_path):
+            continue
+        output_dataset = load_dataset(scene_output_path)
+
+        output_dataset["category_to_task_category_id"] = input_dataset["category_to_task_category_id"]
+        output_dataset["category_to_mp3d_category_id"] = input_dataset["category_to_mp3d_category_id"]
+        output_dataset["gibson_to_mp3d_category_map"] = input_dataset["gibson_to_mp3d_category_map"]
+        output_dataset["category_to_category_id"] = input_dataset["category_to_category_id"]
+        print("Goals copy episodes: {}".format(len(output_dataset["episodes"])))
+
+        scene_output_path = scene_output_path.replace(".gz", "")
+
+        write_json(output_dataset, scene_output_path)
+        write_gzip(scene_output_path, scene_output_path)
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -88,11 +109,16 @@ if __name__ == "__main__":
     parser.add_argument(
         "--copy-goals", dest="copy_goals", action="store_true"
     )
+    parser.add_argument(
+        "--copy-cat-map", dest="copy_cat_map", action="store_true"
+    )
     args = parser.parse_args()
 
     if args.copy:
         copy_dataset(args.input_path, args.output_path)
     elif args.copy_goals:
         copy_goals(args.input_path, args.output_path)
+    elif args.copy_cat_map:
+        copy_category_mapping(args.input_path, args.output_path)
     else:
         sample_dataset(args.input_path, args.output_path)
