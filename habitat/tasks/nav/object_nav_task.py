@@ -695,7 +695,7 @@ class BehaviorMetrics(Measure):
                     current_room = region_name
                 i += 1
 
-        self._metric = self.room_revisitation_map
+        self._metric = {}
         self.previous_room = current_room
     
     def aabb_contains(self, position, aabb):

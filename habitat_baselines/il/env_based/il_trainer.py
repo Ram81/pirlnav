@@ -161,7 +161,7 @@ class ILEnvTrainer(BaseRLTrainer):
         """
         return torch.load(checkpoint_path, *args, **kwargs)
 
-    METRICS_BLACKLIST = {"top_down_map", "collisions.is_collision", "room_visitation_map"}
+    METRICS_BLACKLIST = {"top_down_map", "collisions.is_collision", "behavior_metrics"}
 
     @classmethod
     def _extract_scalars_from_info(
@@ -726,6 +726,7 @@ class ILEnvTrainer(BaseRLTrainer):
                         "episode_id": current_episodes[i].episode_id,
                         "metrics": episode_stats,
                         "object_category": current_episodes[i].object_category,
+                        "behavior_metrics": infos[i].get("behavior_metrics"),
                     })
                     write_json(episode_meta, self.config.EVAL.meta_file)
 
@@ -744,7 +745,7 @@ class ILEnvTrainer(BaseRLTrainer):
                             images=rgb_frames[i],
                             episode_id=current_episodes[i].episode_id,
                             checkpoint_idx=checkpoint_index,
-                            metrics=self._extract_scalars_from_info(infos[i]),
+                            metrics={"success": episode_stats["success"], "spl": episode_stats["spl"]},
                             tb_writer=writer,
                         )
 
