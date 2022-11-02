@@ -133,6 +133,12 @@ class DDPPOTrainer(PPOTrainer):
             self.critic_lr_decay_update = self.config.RL.Finetune.critic_lr_decay_update
             self.start_critic_warmup_at = self.config.RL.Finetune.start_critic_warmup_at
             self.finetune_full_agent =  self.config.RL.Finetune.finetune_full_agent
+        
+        # if hasattr(self.config.RL, "Finetune"):
+        #     logger.info("Start Freeze encoder")
+        #     if self.config.RL.Finetune.freeze_encoders:
+        #         logger.info("Freeze encoders........")
+        #         self.actor_critic.freeze_visual_encoders()
 
         # TODO: Refactor VPT finetuning config
         if hasattr(self.config.RL.Finetune, "vpt_finetuning") and self.config.RL.Finetune.vpt_finetuning:

@@ -514,6 +514,26 @@ class ILEnvDDPTrainer(ILEnvTrainer):
                         )
                         count_checkpoints += 1
 
+                        if self.world_rank == 0:
+                            requeue_stats = dict(
+                                env_time=env_time,
+                                pth_time=pth_time,
+                                count_steps=count_steps,
+                                count_checkpoints=count_checkpoints,
+                                start_update=update,
+                                prev_time=(time.time() - t_start) + prev_time,
+                            )
+                            save_interrupted_state(
+                                dict(
+                                    state_dict=self.agent.state_dict(),
+                                    optim_state=self.agent.optimizer.state_dict(),
+                                    lr_sched_state=lr_scheduler.state_dict(),
+                                    config=self.config,
+                                    requeue_stats=requeue_stats,
+                                ),
+                                interrupted_state_file
+                            )    
+
 
                 profiling_wrapper.range_pop()  # train update
 

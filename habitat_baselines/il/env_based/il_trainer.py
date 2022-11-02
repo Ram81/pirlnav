@@ -635,6 +635,8 @@ class ILEnvTrainer(BaseRLTrainer):
 
         pbar = tqdm.tqdm(total=number_of_eval_episodes)
         episode_meta = []
+        possible_actions = self.config.TASK_CONFIG.TASK.POSSIBLE_ACTIONS
+        episode_actions = [[possible_actions[0]] for i in range(self.config.NUM_PROCESSES)]
         while (
             len(stats_episodes) < number_of_eval_episodes
             and self.envs.num_envs > 0
@@ -667,7 +669,8 @@ class ILEnvTrainer(BaseRLTrainer):
                     not_done_masks,
                     deterministic=config.MODEL.deterministic_eval,
                 )
-
+                for i, a in enumerate(actions.to(device="cpu")):
+                    episode_actions[i].append(possible_actions[a.item()])
                 # actions = torch.argmax(logits, dim=1)
                 prev_actions.copy_(actions)  # type: ignore
 
@@ -750,6 +753,7 @@ class ILEnvTrainer(BaseRLTrainer):
                         )
 
                         rgb_frames[i] = []
+                    episode_actions[i] = []
 
                 # episode continues
                 elif len(self.config.VIDEO_OPTION) > 0:
@@ -769,6 +773,7 @@ class ILEnvTrainer(BaseRLTrainer):
                 rgb_frames,
                 current_episode_entropy,
                 current_episode_steps,
+                episode_actions
             ) = self._pause_envs(
                 envs_to_pause,
                 self.envs,
@@ -780,6 +785,7 @@ class ILEnvTrainer(BaseRLTrainer):
                 rgb_frames,
                 current_episode_entropy,
                 current_episode_steps,
+                episode_actions,
             )
 
         num_episodes = len(stats_episodes)

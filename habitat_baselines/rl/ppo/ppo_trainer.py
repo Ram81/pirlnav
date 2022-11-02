@@ -738,6 +738,8 @@ class PPOTrainer(BaseRLTrainer):
         logger.info("Start evaluation")
         step = 0
         episode_meta = []
+        possible_actions = self.config.TASK_CONFIG.TASK.POSSIBLE_ACTIONS
+        episode_actions = [[possible_actions[0]] for i in range(self.config.NUM_PROCESSES)]
         while (
             len(stats_episodes) < number_of_eval_episodes
             and self.envs.num_envs > 0
@@ -764,6 +766,8 @@ class PPOTrainer(BaseRLTrainer):
                 #     step,
                 # )
                 step += 1
+                for i, a in enumerate(actions.to(device="cpu")):
+                    episode_actions[i].append(possible_actions[a.item()])
 
                 prev_actions.copy_(actions)  # type: ignore
 
@@ -831,6 +835,7 @@ class PPOTrainer(BaseRLTrainer):
                         "metrics": episode_stats,
                         "object_category": current_episodes[i].object_category,
                         "behavior_metrics": infos[i].get("behavior_metrics"),
+                        "actions": episode_actions[i]
                     })
                     write_json(episode_meta, self.config.EVAL.meta_file)
                     # use scene_id + episode_id as unique id for storing stats
@@ -855,6 +860,7 @@ class PPOTrainer(BaseRLTrainer):
 
                         rgb_frames[i] = []
                     step = 0
+                    episode_actions[i] = [possible_actions[0]]
 
                 # episode continues
                 elif len(self.config.VIDEO_OPTION) > 0:
@@ -875,6 +881,7 @@ class PPOTrainer(BaseRLTrainer):
                 rgb_frames,
                 current_episode_entropy,
                 current_episode_steps,
+                episode_actions
             ) = self._pause_envs(
                 envs_to_pause,
                 self.envs,
@@ -886,6 +893,7 @@ class PPOTrainer(BaseRLTrainer):
                 rgb_frames,
                 current_episode_entropy,
                 current_episode_steps,
+                episode_actions,
             )
 
         num_episodes = len(stats_episodes)

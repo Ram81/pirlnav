@@ -16,7 +16,7 @@ def compute_behavior_metrics(path, only_on_success=False):
 
     num_episodes = len(dataset)
     for episode_metrics in tqdm(dataset):
-        if only_on_success and not behavior_metrics["success"]:
+        if only_on_success and episode_metrics["metrics"]["success"]:
             continue
         behavior_metrics["peeks"] += int(len(episode_metrics["behavior_metrics"]["room_revisitation_map_strict"].keys()) > 0)
         behavior_metrics["panoramic_turns"] += int(episode_metrics["behavior_metrics"]["panoramic_turns_strict"] > 0)
@@ -34,6 +34,9 @@ if __name__ == "__main__":
     parser.add_argument(
         "--path", type=str, default="replays/demo_1.json.gz"
     )
+    parser.add_argument(
+        "--success-only", dest="only_on_success", action="store_true"
+    )
     args = parser.parse_args()
 
-    compute_behavior_metrics(args.path)
+    compute_behavior_metrics(args.path, args.only_on_success)

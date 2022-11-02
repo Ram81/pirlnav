@@ -254,6 +254,7 @@ class BaseRLTrainer(BaseTrainer):
         rgb_frames: Union[List[List[Any]], List[List[ndarray]]],
         current_episode_entropy: Tensor = None,
         current_episode_steps: Tensor = None,
+        episode_actions: List[List[Any]] = [],
     ) -> Tuple[
         Union[VectorEnv, RLEnv, Env],
         Tensor,
@@ -261,6 +262,7 @@ class BaseRLTrainer(BaseTrainer):
         Tensor,
         Tensor,
         Dict[str, Tensor],
+        List[List[Any]],
         List[List[Any]],
     ]:
         # pausing self.envs with no new episode
@@ -285,6 +287,7 @@ class BaseRLTrainer(BaseTrainer):
 
             current_episode_entropy = current_episode_entropy[state_index]
             current_episode_steps = current_episode_steps[state_index]
+            episode_actions = [episode_actions[i] for i in state_index]
 
         return (
             envs,
@@ -296,6 +299,7 @@ class BaseRLTrainer(BaseTrainer):
             rgb_frames,
             current_episode_entropy,
             current_episode_steps,
+            episode_actions,
         )
     
     @staticmethod
