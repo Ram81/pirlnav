@@ -758,7 +758,7 @@ class BehaviorMetrics(Measure):
                 count_move_forwards = 0
             else:
                 count_move_forwards += 1
-            max_move_forwards = max(max_move_forwards , count_move_forwards)
+            max_move_forwards = max(max_move_forwards, count_move_forwards)
         return (max_move_forwards / len(self.last_20_actions)) >= 0.5 
 
     def update_metric(self, episode, task, action, *args: Any, **kwargs: Any):        

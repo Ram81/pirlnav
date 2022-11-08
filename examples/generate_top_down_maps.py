@@ -7,12 +7,14 @@ import numpy as np
 from PIL import Image
 from habitat.utils.visualizations.utils import observations_to_image, images_to_video, append_text_to_image
 from scripts.parsing.parse_objectnav_dataset import write_json
-from scripts.utils.hm3d_utils import mask_shapeconv_new_cats
 
-from habitat_baselines.il.env_based.policy.semantic_predictor import SemanticPredictor
 from habitat.utils.visualizations import maps
 from scripts.utils.map_utils import draw_path, add_foreground
+from scripts.utils.utils import load_json_dataset
 from PIL import Image, ImageEnhance
+from habitat.tasks.nav.nav import MAP_THICKNESS_SCALAR
+from habitat import logger
+from habitat_sim.utils.common import quat_to_coeffs
 
 config = habitat.get_config("configs/tasks/objectnav_mp3d_il_video.yaml")
 
@@ -27,52 +29,19 @@ def save_image(img, file_name):
     im.save("demos/" + file_name)
 
 
-def get_semantic_predictor(config):
-    if config is None:
-        return None
-    device = torch.device("cuda", 0)
-    semantic_predictor = SemanticPredictor(config.MODEL, device)
-    semantic_predictor.eval()
-    semantic_predictor.to(device)
-    return semantic_predictor
+def draw_point(tdm, point, color):
+
+    point_padding = 10 * int(
+        np.ceil(256 / MAP_THICKNESS_SCALAR)
+    )
+    tdm[
+        point[0] - point_padding : point[0] + point_padding + 1,
+        point[1] - point_padding : point[1] + point_padding + 1,
+    ] = color
+    return tdm
 
 
-def compute_goal_distance_to_view_points(sim, object_goals):
-    avgs = []
-    view_points_within_1m = []
-    for goal in object_goals:
-        goal_position = goal.position
-        dists = []
-        for view_point in goal.view_points:
-            view_point_position = view_point.agent_state.position
-
-            dist = sim.geodesic_distance(goal_position, view_point_position)
-            # dist = np.linalg.norm(np.array(goal_position) - np.array(view_point_position), ord=2)
-            if dist == np.inf:
-                continue
-
-            view_points_within_1m.append((view_point_position, dist < 1.0))
-            dists.append(dist > 1.0)
-        avgs.extend(dists)
-    return avgs, view_points_within_1m
-
-
-def find_closest_view_point(env, view_points_within_1m):
-    closest_viewpoint = env.get_metrics()["distance_to_goal_v2"]["points"]
-    
-    is_within_1m = False
-    for view_point, in_range in view_points_within_1m:
-        if in_range:
-            for point in closest_viewpoint:
-                if np.allclose(view_point, point):
-                    is_within_1m = True
-                    break
-            if is_within_1m:
-                break
-    return is_within_1m
-
-
-def get_foreground(sim, positions):
+def get_foreground(sim, positions, episode):
     original_tdm = maps.get_topdown_map_from_sim(sim, meters_per_pixel=0.01)
 
     ALPHA = 180
@@ -102,14 +71,30 @@ def get_foreground(sim, positions):
     points = [maps.to_grid(p.position[2], p.position[0], tdm.shape[:2], sim) for p in positions]
     draw_path(tdm, points, color=color, thickness=9)
 
+    tdm = draw_point(tdm, points[0], maps.MAP_SOURCE_POINT_INDICATOR)
+    tdm = draw_point(tdm, points[-1], maps.MAP_VIEW_POINT_INDICATOR)
+
+    point_padding = 10 * int(
+        np.ceil(256 / MAP_THICKNESS_SCALAR)
+    )
+
+    for goal in episode.goals:
+        try:
+            goal_point = maps.to_grid(goal.position[2], goal.position[0], tdm.shape[:2], sim)
+            tdm = draw_point(
+                tdm, goal_point, maps.MAP_TARGET_POINT_INDICATOR
+            )
+        except AttributeError:
+            pass
+
     tdm = COLORS[tdm]
     foregrounds.append(tdm)
     return foregrounds
 
 
-def overlay_top_down_map(positions, sim, scene_name, N=1):
-    foregrounds = get_foreground(sim, positions)
-    background = Image.open("demos/00853-5cdEh9F2hJL.png")
+def overlay_top_down_map(positions, sim, scene_name, episode_id, baseline, episode, N=1):
+    foregrounds = get_foreground(sim, positions, episode)
+    background = Image.open("demos/original/{}.png".format(scene_name))
 
     enhancer = ImageEnhance.Contrast(background)
     background = enhancer.enhance(0.4)
@@ -119,10 +104,18 @@ def overlay_top_down_map(positions, sim, scene_name, N=1):
     foreground = foregrounds[0]
     background = add_foreground(background, foreground, 60, 30)
 
-    path = "demos/overlayed/{}_overlay.png".format(scene_name)
+    dir_name = "demos/overlayed/{}".format(baseline)
+    if not os.path.isdir(dir_name):
+        os.mkdir(dir_name)
+    path = "{}/{}.png".format(dir_name, episode_id)
     background.save(path)
 
-    #save_image(foregrounds[0], "original/{}.png".format(scene_name))
+
+def episode_to_evaluation_meta(evaluation_meta):
+    episode_eval_meta_map = {}
+    for episode_meta in evaluation_meta:
+        episode_eval_meta_map[episode_meta["episode_id"]] = episode_meta
+    return episode_eval_meta_map
 
 
 def run_reference_replay(
@@ -132,13 +125,19 @@ def run_reference_replay(
     append_instruction=False,
     save_videos=False,
     save_step_image=False,
-    config=None,
     separate_top_down_map=False,
     save_top_down_map=False,
+    evaluation_meta_path=None,
+    baseline="test",
+    specific_episode_id=None
 ):
-    semantic_predictor = get_semantic_predictor(config)
+    possible_actions = cfg.TASK.POSSIBLE_ACTIONS
 
-    possible_actions = cfg.TASK.POSSIBLE_ACTIONS  
+    evaluation_meta = None
+    if evaluation_meta_path is not None:
+        evaluation_meta = load_json_dataset(evaluation_meta_path)
+        episode_eval_meta_map = episode_to_evaluation_meta(evaluation_meta)
+
     with habitat.Env(cfg) as env:
         total_success = 0
         spl = 0
@@ -150,14 +149,28 @@ def run_reference_replay(
             observation_list = []
             top_down_map_observation_list = []
             obs = env.reset()
+            hab_on_web_trajectory = []
 
             step_index = 1
             total_reward = 0.0
             episode = env.current_episode
+            if specific_episode_id is not None and episode.episode_id != specific_episode_id:
+                continue
             positions = [env._sim.get_agent_state()]
 
-            for step_id, data in enumerate(env.current_episode.reference_replay[step_index:]):
-                action = possible_actions.index(data.action)
+            reference_replay = env.current_episode.reference_replay
+            if evaluation_meta is not None:
+                reference_replay = episode_eval_meta_map[env.current_episode.episode_id]["actions"]
+                if reference_replay[0] != "STOP":
+                    step_index = 0
+                print("Expected succesS: {}".format(episode_eval_meta_map[env.current_episode.episode_id]["metrics"]["success"]))
+
+
+            for step_id, data in enumerate(reference_replay[step_index:]):
+                if type(data) is str:
+                    action = possible_actions.index(data)
+                else:
+                    action = possible_actions.index(data.action)
                 # action = data.action
                 action_name = env.task.get_action_name(
                     action
@@ -166,13 +179,10 @@ def run_reference_replay(
                 observations = env.step(action=action)
 
                 obs = {"rgb": observations["rgb"]}
-                masked_semantic = None
-                if semantic_predictor is not None:
-                    obs_semantic = semantic_predictor({"rgb": torch.tensor(observations["rgb"]).unsqueeze(0).cuda(), "depth": torch.tensor(observations["depth"]).unsqueeze(0).cuda()})
-                    obs["semantic"] = obs_semantic[0].permute(1,2,0).long().cpu().numpy()
 
                 info = env.get_metrics()
-                positions.append(env._sim.get_agent_state())
+                agent_state = env._sim.get_agent_state()
+                positions.append(agent_state)
 
                 top_down_frame = None
                 if not separate_top_down_map:
@@ -181,8 +191,6 @@ def run_reference_replay(
                     frame = observations_to_image(obs, {})
                     top_down_frame = observations_to_image(obs, info, top_down_map_only=True)
 
-                total_reward += info["simple_reward"]
-
                 if append_instruction:
                     frame = append_text_to_image(frame, "Find and go to {}".format(episode.object_category))
 
@@ -190,6 +198,11 @@ def run_reference_replay(
                     save_image(frame, "trajectory_1/demo_{}_{}.png".format(ep_id, step_id))
 
                 observation_list.append(frame)
+                hab_on_web_trajectory.append({
+                    "position": np.array(agent_state.position).tolist(),
+                    "rotation": quat_to_coeffs(agent_state.rotation).tolist(),
+                    "sensor_data": {}
+                })
 
                 if separate_top_down_map:
                     top_down_map_observation_list.append(top_down_frame)
@@ -203,28 +216,28 @@ def run_reference_replay(
             if save_top_down_map:
                 make_videos([top_down_map_observation_list], "{}_top_down_map".format(output_prefix), ep_id)
 
-            print("Total reward: {}, Success: {}, Steps: {}, Attempts: {}".format(total_reward, info["success"], len(episode.reference_replay), episode.attempts))
-            del info["top_down_map"]
-            del info["behavior_metrics"]
-
-            if len(episode.reference_replay) <= 500 and episode.attempts == 1:
-                total_success += info["success"]
-                spl += info["spl"]
+            print("Total reward: {}, Success: {}, Steps: {}, Attempts: {}".format(total_reward, info["success"], len(reference_replay), episode.attempts))
+            if "top_down_map" in info:
+                del info["top_down_map"]
+                del info["behavior_metrics"]
 
             episode_meta.append({
                 "scene_id": episode.scene_id,
                 "episode_id": episode.episode_id,
                 "metrics": info,
-                "steps": len(episode.reference_replay),
                 "attempts": episode.attempts,
                 "object_category": episode.object_category
             })
 
-            overlay_top_down_map(positions, env._sim, episode.scene_id.split("/")[-1])
-            save_image(top_down_map_observation_list[-1], "original/{}.png".format(episode.scene_id.split("/")[-1]))
+            write_json({
+                "trajectory": hab_on_web_trajectory
+            }, "demos/overlayed/{}/demo_trajectory.json".format(baseline))
 
-        print("SPL: {}, {}, {}".format(spl/num_episodes, spl, num_episodes))
-        print("Success: {}, {}, {}".format(total_success/num_episodes, total_success, num_episodes))
+            overlay_top_down_map(positions, env._sim, episode.scene_id.split("/")[-2], episode.episode_id, baseline, episode)
+            logger.info("Episodes done: {}/{}".format(ep_id, num_episodes))
+
+        logger.info("SPL: {}, {}, {}".format(spl/num_episodes, spl, num_episodes))
+        logger.info("Success: {}, {}, {}".format(total_success/num_episodes, total_success, num_episodes))
 
         output_path = os.path.join(os.path.dirname(cfg.DATASET.DATA_PATH), "replay_meta.json")
         write_json(episode_meta, output_path)
@@ -254,13 +267,19 @@ def main():
         "--save-step-image", dest="save_step_image", action="store_true"
     )
     parser.add_argument(
-        "--semantic-predictor-config", type=str, default=None
-    )
-    parser.add_argument(
         "--separate-top-down-map", action="store_true", dest="separate_top_down_map"
     )
     parser.add_argument(
         "--save-top-down-map", action="store_true", dest="save_top_down_map"
+    )
+    parser.add_argument(
+        "--evaluation-meta-path", type=str, default=None
+    )
+    parser.add_argument(
+        "--baseline", type=str, default="demo"
+    )
+    parser.add_argument(
+        "--specific-episode-id", type=str, default="ziup5kvtCCR_26_[5.47169, 0.02122, 2.32604]_plant.png"
     )
     args = parser.parse_args()
     cfg = config
@@ -268,19 +287,19 @@ def main():
     cfg.DATASET.DATA_PATH = args.path
     cfg.DATASET.MAX_EPISODE_STEPS = args.max_steps
     cfg.ENVIRONMENT.MAX_EPISODE_STEPS = args.max_steps
-    cfg.TASK.MEASUREMENTS = ["DISTANCE_TO_GOAL", "SUCCESS", "SPL", "SOFT_SPL", "TRAIN_SUCCESS",  "STRICT_SUCCESS", "ANGLE_TO_GOAL", "ANGLE_SUCCESS", "SIMPLE_REWARD", "TOP_DOWN_MAP", "BEHAVIOR_METRICS"]
-    cfg.TASK.TOP_DOWN_MAP.DRAW_GOAL_POSITIONS = False
+    cfg.TASK.SENSORS = ['OBJECTGOAL_SENSOR', 'COMPASS_SENSOR', 'GPS_SENSOR']
+    cfg.TASK.MEASUREMENTS = ["DISTANCE_TO_GOAL", "SUCCESS", "SPL", "SOFT_SPL"]
+    cfg.TASK.TOP_DOWN_MAP.DRAW_GOAL_POSITIONS = True
     cfg.TASK.TOP_DOWN_MAP.DRAW_VIEW_POINTS_WITHIN_1M = False
-    cfg.TASK.TOP_DOWN_MAP.DRAW_VIEW_POINTS = False
+    cfg.TASK.TOP_DOWN_MAP.DRAW_VIEW_POINTS = True
     cfg.TASK.SIMPLE_REWARD.USE_STRICT_SUCCESS_REWARD = False
     cfg.TASK.SIMPLE_REWARD.USE_STRICT_SUCCESS_REWARD_V2 = False
     cfg.TASK.SIMPLE_REWARD.USE_DTG_REWARD = False
     cfg.TASK.SIMPLE_REWARD.USE_ANGLE_SUCCESS_REWARD = True
+    cfg.DATASET.TYPE = "ObjectNav-v1"
+    cfg.DATASET.CONTENT_SCENES = ["svBbv1Pavdk", "Dd4bFSTQ8gi", "QaLdnwvtxbs", "ziup5kvtCCR", "5cdEh9F2hJL", "mv2HUxq3B53", "Nfvxx8J5NCo"]
+    cfg.DATASET.CONTENT_SCENES = ["ziup5kvtCCR"]
     cfg.freeze()
-
-    model_config = None
-    if not args.semantic_predictor_config is None:
-        model_config = habitat.get_config(args.semantic_predictor_config)
 
     run_reference_replay(
         cfg,
@@ -289,9 +308,11 @@ def main():
         append_instruction=args.append_instruction,
         save_videos=args.save_videos,
         save_step_image=args.save_step_image,
-        config=model_config,
         separate_top_down_map=args.separate_top_down_map,
         save_top_down_map=args.save_top_down_map,
+        evaluation_meta_path=args.evaluation_meta_path,
+        baseline=args.baseline,
+        specific_episode_id=args.specific_episode_id
     )
 
 

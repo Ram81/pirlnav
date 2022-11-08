@@ -24,8 +24,8 @@ export MASTER_ADDR
 
 config="habitat_baselines/config/objectnav/il_rl/ddppo_semseg_ft_objectnav.yaml"
 
-TENSORBOARD_DIR="tb/objectnav_il_rl_ft/ddppo_hm3d_pt_s_path_240k/sem_seg_pred/sparse_reward_ckpt_16_4_gpu_vanilla/hm3d_v0_1_0/seed_1/"
-CHECKPOINT_DIR="data/new_checkpoints/objectnav_il_rl_ft/ddppo_hm3d_pt_s_path_240k/sem_seg_pred/sparse_reward_ckpt_16_4_gpu_vanilla/hm3d_v0_1_0/seed_1/"
+TENSORBOARD_DIR="tb/objectnav_il_rl_ft/ddppo_hm3d_pt_s_path_240k/sem_seg_pred/sparse_reward_ckpt_16_4_gpu_vanilla/hm3d_v0_1_0/seed_2_high_lr/"
+CHECKPOINT_DIR="data/new_checkpoints/objectnav_il_rl_ft/ddppo_hm3d_pt_s_path_240k/sem_seg_pred/sparse_reward_ckpt_16_4_gpu_vanilla/hm3d_v0_1_0/seed_2_high_lr/"
 DATA_PATH="data/datasets/objectnav/objectnav_hm3d/objectnav_hm3d_v1/"
 PRETRAINED_WEIGHTS="data/new_checkpoints/objectnav_il/objectnav_hm3d/objectnav_hm3d_s_path_240k/sem_seg_pred/seed_1/ckpt.16.pth"
 set -x
@@ -45,6 +45,7 @@ RL.Finetune.start_actor_finetuning_at 2000 \
 RL.Finetune.actor_lr_warmup_update 2000 \
 RL.Finetune.start_critic_warmup_at 2000 \
 RL.Finetune.critic_lr_decay_update 2000 \
+RL.Finetune.policy_ft_lr 2.5e-4 \
 TASK_CONFIG.DATASET.SPLIT "train" \
 TASK_CONFIG.DATASET.DATA_PATH "$DATA_PATH/{split}/{split}.json.gz" \
 TASK_CONFIG.TASK.SUCCESS.SUCCESS_DISTANCE 0.1 \

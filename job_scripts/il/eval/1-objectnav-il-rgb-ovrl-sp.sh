@@ -25,7 +25,7 @@ export MASTER_ADDR
 config="habitat_baselines/config/objectnav/il/il_rgb_ddp_objectnav.yaml"
 
 DATA_PATH="data/datasets/objectnav/objectnav_hm3d/objectnav_hm3d_v1"
-TENSORBOARD_DIR="tb/objectnav_il/objectnav_hm3d/objectnav_hm3d_s_path_240k/rgb_ovrl/seed_1/hm3d_v0_1_0_evals/ckpt_114_val_behavior_metrics_2/"
+TENSORBOARD_DIR="tb/objectnav_il/objectnav_hm3d/objectnav_hm3d_s_path_240k/rgb_ovrl/seed_1/hm3d_v0_1_0_evals/ckpt_114_val_replays/"
 EVAL_CKPT_PATH_DIR="data/new_checkpoints/objectnav_il/objectnav_hm3d/objectnav_hm3d_s_path_240k/rgb_ovrl/seed_1/ckpt.114.pth"
 set -x
 

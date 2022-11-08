@@ -730,6 +730,7 @@ class ILEnvTrainer(BaseRLTrainer):
                         "metrics": episode_stats,
                         "object_category": current_episodes[i].object_category,
                         "behavior_metrics": infos[i].get("behavior_metrics"),
+                        "actions": episode_actions[i],
                     })
                     write_json(episode_meta, self.config.EVAL.meta_file)
 

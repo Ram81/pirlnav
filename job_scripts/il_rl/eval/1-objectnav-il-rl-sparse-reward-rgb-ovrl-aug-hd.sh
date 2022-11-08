@@ -7,7 +7,7 @@
 #SBATCH --signal=USR1@300
 #SBATCH --partition=short
 #SBATCH --constraint=a40
-#SBATCH --exclude=nestor
+#SBATCH --exclude=nestor,conroy
 #SBATCH --output=slurm_logs/eval/ddp-il-rl-%j.out
 #SBATCH --error=slurm_logs/eval/ddp-il-rl-%j.err
 #SBATCH --requeue
@@ -25,7 +25,7 @@ export MASTER_ADDR
 config="habitat_baselines/config/objectnav/il_rl/ddppo_rgb_ovrl_ft_objectnav.yaml"
 
 DATA_PATH="data/datasets/objectnav/objectnav_hm3d/objectnav_hm3d_v1"
-TENSORBOARD_DIR="tb/objectnav_il_rl_ft/ddppo_hm3d_pt_77k/rgb_ovrl_with_augs/sparse_reward/hm3d_v0_1_0/seed_2/hm3d_v0_1_0_evals/ckpt_14_val_videos/"
+TENSORBOARD_DIR="tb/objectnav_il_rl_ft/ddppo_hm3d_pt_77k/rgb_ovrl_with_augs/sparse_reward/hm3d_v0_1_0/seed_2/hm3d_v0_1_0_evals/ckpt_14_val_replays/"
 EVAL_CKPT_PATH_DIR="data/new_checkpoints/objectnav_il_rl_ft/ddppo_hm3d_pt_77k/rgb_ovrl_with_augs/sparse_reward/hm3d_v0_1_0/seed_2/ckpt.14.pth"
 PRETRAINED_WEIGHTS="data/new_checkpoints/objectnav_il/objectnav_hm3d/objectnav_hm3d_20k/rgb_ovrl/seed_1/ckpt.38.pth"
 
