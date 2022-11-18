@@ -818,6 +818,9 @@ class BehaviorMetrics(Measure):
         if self.total_left_turns >= 3 and self.total_right_turns >= 3 and (self.total_right_turns + self.total_left_turns) >= 8 and self.delta_sight_coverage > 0.01:
             self.panoramic_turns_strict += 1
             self.avg_delta_coverage += self.delta_sight_coverage
+
+        if self.total_left_turns >= 3 and self.total_right_turns >= 3 and (self.total_right_turns + self.total_left_turns) >= 8 and self.delta_sight_coverage > 0.015:
+            self.panoramic_turns += 1
     
         avg_cov = 0
         if self.panoramic_turns_strict > 0:

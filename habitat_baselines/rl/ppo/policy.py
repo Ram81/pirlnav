@@ -126,8 +126,8 @@ class CriticHead(nn.Module):
     def __init__(self, input_size):
         super().__init__()
         self.fc = nn.Linear(input_size, 1)
-        nn.init.orthogonal_(self.fc.weight)
-        nn.init.constant_(self.fc.bias, 0)
+        # nn.init.orthogonal_(self.fc.weight)
+        # nn.init.constant_(self.fc.bias, 0)
 
     def forward(self, x):
         return self.fc(x)

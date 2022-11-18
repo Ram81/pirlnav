@@ -45,7 +45,7 @@ RL.Finetune.start_actor_finetuning_at 750 \
 RL.Finetune.actor_lr_warmup_update 1500 \
 RL.Finetune.start_critic_warmup_at 500 \
 RL.Finetune.critic_lr_decay_update 1000 \
-RL.Finetune.unfreeze_encoders_after_warmup True \
+RL.Finetune.finetune_full_agent True \
 TASK_CONFIG.DATASET.SPLIT "train" \
 TASK_CONFIG.DATASET.DATA_PATH "$DATA_PATH/{split}/{split}.json.gz" \
 TASK_CONFIG.TASK.SUCCESS.SUCCESS_DISTANCE 0.1

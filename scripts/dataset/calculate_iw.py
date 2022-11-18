@@ -112,6 +112,7 @@ def calculate_inflection_weight_objectnav(path, stats_path):
     per_scene_episodes_lt_500 = []
     per_scene_actions = []
     scene_ids = []
+    episode_ids = []
     for file_path in tqdm(files):
         data = load_dataset(file_path)
 
@@ -120,6 +121,7 @@ def calculate_inflection_weight_objectnav(path, stats_path):
         actions_per_scene = 0
         total_episodes_lt_500_steps = 0
         for episode in episodes:
+            episode_ids.append(episode["episode_id"])
             num_inflections, num_actions = caclulate_inflections(episode)
 
             data_stats["episode_length"].append(num_actions)
@@ -183,6 +185,7 @@ def calculate_inflection_weight_objectnav(path, stats_path):
             filtered_actions += per_scene_actions[i]
     # print(f_scenes)
     print("Actions after filtering: {}".format(filtered_actions))
+    write_json(episode_ids, os.path.join(path, "ep_ids.json"))
 
 
 def convert_instruction_tokens(episodes):

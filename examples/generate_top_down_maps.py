@@ -154,6 +154,10 @@ def run_reference_replay(
             step_index = 1
             total_reward = 0.0
             episode = env.current_episode
+            
+            if episode.object_category != "bed":
+                continue
+            print(episode.episode_id)
             if specific_episode_id is not None and episode.episode_id != specific_episode_id:
                 continue
             positions = [env._sim.get_agent_state()]
@@ -229,11 +233,11 @@ def run_reference_replay(
                 "object_category": episode.object_category
             })
 
-            write_json({
-                "trajectory": hab_on_web_trajectory
-            }, "demos/overlayed/{}/demo_trajectory.json".format(baseline))
+            # write_json({
+            #     "trajectory": hab_on_web_trajectory
+            # }, "demos/overlayed/{}/demo_trajectory.json".format(baseline))
 
-            overlay_top_down_map(positions, env._sim, episode.scene_id.split("/")[-2], episode.episode_id, baseline, episode)
+            # overlay_top_down_map(positions, env._sim, episode.scene_id.split("/")[-2], episode.episode_id, baseline, episode)
             logger.info("Episodes done: {}/{}".format(ep_id, num_episodes))
 
         logger.info("SPL: {}, {}, {}".format(spl/num_episodes, spl, num_episodes))
@@ -288,7 +292,7 @@ def main():
     cfg.DATASET.MAX_EPISODE_STEPS = args.max_steps
     cfg.ENVIRONMENT.MAX_EPISODE_STEPS = args.max_steps
     cfg.TASK.SENSORS = ['OBJECTGOAL_SENSOR', 'COMPASS_SENSOR', 'GPS_SENSOR']
-    cfg.TASK.MEASUREMENTS = ["DISTANCE_TO_GOAL", "SUCCESS", "SPL", "SOFT_SPL"]
+    cfg.TASK.MEASUREMENTS = ["DISTANCE_TO_GOAL", "SUCCESS", "SPL", "SOFT_SPL", "TOP_DOWN_MAP"]
     cfg.TASK.TOP_DOWN_MAP.DRAW_GOAL_POSITIONS = True
     cfg.TASK.TOP_DOWN_MAP.DRAW_VIEW_POINTS_WITHIN_1M = False
     cfg.TASK.TOP_DOWN_MAP.DRAW_VIEW_POINTS = True
@@ -298,7 +302,7 @@ def main():
     cfg.TASK.SIMPLE_REWARD.USE_ANGLE_SUCCESS_REWARD = True
     cfg.DATASET.TYPE = "ObjectNav-v1"
     cfg.DATASET.CONTENT_SCENES = ["svBbv1Pavdk", "Dd4bFSTQ8gi", "QaLdnwvtxbs", "ziup5kvtCCR", "5cdEh9F2hJL", "mv2HUxq3B53", "Nfvxx8J5NCo"]
-    cfg.DATASET.CONTENT_SCENES = ["ziup5kvtCCR"]
+    cfg.DATASET.CONTENT_SCENES = ["zt1RVoi7PcG"]
     cfg.freeze()
 
     run_reference_replay(
