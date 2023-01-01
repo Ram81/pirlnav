@@ -234,3 +234,13 @@ class ObjectNavILMAEPolicy(ILPolicy):
             model_config=config.MODEL,
             run_type=config.RUN_TYPE,
         )
+
+    def freeze_visual_encoders(self):
+        if hasattr(self.net, "visual_encoder"):
+            for param in self.net.visual_encoder.parameters():
+                param.requires_grad_(False)
+    
+    def unfreeze_visual_encoders(self):
+        if hasattr(self.net, "visual_encoder"):
+            for param in self.net.visual_encoder.parameters():
+                param.requires_grad_(True)
