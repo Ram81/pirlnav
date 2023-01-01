@@ -69,7 +69,7 @@ RL:
     # Whether or not the visual encoder backbone will be trained.
     train_encoder: True
     # Whether or not to reset the critic linear layer
-    reset_critic: True
+    reset_critic: False
     downsample_critic: 1
 
     # Model parameters

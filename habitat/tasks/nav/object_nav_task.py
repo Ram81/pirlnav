@@ -3,6 +3,7 @@
 # LICENSE file in the root directory of this source tree.
 
 import os
+import clip
 from typing import Any, List, Optional
 
 import attr
@@ -388,6 +389,7 @@ class ObjectGoalPromptSensor(Sensor):
     ):
         self._sim = sim
         self._dataset = dataset
+        self._clip_goal_cache = np.load(config.CACHE_PATH)
         super().__init__(config=config)
 
     def _get_uuid(self, *args: Any, **kwargs: Any) -> str:
@@ -396,19 +398,23 @@ class ObjectGoalPromptSensor(Sensor):
     def _get_sensor_type(self, *args: Any, **kwargs: Any):
         return SensorTypes.SEMANTIC
 
-    def _get_observation_space(self, *args: Any, **kwargs: Any):
-        sensor_shape = (1,)
-        max_value = self.config.GOAL_SPEC_MAX_VAL - 1
-        if self.config.GOAL_SPEC == "TASK_CATEGORY_ID":
-            max_value = max(
-                self._dataset.category_to_task_category_id.values()
-            )
-            logger.info("max object cat: {}".format(max_value))
-            logger.info("cats: {}".format(self._dataset.category_to_task_category_id.values()))
+    # def _get_observation_space(self, *args: Any, **kwargs: Any):
+    #     sensor_shape = self._clip_goal_cache[0].shape
+    #     max_value = np.max(self._clip_goal_cache)
+    #     min_value = np.max(self._clip_goal_cache)
+    #     if self.config.GOAL_SPEC == "TASK_CATEGORY_ID":
+    #         max_value = max(
+    #             self._dataset.category_to_task_category_id.values()
+    #         )
+    #         logger.info("max object cat: {}".format(max_value))
+    #         logger.info("cats: {}".format(self._dataset.category_to_task_category_id.values()))
 
-        return spaces.Box(
-            low=0, high=max_value, shape=sensor_shape, dtype=np.int64
-        )
+    #     return spaces.Box(
+    #         low=min_value, high=max_value, shape=sensor_shape, dtype=self._clip_goal_cache.dtype
+    #     )
+
+    def _get_observation_space(self, *args: Any, **kwargs: Any):
+        return spaces.Box(low=0, high=np.inf, shape=(1, 77,), dtype=np.int64)
 
     def get_observation(
         self,
@@ -428,13 +434,12 @@ class ObjectGoalPromptSensor(Sensor):
                 f"First goal should be ObjectGoal, episode {episode.episode_id}."
             )
             return None
+
         category_name = episode.object_category
         if self.config.GOAL_SPEC == "TASK_CATEGORY_ID":
-            return "a {}".format(category_name)
-        elif self.config.GOAL_SPEC == "OBJECT_ID":
-            obj_goal = episode.goals[0]
-            assert isinstance(obj_goal, ObjectGoal)  # for type checking
-            return np.array([obj_goal.object_name_id], dtype=np.int64)
+            # object_category_id = self._dataset.category_to_task_category_id[category_name]
+            # return self._clip_goal_cache[object_category_id]
+            return clip.tokenize(category_name).numpy()
         else:
             raise RuntimeError(
                 "Wrong GOAL_SPEC specified for ObjectGoalSensor."

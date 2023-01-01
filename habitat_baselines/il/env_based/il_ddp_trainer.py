@@ -107,6 +107,7 @@ class ILEnvDDPTrainer(ILEnvTrainer):
                 }, strict=False
             )
             logger.info("Loading checkpoint missing keys: {}".format(missing_keys))
+        logger.info("Swithing to legacy trainer")
 
         # Set up policy for finetuning
         if hasattr(self.config.IL, "Finetune"):

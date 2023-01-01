@@ -100,6 +100,13 @@ _C.TASK.OBJECTGOAL_SENSOR.TYPE = "ObjectGoalSensor"
 _C.TASK.OBJECTGOAL_SENSOR.GOAL_SPEC = "TASK_CATEGORY_ID"
 _C.TASK.OBJECTGOAL_SENSOR.GOAL_SPEC_MAX_VAL = 50
 # -----------------------------------------------------------------------------
+# CLIP OBJECTGOAL SENSOR
+# -----------------------------------------------------------------------------
+_C.TASK.OBJECTGOAL_PROMPT_SENSOR = CN()
+_C.TASK.OBJECTGOAL_PROMPT_SENSOR.TYPE = "ObjectGoalPromptSensor"
+_C.TASK.OBJECTGOAL_PROMPT_SENSOR.CACHE_PATH = "data/cache/clip_objectnav_hm3d_goals/clip_vit_base32.npy"
+_C.TASK.OBJECTGOAL_PROMPT_SENSOR.GOAL_SPEC = "TASK_CATEGORY_ID"
+# -----------------------------------------------------------------------------
 # IMAGEGOAL SENSOR
 # -----------------------------------------------------------------------------
 _C.TASK.IMAGEGOAL_SENSOR = CN()

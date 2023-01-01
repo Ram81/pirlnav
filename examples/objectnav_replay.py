@@ -155,6 +155,7 @@ def run_reference_replay(
             total_reward = 0.0
             episode = env.current_episode
             positions = [env._sim.get_agent_state()]
+            print(episode.episode_id, episode.object_category)
 
             for step_id, data in enumerate(env.current_episode.reference_replay[step_index:]):
                 action = possible_actions.index(data.action)
@@ -181,7 +182,7 @@ def run_reference_replay(
                     frame = observations_to_image(obs, {})
                     top_down_frame = observations_to_image(obs, info, top_down_map_only=True)
 
-                total_reward += info["simple_reward"]
+                # total_reward += info["simple_reward"]
 
                 if append_instruction:
                     frame = append_text_to_image(frame, "Find and go to {}".format(episode.object_category))
@@ -193,6 +194,8 @@ def run_reference_replay(
 
                 if separate_top_down_map:
                     top_down_map_observation_list.append(top_down_frame)
+                
+                print(step_index + step_id, action, observations["inflection_weight"])
 
                 if action_name == "STOP":
                     break
@@ -204,8 +207,8 @@ def run_reference_replay(
                 make_videos([top_down_map_observation_list], "{}_top_down_map".format(output_prefix), ep_id)
 
             print("Total reward: {}, Success: {}, Steps: {}, Attempts: {}".format(total_reward, info["success"], len(episode.reference_replay), episode.attempts))
-            del info["top_down_map"]
-            del info["behavior_metrics"]
+            # del info["top_down_map"]
+            # del info["behavior_metrics"]
 
             if len(episode.reference_replay) <= 500 and episode.attempts == 1:
                 total_success += info["success"]
@@ -220,8 +223,8 @@ def run_reference_replay(
                 "object_category": episode.object_category
             })
 
-            overlay_top_down_map(positions, env._sim, episode.scene_id.split("/")[-1])
-            save_image(top_down_map_observation_list[-1], "original/{}.png".format(episode.scene_id.split("/")[-1]))
+            # overlay_top_down_map(positions, env._sim, episode.scene_id.split("/")[-1])
+            # save_image(top_down_map_observation_list[-1], "original/{}.png".format(episode.scene_id.split("/")[-1]))
 
         print("SPL: {}, {}, {}".format(spl/num_episodes, spl, num_episodes))
         print("Success: {}, {}, {}".format(total_success/num_episodes, total_success, num_episodes))
@@ -268,7 +271,7 @@ def main():
     cfg.DATASET.DATA_PATH = args.path
     cfg.DATASET.MAX_EPISODE_STEPS = args.max_steps
     cfg.ENVIRONMENT.MAX_EPISODE_STEPS = args.max_steps
-    cfg.TASK.MEASUREMENTS = ["DISTANCE_TO_GOAL", "SUCCESS", "SPL", "SOFT_SPL", "TRAIN_SUCCESS",  "STRICT_SUCCESS", "ANGLE_TO_GOAL", "ANGLE_SUCCESS", "SIMPLE_REWARD", "TOP_DOWN_MAP", "BEHAVIOR_METRICS"]
+    #cfg.TASK.MEASUREMENTS = ["DISTANCE_TO_GOAL", "SUCCESS", "SPL", "SOFT_SPL", "TRAIN_SUCCESS",  "STRICT_SUCCESS", "ANGLE_TO_GOAL", "ANGLE_SUCCESS", "SIMPLE_REWARD", "TOP_DOWN_MAP", "BEHAVIOR_METRICS"]
     cfg.TASK.TOP_DOWN_MAP.DRAW_GOAL_POSITIONS = False
     cfg.TASK.TOP_DOWN_MAP.DRAW_VIEW_POINTS_WITHIN_1M = False
     cfg.TASK.TOP_DOWN_MAP.DRAW_VIEW_POINTS = False

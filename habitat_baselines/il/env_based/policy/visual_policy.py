@@ -1,5 +1,6 @@
 from typing import Dict
 
+import clip
 import numpy as np
 import torch
 import torch.nn as nn
@@ -14,6 +15,7 @@ from habitat.tasks.nav.nav import (
 )
 from habitat.tasks.nav.object_nav_task import (
     ObjectGoalSensor,
+    ObjectGoalPromptSensor
 )
 from habitat_baselines.il.common.encoders.resnet_encoders import (
     VlnResnetDepthEncoder,
@@ -47,6 +49,7 @@ class ObjectNavMAEILNet(Net):
         super().__init__()
         self.model_config = model_config
         rnn_input_size = 0
+        logger.info("\n\nSetting up ObjectNavMAEILPolicy")
 
         # Init the depth encoder
         assert model_config.DEPTH_ENCODER.cnn_type in [
@@ -137,7 +140,8 @@ class ObjectNavMAEILNet(Net):
             rnn_input_size += 32
             logger.info("\n\nSetting up Compass sensor")
 
-        if ObjectGoalSensor.cls_uuid in observation_space.spaces:
+        self.use_clip_goal = model_config.GOAL.use_clip_goal
+        if not self.use_clip_goal and ObjectGoalSensor.cls_uuid in observation_space.spaces:
             self._n_object_categories = (
                 int(
                     observation_space.spaces[ObjectGoalSensor.cls_uuid].high[0]
@@ -150,6 +154,14 @@ class ObjectNavMAEILNet(Net):
             )
             rnn_input_size += 32
             logger.info("\n\nSetting up Object Goal sensor")
+        else:
+            self.clip, _ = clip.load(model_config.GOAL.clip_model)
+            for p in self.clip.parameters():
+                p.requires_grad = False
+            self.clip.eval()
+
+            rnn_input_size += 512
+            logger.info("\n\nSetting up CLIP Object Goal sensor")
 
         if model_config.SEQ2SEQ.use_prev_action:
             self.prev_action_embedding = nn.Embedding(num_actions + 1, 32)
@@ -249,11 +261,23 @@ class ObjectNavMAEILNet(Net):
             compass_embedding = self.compass_embedding(compass_observations.squeeze(dim=1))
             x.append(compass_embedding)
 
-        if ObjectGoalSensor.cls_uuid in observations:
+        if not self.use_clip_goal and ObjectGoalSensor.cls_uuid in observations:
             object_goal = observations[ObjectGoalSensor.cls_uuid].long()
             if len(object_goal.size()) == 3:
                 object_goal = object_goal.contiguous().view(-1, object_goal.size(2))
             x.append(self.obj_categories_embedding(object_goal).squeeze(dim=1))
+        else:
+            goal = observations[ObjectGoalPromptSensor.cls_uuid]  # T x N x 1 x F
+            # logger.info("Goal shape: {}".format(goal.shape))
+            if len(goal.shape) == 4:
+                goal = goal.flatten(0, 1) # TN x 1 x F
+            goal = goal.flatten(0, 1)  # TN x F
+
+            with torch.no_grad():
+                goal = self.clip.encode_text(goal.long()).float()
+                goal /= goal.norm(dim=-1, keepdim=True)
+
+            x.append(goal)
 
         if self.model_config.SEQ2SEQ.use_prev_action:
             prev_actions_embedding = self.prev_action_embedding(

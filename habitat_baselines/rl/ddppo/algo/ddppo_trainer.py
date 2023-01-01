@@ -122,6 +122,7 @@ class DDPPOTrainer(PPOTrainer):
         self.kl_coef = 0.0
         self.pretrained_policy = None
         self.kl_decay_coef = 0.0
+
         if hasattr(self.config.RL, "Finetune") and self.config.RL.Finetune.finetune:
             logger.info("Start Freeze encoder")
             self.rl_finetuning = True
@@ -134,11 +135,11 @@ class DDPPOTrainer(PPOTrainer):
             self.start_critic_warmup_at = self.config.RL.Finetune.start_critic_warmup_at
             self.finetune_full_agent =  self.config.RL.Finetune.finetune_full_agent
         
-        # if hasattr(self.config.RL, "Finetune"):
-        #     logger.info("Start Freeze encoder")
-        #     if self.config.RL.Finetune.freeze_encoders:
-        #         logger.info("Freeze encoders........")
-        #         self.actor_critic.freeze_visual_encoders()
+        if hasattr(self.config.RL, "Finetune"):
+            logger.info("Start Freeze encoder")
+            if self.config.RL.Finetune.freeze_encoders:
+                logger.info("Freeze encoders........")
+                self.actor_critic.freeze_visual_encoders()
 
         # TODO: Refactor VPT finetuning config
         if hasattr(self.config.RL.Finetune, "vpt_finetuning") and self.config.RL.Finetune.vpt_finetuning:
@@ -170,7 +171,8 @@ class DDPPOTrainer(PPOTrainer):
                 self.actor_critic.critic.fc.weight.data.fill_(0.0)
 
         if self.config.RL.DDPPO.reset_critic:
-            pass
+            nn.init.orthogonal_(self.actor_critic.critic.fc.weight)
+            nn.init.constant_(self.actor_critic.critic.fc.bias, 0)
 
         self.agent = DDPPO(
             actor_critic=self.actor_critic,
@@ -269,12 +271,17 @@ class DDPPOTrainer(PPOTrainer):
         self.agent.init_distributed(find_unused_params=True)
 
         if self.world_rank == 0:
+            parameters = [(param.numel(), param.requires_grad) for param in self.agent.parameters()] 
             logger.info(
-                "agent number of trainable parameters: {}".format(
+                "agent number of trainable parameters: {} / {}".format(
                     sum(
-                        param.numel()
-                        for param in self.agent.parameters()
-                        if param.requires_grad
+                        param[0]
+                        for param in parameters
+                        if param[1]
+                    ),
+                    sum(
+                        param[0]
+                        for param in parameters
                     )
                 )
             )
