@@ -1,17 +1,12 @@
-from typing import DefaultDict, Dict, List, Optional, Union
-
 import glob
 import gzip
 import json
 import os
+from collections import defaultdict
+from typing import DefaultDict, Dict, List, Optional, Union
+
 import numpy as np
 import torch
-import wandb
-
-from collections import defaultdict
-from numpy import ndarray
-from torch import Tensor
-
 from habitat.utils import profiling_wrapper
 from habitat.utils.visualizations import maps
 from habitat.utils.visualizations.utils import (
@@ -19,8 +14,11 @@ from habitat.utils.visualizations.utils import (
     draw_collision,
     images_to_video,
 )
+from numpy import ndarray
+from torch import Tensor
 
-from pirlnav.models.resnet_gn import ResNet
+import wandb
+from pirlnav.policy.models.resnet_gn import ResNet
 
 
 def load_encoder(encoder, path):

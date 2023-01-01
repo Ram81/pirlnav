@@ -32,11 +32,10 @@ from numpy import ndarray
 from torch import Tensor
 from torch.optim.lr_scheduler import LambdaLR
 
-import pirlnav.utils as utils
 import wandb
 from pirlnav.algos.agent import ILAgent
 from pirlnav.common.rollout_storage import RolloutStorage
-from pirlnav.utils import batch_obs, write_json
+from pirlnav.utils.utils import batch_obs, setup_wandb, write_json
 
 
 @baseline_registry.register_trainer(name="mil-trainer")
@@ -349,7 +348,7 @@ class ILEnvTrainer(BaseRLTrainer):
         )
 
         if self.wandb_initialized == False:
-            utils.setup_wandb(self.config, train=True, project_name="pirlnav")
+            setup_wandb(self.config, train=True, project_name=self.config.WANDB_PROJECT_NAME)
             self.wandb_initialized = True
 
         rollouts = RolloutStorage(
@@ -525,7 +524,7 @@ class ILEnvTrainer(BaseRLTrainer):
             config = self.config.clone()
         
         if self.wandb_initialized == False:
-            utils.setup_wandb(self.config, train=False, project_name="objectnav_mae")
+            setup_wandb(self.config, train=False, project_name=self.config.WANDB_PROJECT_NAME)
             self.wandb_initialized = True
 
         il_cfg = config.IL.BehaviorCloning

@@ -1,9 +1,9 @@
 #!/bin/bash
-#SBATCH --job-name=mae_onav
-#SBATCH --gres gpu:8
+#SBATCH --job-name=pirlnav
+#SBATCH --gres gpu:1
 #SBATCH --nodes 1
 #SBATCH --cpus-per-task 6
-#SBATCH --ntasks-per-node 8
+#SBATCH --ntasks-per-node 1
 #SBATCH --signal=USR1@1000
 #SBATCH --partition=short
 #SBATCH --constraint=a40
@@ -53,4 +53,3 @@ TASK_CONFIG.DATASET.TYPE "ObjectNav-v2" \
 TASK_CONFIG.DATASET.MAX_EPISODE_STEPS 500 \
 TASK_CONFIG.TASK.SENSORS "['OBJECTGOAL_SENSOR', 'DEMONSTRATION_SENSOR', 'INFLECTION_WEIGHT_SENSOR']" \
 WANDB_NAME "pirlnav-ovrl-resnet50-train-split-hab-v1" \
-TASK_CONFIG.ENVIRONMENT.ITERATOR_OPTIONS.MAX_SCENE_REPEAT_STEPS 10000 \

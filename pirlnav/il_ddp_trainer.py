@@ -42,7 +42,7 @@ import wandb
 from pirlnav.algos.agent import DDPILAgent
 from pirlnav.common.rollout_storage import RolloutStorage
 from pirlnav.il_trainer import ILEnvTrainer
-from pirlnav.utils import batch_obs, setup_wandb
+from pirlnav.utils.utils import batch_obs, setup_wandb
 
 
 @baseline_registry.register_trainer(name="mddp-il-trainer")
@@ -193,7 +193,6 @@ class ILEnvDDPTrainer(ILEnvTrainer):
         self.agent.train()
 
         if self.world_rank == 0:
-            # pdb.set_trace()
             logger.info(
                 "agent number of trainable parameters: {}".format(
                     sum(
@@ -205,7 +204,7 @@ class ILEnvDDPTrainer(ILEnvTrainer):
             )
 
             if self.wandb_initialized == False:
-                setup_wandb(self.config, train=True, project_name="objectnav_mae")
+                setup_wandb(self.config, train=True, project_name=self.config.WANDB_PROJECT_NAME)
                 self.wandb_initialized = True
 
         observations = self.envs.reset()

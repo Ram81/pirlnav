@@ -11,7 +11,7 @@ from pirlnav.common.rnn_state_encoder import RNNStateEncoder
 from pirlnav.policy.policy import ILPolicy
 from pirlnav.policy.transforms import get_transform
 from pirlnav.policy.visual_encoder import VisualEncoder
-from pirlnav.utils import load_encoder
+from pirlnav.utils.utils import load_encoder
 
 
 class ObjectNavILMAENet(Net):
@@ -56,10 +56,6 @@ class ObjectNavILMAENet(Net):
                 input_channels=3,
                 resnet_baseplanes=rgb_config.resnet_baseplanes,
                 resnet_ngroups=rgb_config.resnet_baseplanes // 2,
-                vit_use_fc_norm=rgb_config.vit_use_fc_norm,
-                vit_global_pool=rgb_config.vit_global_pool,
-                vit_use_cls=rgb_config.vit_use_cls,
-                vit_mask_ratio=rgb_config.vit_mask_ratio,
                 avgpooled_image=rgb_config.avgpooled_image,
                 drop_path_rate=rgb_config.drop_path_rate,
             )

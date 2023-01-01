@@ -6,14 +6,14 @@
 import abc
 
 import torch
-from torch import nn as nn
-
 from habitat_baselines.rl.ppo import Policy
 from habitat_baselines.utils.common import CategoricalNet
+from torch import nn as nn
 
 
 class ILPolicy(Policy):
     def __init__(self, net, dim_actions, no_critic=False, mlp_critic=False, critic_hidden_dim=512):
+        super().__init__(net, dim_actions)
         self.net = net
         self.dim_actions = dim_actions
         self.no_critic = no_critic
@@ -22,7 +22,7 @@ class ILPolicy(Policy):
             self.net.output_size, self.dim_actions
         )
         if self.no_critic:
-            pass
+            self.critic = None
         else:
             if not mlp_critic:
                 self.critic = CriticHead(self.net.output_size)

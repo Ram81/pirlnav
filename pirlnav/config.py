@@ -104,7 +104,8 @@ _CONFIG.BASE_TASK_CONFIG_PATH = "configs/tasks/imagenav.yaml"
 
 _CONFIG.TRAINER_NAME = "mppo"
 _CONFIG.ENV_NAME = "SimpleRLEnv"
-_CONFIG.WANDB_NAME = "mae-for-eai"
+_CONFIG.WANDB_PROJECT_NAME = "pirlnav"
+_CONFIG.WANDB_NAME = "pirlnav"
 _CONFIG.WANDB_MODE = "online"
 _CONFIG.SENSORS = ["RGB_SENSOR"]
 

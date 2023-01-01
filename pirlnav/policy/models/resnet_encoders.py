@@ -1,20 +1,16 @@
+import math
 from typing import Dict
 
 import numpy as np
-import math
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-
-from torch import Tensor
-
 from gym import spaces
 from habitat import logger
-from habitat_baselines.rl.ddppo.policy.running_mean_and_var import (
-    RunningMeanAndVar,
-)
+from habitat_baselines.rl.ddppo.policy.running_mean_and_var import RunningMeanAndVar
+from torch import Tensor
 
-from pirlnav.models import resnet
+from pirlnav.policy.models import resnet
 
 
 class Flatten(nn.Module):
