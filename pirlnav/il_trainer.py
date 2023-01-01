@@ -6,25 +6,17 @@
 
 import os
 import time
-import wandb
-
 from collections import defaultdict, deque
-from typing import Any, DefaultDict, Dict, List, Optional, Union, Tuple
+from typing import Any, DefaultDict, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import torch
 import tqdm
-
-from numpy import ndarray
-from torch.optim.lr_scheduler import LambdaLR
-from torch import Tensor
-
 from habitat import Config, logger
 from habitat.core.env import Env, RLEnv
 from habitat.core.vector_env import VectorEnv
 from habitat.utils import profiling_wrapper
 from habitat.utils.visualizations.utils import observations_to_image
-
 from habitat_baselines.common.base_trainer import BaseRLTrainer
 from habitat_baselines.common.baseline_registry import baseline_registry
 from habitat_baselines.common.environments import get_env_class
@@ -34,62 +26,20 @@ from habitat_baselines.common.obs_transformers import (
     get_active_obs_transforms,
 )
 from habitat_baselines.common.tensorboard_utils import TensorboardWriter
-from habitat_baselines.utils.common import (
-    #batch_obs,
-    generate_video,
-    linear_decay,
-)
+from habitat_baselines.utils.common import generate_video, linear_decay
 from habitat_baselines.utils.env_utils import construct_envs
+from numpy import ndarray
+from torch import Tensor
+from torch.optim.lr_scheduler import LambdaLR
 
-from pirlnav.algos.agent import ILAgent
-from pirlnav.rollout_storage import RolloutStorage
-from pirlnav.utils import write_json
 import pirlnav.utils as utils
-
-def _to_tensor(v: Union[Tensor, ndarray]) -> torch.Tensor:
-    if torch.is_tensor(v):
-        return v
-    elif isinstance(v, np.ndarray):
-        if v.dtype == np.uint32:
-            return torch.from_numpy(v.astype(int))
-        else:
-            return torch.from_numpy(v)
-    else:
-        return torch.tensor(v, dtype=torch.float)
+import wandb
+from pirlnav.algos.agent import ILAgent
+from pirlnav.common.rollout_storage import RolloutStorage
+from pirlnav.utils import batch_obs, write_json
 
 
-@torch.no_grad()
-@profiling_wrapper.RangeContext("batch_obs")
-def batch_obs(
-    observations: List[Dict],
-    device: Optional[torch.device] = None,
-) -> Dict[str, torch.Tensor]:
-    r"""Transpose a batch of observation dicts to a dict of batched
-    observations.
-
-    Args:
-        observations:  list of dicts of observations.
-        device: The torch.device to put the resulting tensors on.
-            Will not move the tensors if None
-
-    Returns:
-        transposed dict of torch.Tensor of observations.
-    """
-    batch: DefaultDict[str, List] = defaultdict(list)
-
-    for obs in observations:
-        for sensor in obs:
-            batch[sensor].append(_to_tensor(obs[sensor]))
-
-    batch_t: Dict[str, torch.Tensor] = {}
-
-    for sensor in batch:
-        batch_t[sensor] = torch.stack(batch[sensor], dim=0).to(device=device)
-
-    return batch_t
-
-
-@baseline_registry.register_trainer(name="il-trainer")
+@baseline_registry.register_trainer(name="mil-trainer")
 class ILEnvTrainer(BaseRLTrainer):
     r"""Trainer class for behavior cloning.
     """
@@ -399,7 +349,7 @@ class ILEnvTrainer(BaseRLTrainer):
         )
 
         if self.wandb_initialized == False:
-            utils.setup_wandb(self.config, train=True, project_name="objectnav_mae")
+            utils.setup_wandb(self.config, train=True, project_name="pirlnav")
             self.wandb_initialized = True
 
         rollouts = RolloutStorage(

@@ -6,20 +6,13 @@
 
 import contextlib
 import os
-import pdb
 import random
 import time
-import numpy as np
-import torch
-import wandb
-
 from collections import defaultdict, deque
 from typing import DefaultDict, Optional
 
-from torch import distributed as distrib
-from torch import nn as nn
-from torch.optim.lr_scheduler import LambdaLR
-
+import numpy as np
+import torch
 from habitat import Config, logger
 from habitat.utils import profiling_wrapper
 from habitat_baselines.common.baseline_registry import baseline_registry
@@ -27,28 +20,32 @@ from habitat_baselines.common.environments import get_env_class
 from habitat_baselines.common.obs_transformers import (
     apply_obs_transforms_batch,
     apply_obs_transforms_obs_space,
-    get_active_obs_transforms
+    get_active_obs_transforms,
 )
 from habitat_baselines.common.tensorboard_utils import TensorboardWriter
-from habitat_baselines.rl.ddppo.ddp_utils import (
+from habitat_baselines.rl.ddppo.algo.ddp_utils import (
     EXIT,
     REQUEUE,
     add_signal_handlers,
     init_distrib_slurm,
-    load_resume_state,
+    load_interrupted_state,
     requeue_job,
-    save_resume_state,
+    save_interrupted_state,
 )
-from habitat_baselines.utils.common import batch_obs, linear_decay
+from habitat_baselines.utils.common import linear_decay
 from habitat_baselines.utils.env_utils import construct_envs
+from torch import distributed as distrib
+from torch import nn as nn
+from torch.optim.lr_scheduler import LambdaLR
 
+import wandb
 from pirlnav.algos.agent import DDPILAgent
+from pirlnav.common.rollout_storage import RolloutStorage
 from pirlnav.il_trainer import ILEnvTrainer
-from pirlnav.rollout_storage import RolloutStorage
-import pirlnav.utils as utils
+from pirlnav.utils import batch_obs, setup_wandb
 
 
-@baseline_registry.register_trainer(name="ddp-il-trainer")
+@baseline_registry.register_trainer(name="mddp-il-trainer")
 class ILEnvDDPTrainer(ILEnvTrainer):
     # DD-PPO cuts rollouts short to mitigate the straggler effect
     # This, in theory, can cause some rollouts to be very short.
@@ -59,7 +56,7 @@ class ILEnvDDPTrainer(ILEnvTrainer):
     SHORT_ROLLOUT_THRESHOLD: float = 0.25
 
     def __init__(self, config: Optional[Config] = None) -> None:
-        interrupted_state = load_resume_state(config)
+        interrupted_state = load_interrupted_state()
         if interrupted_state is not None:
             config = interrupted_state["config"]
 
@@ -108,6 +105,7 @@ class ILEnvDDPTrainer(ILEnvTrainer):
                 }, strict=False
             )
             logger.info("Loading checkpoint missing keys: {}".format(missing_keys))
+        logger.info("Using legacy policy new trainer")
 
         self.agent = DDPILAgent(
             model=self.policy,
@@ -138,7 +136,7 @@ class ILEnvDDPTrainer(ILEnvTrainer):
         SLURM_JOBID = os.environ.get("SLURM_JOB_ID", None)
         interrupted_state_file = os.path.join(self.config.CHECKPOINT_FOLDER, "{}.pth".format(SLURM_JOBID))
 
-        interrupted_state = load_resume_state(self.config)
+        interrupted_state = load_interrupted_state(interrupted_state_file)
         if interrupted_state is not None:
             logger.info("Overriding current config with interrupted state config")
             self.config = interrupted_state["config"]
@@ -207,7 +205,7 @@ class ILEnvDDPTrainer(ILEnvTrainer):
             )
 
             if self.wandb_initialized == False:
-                utils.setup_wandb(self.config, train=True, project_name="objectnav_mae")
+                setup_wandb(self.config, train=True, project_name="objectnav_mae")
                 self.wandb_initialized = True
 
         observations = self.envs.reset()
@@ -307,7 +305,7 @@ class ILEnvDDPTrainer(ILEnvTrainer):
                             start_update=update,
                             prev_time=(time.time() - t_start) + prev_time,
                         )
-                        save_resume_state(
+                        save_interrupted_state(
                             dict(
                                 state_dict=self.agent.state_dict(),
                                 optim_state=self.agent.optimizer.state_dict(),

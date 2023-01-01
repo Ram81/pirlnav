@@ -2,7 +2,7 @@
 # for better hyperparameters for actual trainingsem_seg_pred
 
 BASE_TASK_CONFIG_PATH: "configs/tasks/objectnav_hm3d_il.yaml"
-TRAINER_NAME: "ddp-il-trainer"
+TRAINER_NAME: "mddp-il-trainer"
 ENV_NAME: SimpleRLEnv
 SIMULATOR_GPU_ID: 0
 TORCH_GPU_ID: 0
@@ -41,7 +41,7 @@ WANDB:
 
 IL:
   POLICY:
-    name: "ObjectNavILPolicy"
+    name: "ObjectNavILMAEPolicy"
   USE_IW: True
   distrib_backend: NCCL
   BehaviorCloning:

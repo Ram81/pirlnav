@@ -1,35 +1,20 @@
-from typing import Dict, Optional
-
-import numpy as np
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
-
 from gym import Space
-from gym.spaces import Dict, Box
 from habitat import Config, logger
-from habitat.tasks.nav.nav import (
-    EpisodicCompassSensor,
-    EpisodicGPSSensor,
-)
-from habitat.tasks.nav.object_nav_task import (
-    ObjectGoalSensor,
-)
+from habitat.tasks.nav.nav import EpisodicCompassSensor, EpisodicGPSSensor
+from habitat.tasks.nav.object_nav_task import ObjectGoalSensor
 from habitat_baselines.common.baseline_registry import baseline_registry
+from habitat_baselines.rl.ppo import Net
 
-from pirlnav.transforms import get_transform
+from pirlnav.common.rnn_state_encoder import RNNStateEncoder
+from pirlnav.policy.policy import ILPolicy
+from pirlnav.policy.transforms import get_transform
+from pirlnav.policy.visual_encoder import VisualEncoder
 from pirlnav.utils import load_encoder
-from pirlnav.visual_encoder import VisualEncoder
-
-from pirlnav.models.resnet_encoders import (
-    VlnResnetDepthEncoder,
-    ResnetRGBEncoder,
-)
-from pirlnav.rnn_state_encoder import RNNStateEncoder
-from pirlnav.policy import Net, ILPolicy
 
 
-class ObjectNavILNet(Net):
+class ObjectNavILMAENet(Net):
     r"""A baseline sequence to sequence network that concatenates instruction,
     RGB, and depth encodings before decoding an action distribution with an RNN.
     Modules:
@@ -50,30 +35,10 @@ class ObjectNavILNet(Net):
         self.model_config = model_config
         rnn_input_size = 0
 
-        # Init the depth encoder
-        assert model_config.DEPTH_ENCODER.cnn_type in [
-            "VlnResnetDepthEncoder",
-            "None",
-        ], "DEPTH_ENCODER.cnn_type must be VlnResnetDepthEncoder"
-        if model_config.DEPTH_ENCODER.cnn_type == "VlnResnetDepthEncoder":
-            self.depth_encoder = VlnResnetDepthEncoder(
-                observation_space,
-                output_size=model_config.DEPTH_ENCODER.output_size,
-                checkpoint=model_config.DEPTH_ENCODER.ddppo_checkpoint,
-                backbone=model_config.DEPTH_ENCODER.backbone,
-                trainable=model_config.DEPTH_ENCODER.trainable,
-            )
-            rnn_input_size += model_config.DEPTH_ENCODER.output_size
-            logger.info("Initializing {} depth encoder".format(model_config.DEPTH_ENCODER.cnn_type))
-        else:
-            self.depth_encoder = None
-
         # Init the RGB visual encoder
         assert model_config.RGB_ENCODER.cnn_type in [
             "VisualEncoder",
-            "ResnetRGBEncoder",
-            "None",
-        ], "RGB_ENCODER.cnn_type must be 'VisualEncoder', 'ResnetRGBEncoder' or 'None'."
+        ], "RGB_ENCODER.cnn_type must be 'VisualEncoder'."
 
         rgb_config = model_config.RGB_ENCODER
         if model_config.RGB_ENCODER.cnn_type == "VisualEncoder":
@@ -107,19 +72,6 @@ class ObjectNavILNet(Net):
 
             rnn_input_size += model_config.RGB_ENCODER.hidden_size
             logger.info("RGB encoder is {}".format(model_config.RGB_ENCODER.cnn_type))
-        elif model_config.RGB_ENCODER.cnn_type == "ResnetRGBEncoder":
-            self.visual_encoder = ResnetRGBEncoder(
-                observation_space,
-                output_size=model_config.RGB_ENCODER.hidden_size,
-                backbone=model_config.RGB_ENCODER.backbone,
-                trainable=(not model_config.RGB_ENCODER.freeze_backbone),
-                normalize_visual_inputs=model_config.RGB_ENCODER.normalize_visual_inputs,
-            )
-            rnn_input_size += model_config.RGB_ENCODER.hidden_size
-            logger.info("RGB encoder is {}".format(model_config.RGB_ENCODER.cnn_type))
-        else:
-            self.visual_encoder = None
-            logger.info("RGB encoder is none")
 
         if EpisodicGPSSensor.cls_uuid in observation_space.spaces:
             input_gps_dim = observation_space.spaces[
@@ -162,8 +114,7 @@ class ObjectNavILNet(Net):
 
         self.rnn_input_size = rnn_input_size
 
-        # pretrained weights
-        logger.info("encoder: {}".format(rgb_config.pretrained_encoder is not None))
+        # load pretrained weights
         if rgb_config.pretrained_encoder is not None:
             msg = load_encoder(self.visual_encoder, rgb_config.pretrained_encoder)
             logger.info("Using weights from {}: {}".format(rgb_config.pretrained_encoder, msg))
@@ -179,12 +130,6 @@ class ObjectNavILNet(Net):
             num_layers=model_config.STATE_ENCODER.num_recurrent_layers,
             rnn_type=model_config.STATE_ENCODER.rnn_type,
         )
-        # self.state_encoder = build_rnn_state_encoder(
-        #     input_size=rnn_input_size,
-        #     hidden_size=model_config.STATE_ENCODER.hidden_size,
-        #     rnn_type=model_config.STATE_ENCODER.rnn_type,
-        #     num_layers=model_config.STATE_ENCODER.num_recurrent_layers,
-        # )
 
         self.train()
 
@@ -211,16 +156,6 @@ class ObjectNavILNet(Net):
         N = rnn_hidden_states.size(1)
 
         x = []
-
-        if self.depth_encoder is not None:
-            depth_obs = observations["depth"]
-            if len(depth_obs.size()) == 5:
-                observations["depth"] = depth_obs.contiguous().view(
-                    -1, depth_obs.size(2), depth_obs.size(3), depth_obs.size(4)
-                )
-
-            depth_embedding = self.depth_encoder(observations)
-            x.append(depth_embedding)
 
         if self.visual_encoder is not None:
             if len(rgb_obs.size()) == 5:
@@ -276,12 +211,12 @@ class ObjectNavILNet(Net):
 
 
 @baseline_registry.register_policy
-class ObjectNavILPolicy(ILPolicy):
+class ObjectNavILMAEPolicy(ILPolicy):
     def __init__(
         self, observation_space: Space, action_space: Space, model_config: Config, run_type: str
     ):
         super().__init__(
-            ObjectNavILNet(
+            ObjectNavILMAENet(
                 observation_space=observation_space,
                 model_config=model_config,
                 num_actions=action_space.n,

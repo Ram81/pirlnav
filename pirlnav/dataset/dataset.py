@@ -17,14 +17,9 @@ from habitat.datasets.pointnav.pointnav_dataset import (
     DEFAULT_SCENE_PATH_PREFIX,
     PointNavDatasetV1,
 )
-from habitat.tasks.nav.object_nav_task import (
-    ObjectGoal,
-    ObjectViewLocation,
-)
-from pirlnav.object_nav_task import ( 
-    ObjectGoalNavEpisode,
-    ReplayActionSpec
-)
+from habitat.tasks.nav.object_nav_task import ObjectGoal, ObjectViewLocation
+
+from pirlnav.task.object_nav_task import ObjectGoalNavEpisode, ReplayActionSpec
 
 
 @registry.register_dataset(name="ObjectNav-v2")

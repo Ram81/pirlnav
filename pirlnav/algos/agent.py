@@ -22,9 +22,12 @@ class ILAgent(nn.Module):
         num_envs: int,
         num_mini_batch: int,
         lr: Optional[float] = None,
+        encoder_lr: Optional[float] = None,
         eps: Optional[float] = None,
         max_grad_norm: Optional[float] = None,
-        wd: Optional[float] = None
+        wd: Optional[float] = None,
+        optimizer: Optional[str] = "Adam",
+        entropy_coef: Optional[float] = 0.0,
     ) -> None:
 
         super().__init__()
@@ -35,12 +38,12 @@ class ILAgent(nn.Module):
 
         self.max_grad_norm = max_grad_norm
         self.num_envs = num_envs
+        self.entropy_coef = entropy_coef
 
-        self.optimizer = optim.AdamW(
+        self.optimizer = optim.Adam(
             list(filter(lambda p: p.requires_grad, model.parameters())),
             lr=lr,
             eps=eps,
-            weight_decay=wd,
         )
         self.device = next(model.parameters()).device
 
@@ -49,6 +52,8 @@ class ILAgent(nn.Module):
 
     def update(self, rollouts) -> Tuple[float, float, float]:
         total_loss_epoch = 0.0
+        total_entropy = 0.0
+        total_action_loss = 0.0
 
         profiling_wrapper.range_push("BC.update epoch")
         data_generator = rollouts.recurrent_generator(
@@ -71,7 +76,7 @@ class ILAgent(nn.Module):
             (
                 logits,
                 rnn_hidden_states,
-                distribution_entropy
+                ent
             ) = self.model(
                 obs_batch,
                 recurrent_hidden_states_batch,
@@ -88,6 +93,7 @@ class ILAgent(nn.Module):
             inflections_batch = obs_batch["inflection_weight"]
 
             total_loss = ((inflections_batch * action_loss).sum(0) / inflections_batch.sum(0)).mean()
+            
 
             self.before_backward(total_loss)
             total_loss.backward()
@@ -98,6 +104,7 @@ class ILAgent(nn.Module):
             self.after_step()
 
             total_loss_epoch += total_loss.item()
+            # total_entropy += dist_entropy.item()
             hidden_states.append(rnn_hidden_states)
 
         profiling_wrapper.range_pop()
@@ -105,6 +112,8 @@ class ILAgent(nn.Module):
         hidden_states = torch.cat(hidden_states, dim=1)
 
         total_loss_epoch /= self.num_mini_batch
+        total_entropy /= self.num_mini_batch
+        total_action_loss /= self.num_mini_batch
 
         return total_loss_epoch, hidden_states
 

@@ -13,7 +13,7 @@
 
 source /srv/flash1/rramrakhya6/miniconda3/etc/profile.d/conda.sh
 conda deactivate
-conda activate eai
+conda activate habitat-web
 
 export GLOG_minloglevel=2
 export MAGNUM_LOG=quiet
@@ -24,8 +24,8 @@ export MASTER_ADDR
 config="configs/experiments/il_ddp_objectnav.yaml"
 
 DATA_PATH="data/datasets/objectnav/objectnav_hm3d/objectnav_hm3d_10k"
-TENSORBOARD_DIR="tb/objectnav_il/overfitting/ovrl_resnet50_train_split/seed_1/"
-CHECKPOINT_DIR="data/new_checkpoints/objectnav_il/overfitting/ovrl_resnet50_train_split/seed_1/"
+TENSORBOARD_DIR="tb/objectnav_il/overfitting/ovrl_resnet50_train_split_hab_v1/seed_1/"
+CHECKPOINT_DIR="data/new_checkpoints/objectnav_il/overfitting/ovrl_resnet50_train_split_hab_v1/seed_1/"
 INFLECTION_COEF=3.234951275740812
 
 mkdir -p $TENSORBOARD_DIR
@@ -52,5 +52,5 @@ TASK_CONFIG.DATASET.DATA_PATH "$DATA_PATH/{split}/{split}.json.gz" \
 TASK_CONFIG.DATASET.TYPE "ObjectNav-v2" \
 TASK_CONFIG.DATASET.MAX_EPISODE_STEPS 500 \
 TASK_CONFIG.TASK.SENSORS "['OBJECTGOAL_SENSOR', 'DEMONSTRATION_SENSOR', 'INFLECTION_WEIGHT_SENSOR']" \
-WANDB_NAME "pirlnav-ovrl-resnet50-train-split" \
+WANDB_NAME "pirlnav-ovrl-resnet50-train-split-hab-v1" \
 TASK_CONFIG.ENVIRONMENT.ITERATOR_OPTIONS.MAX_SCENE_REPEAT_STEPS 10000 \

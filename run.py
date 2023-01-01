@@ -5,8 +5,10 @@ import random
 from datetime import datetime
 
 import numpy as np
-import habitat
+import numba
+import quaternion
 import torch
+import habitat
 
 from habitat import logger
 from habitat.config import Config

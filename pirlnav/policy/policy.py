@@ -14,7 +14,6 @@ from habitat_baselines.utils.common import CategoricalNet
 
 class ILPolicy(Policy):
     def __init__(self, net, dim_actions, no_critic=False, mlp_critic=False, critic_hidden_dim=512):
-        super().__init__(net, dim_actions)
         self.net = net
         self.dim_actions = dim_actions
         self.no_critic = no_critic
@@ -22,15 +21,16 @@ class ILPolicy(Policy):
         self.action_distribution = CategoricalNet(
             self.net.output_size, self.dim_actions
         )
-        if not self.no_critic:
-            self.critic = CriticHead(self.net.output_size)
-        elif self.no_critic:
+        if self.no_critic:
             pass
         else:
             if not mlp_critic:
                 self.critic = CriticHead(self.net.output_size)
             else:
-                self.critic = MLPCriticHead(self.net.output_size, critic_hidden_dim)
+                self.critic = MLPCriticHead(
+                    self.net.output_size,
+                    critic_hidden_dim,
+                )
 
     def forward(self, *x):
         features, rnn_hidden_states = self.net(
@@ -48,6 +48,7 @@ class ILPolicy(Policy):
         prev_actions,
         masks,
         deterministic=False,
+        return_distribution=False,
     ):
         features, rnn_hidden_states = self.net(
             observations, rnn_hidden_states, prev_actions, masks
@@ -62,10 +63,14 @@ class ILPolicy(Policy):
         distribution_entropy = distribution.entropy().mean()
 
         if self.no_critic:
-            return action, rnn_hidden_states            
+            return action, rnn_hidden_states, distribution_entropy
 
         value = self.critic(features)
-        return value, action, action_log_probs, rnn_hidden_states #, distribution_entropy
+
+        if return_distribution:
+            return value, action, action_log_probs, rnn_hidden_states, distribution_entropy, distribution
+
+        return value, action, action_log_probs, rnn_hidden_states, distribution_entropy
 
     def get_value(self, observations, rnn_hidden_states, prev_actions, masks):
         features, _ = self.net(
@@ -85,7 +90,10 @@ class ILPolicy(Policy):
         action_log_probs = distribution.log_probs(action)
         distribution_entropy = distribution.entropy().mean()
 
-        return value, action_log_probs, distribution_entropy, rnn_hidden_states
+        aux_loss_meta = {}
+        aux_loss_meta["action_distribution"] = distribution
+
+        return value, action_log_probs, distribution_entropy, rnn_hidden_states, aux_loss_meta
 
     @classmethod
     @abc.abstractmethod
@@ -120,24 +128,3 @@ class MLPCriticHead(nn.Module):
 
     def forward(self, x):
         return self.fc(x.detach())
-
-
-class Net(nn.Module, metaclass=abc.ABCMeta):
-    @abc.abstractmethod
-    def forward(self, observations, rnn_hidden_states, prev_actions, masks):
-        pass
-
-    @property
-    @abc.abstractmethod
-    def output_size(self):
-        pass
-
-    @property
-    @abc.abstractmethod
-    def num_recurrent_layers(self):
-        pass
-
-    @property
-    @abc.abstractmethod
-    def is_blind(self):
-        pass
