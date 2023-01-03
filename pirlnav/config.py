@@ -130,25 +130,60 @@ _CONFIG.EVAL.SPLIT = "val"
 _CONFIG.EVAL.USE_CKPT_CONFIG = True
 _CONFIG.EVAL.EVAL_FREQ = 5
 
-_CONFIG.MODEL = CN()
-_CONFIG.MODEL.RGB_ENCODER = CN()
-_CONFIG.MODEL.RGB_ENCODER.image_size = 256
-_CONFIG.MODEL.RGB_ENCODER.backbone = "resnet50"
-_CONFIG.MODEL.RGB_ENCODER.resnet_baseplanes = 32
-_CONFIG.MODEL.RGB_ENCODER.vit_use_fc_norm = False
-_CONFIG.MODEL.RGB_ENCODER.vit_global_pool = False
-_CONFIG.MODEL.RGB_ENCODER.vit_use_cls = False
-_CONFIG.MODEL.RGB_ENCODER.vit_mask_ratio = None
-_CONFIG.MODEL.RGB_ENCODER.hidden_size = 512
-_CONFIG.MODEL.RGB_ENCODER.use_augmentations = True
-_CONFIG.MODEL.RGB_ENCODER.use_augmentations_test_time = True
-_CONFIG.MODEL.RGB_ENCODER.randomize_augmentations_over_envs = False
-_CONFIG.MODEL.RGB_ENCODER.pretrained_encoder = None
-_CONFIG.MODEL.RGB_ENCODER.freeze_backbone = False
-_CONFIG.MODEL.RGB_ENCODER.avgpooled_image = False
-_CONFIG.MODEL.RGB_ENCODER.augmentations_name = "jitter+shift"
-_CONFIG.MODEL.RGB_ENCODER.drop_path_rate = 0.0
-_CONFIG.MODEL.RGB_ENCODER.normalize_visual_inputs = False
+_CONFIG.RL.POLICY.NAME = "ObjectNavILMAEPolicy"
+
+_CONFIG.POLICY = CN()
+_CONFIG.POLICY.RGB_ENCODER = CN()
+_CONFIG.POLICY.RGB_ENCODER.image_size = 256
+_CONFIG.POLICY.RGB_ENCODER.backbone = "resnet50"
+_CONFIG.POLICY.RGB_ENCODER.resnet_baseplanes = 32
+_CONFIG.POLICY.RGB_ENCODER.vit_use_fc_norm = False
+_CONFIG.POLICY.RGB_ENCODER.vit_global_pool = False
+_CONFIG.POLICY.RGB_ENCODER.vit_use_cls = False
+_CONFIG.POLICY.RGB_ENCODER.vit_mask_ratio = None
+_CONFIG.POLICY.RGB_ENCODER.hidden_size = 512
+_CONFIG.POLICY.RGB_ENCODER.use_augmentations = True
+_CONFIG.POLICY.RGB_ENCODER.use_augmentations_test_time = True
+_CONFIG.POLICY.RGB_ENCODER.randomize_augmentations_over_envs = False
+_CONFIG.POLICY.RGB_ENCODER.pretrained_encoder = None
+_CONFIG.POLICY.RGB_ENCODER.freeze_backbone = False
+_CONFIG.POLICY.RGB_ENCODER.avgpooled_image = False
+_CONFIG.POLICY.RGB_ENCODER.augmentations_name = "jitter+shift"
+_CONFIG.POLICY.RGB_ENCODER.drop_path_rate = 0.0
+_CONFIG.POLICY.RGB_ENCODER.normalize_visual_inputs = False
+
+_CONFIG.POLICY.STATE_ENCODER = CN()
+_CONFIG.POLICY.STATE_ENCODER.hidden_size = 2048
+_CONFIG.POLICY.STATE_ENCODER.rnn_type = "GRU"
+_CONFIG.POLICY.STATE_ENCODER.num_recurrent_layers = 2
+
+_CONFIG.POLICY.SEQ2SEQ = CN()
+_CONFIG.POLICY.SEQ2SEQ.use_prev_action = True
+
+_CONFIG.POLICY.CRITIC = CN()
+_CONFIG.POLICY.CRITIC.no_critic = False
+_CONFIG.POLICY.CRITIC.mlp_critic = False
+_CONFIG.POLICY.CRITIC.hidden_dim = 512
+
+##############################################
+# Policy Finetuning config
+##############################################
+
+_CONFIG.RL.Finetune = CN()
+_CONFIG.RL.Finetune.finetune = True
+_CONFIG.RL.Finetune.freeze_encoders = True
+
+_CONFIG.RL.Finetune.vpt_finetuning = False
+_CONFIG.RL.Finetune.kl_coef = 0.2
+_CONFIG.RL.Finetune.kl_decay_coef = 0.9995
+_CONFIG.RL.Finetune.zero_critic_weights = False
+
+_CONFIG.RL.Finetune.lr = 1.5e-5
+
+_CONFIG.RL.Finetune.start_actor_warmup_at = 50
+_CONFIG.RL.Finetune.start_actor_update_at = 100
+_CONFIG.RL.Finetune.start_critic_warmup_at = 50
+_CONFIG.RL.Finetune.start_critic_update_at = 100
 
 def get_config(
     config_paths: Optional[Union[List[str], str]] = None,

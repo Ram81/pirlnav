@@ -60,9 +60,11 @@ class ILEnvDDPTrainer(ILEnvTrainer):
         if interrupted_state is not None:
             config = interrupted_state["config"]
 
-        super().__init__(config)  
+        super().__init__(config)
 
-    def _setup_actor_critic_agent(self, il_cfg: Config, model_config: Config) -> None:
+    def _setup_actor_critic_agent(
+        self, il_cfg: Config, model_config: Config
+    ) -> None:
         r"""Sets up actor critic and agent for PPO.
 
         Args:
@@ -93,7 +95,8 @@ class ILEnvDDPTrainer(ILEnvTrainer):
         # Load pretrained state
         if self.config.IL.BehaviorCloning.pretrained:
             pretrained_state = torch.load(
-                self.config.IL.BehaviorCloning.pretrained_weights, map_location="cpu"
+                self.config.IL.BehaviorCloning.pretrained_weights,
+                map_location="cpu",
             )
             logger.info("Loading pretrained state")
 
@@ -102,9 +105,12 @@ class ILEnvDDPTrainer(ILEnvTrainer):
                 {
                     k.replace("model.", ""): v
                     for k, v in pretrained_state["state_dict"].items()
-                }, strict=False
+                },
+                strict=False,
             )
-            logger.info("Loading checkpoint missing keys: {}".format(missing_keys))
+            logger.info(
+                "Loading checkpoint missing keys: {}".format(missing_keys)
+            )
         logger.info("Using legacy policy new trainer")
 
         self.agent = DDPILAgent(
@@ -134,11 +140,15 @@ class ILEnvDDPTrainer(ILEnvTrainer):
             num_steps_to_capture=self.config.PROFILING.NUM_STEPS_TO_CAPTURE,
         )
         SLURM_JOBID = os.environ.get("SLURM_JOB_ID", None)
-        interrupted_state_file = os.path.join(self.config.CHECKPOINT_FOLDER, "{}.pth".format(SLURM_JOBID))
+        interrupted_state_file = os.path.join(
+            self.config.CHECKPOINT_FOLDER, "{}.pth".format(SLURM_JOBID)
+        )
 
         interrupted_state = load_interrupted_state(interrupted_state_file)
         if interrupted_state is not None:
-            logger.info("Overriding current config with interrupted state config")
+            logger.info(
+                "Overriding current config with interrupted state config"
+            )
             self.config = interrupted_state["config"]
 
         # Stores the number of workers that have finished their rollout
@@ -204,7 +214,11 @@ class ILEnvDDPTrainer(ILEnvTrainer):
             )
 
             if self.wandb_initialized == False:
-                setup_wandb(self.config, train=True, project_name=self.config.WANDB_PROJECT_NAME)
+                setup_wandb(
+                    self.config,
+                    train=True,
+                    project_name=self.config.WANDB_PROJECT_NAME,
+                )
                 self.wandb_initialized = True
 
         observations = self.envs.reset()
@@ -285,7 +299,7 @@ class ILEnvDDPTrainer(ILEnvTrainer):
                 if update > 0 and il_cfg.use_linear_lr_decay:
                     lr_scheduler.step()  # type: ignore
 
-                if update > 0 and  il_cfg.use_linear_clip_decay:
+                if update > 0 and il_cfg.use_linear_clip_decay:
                     self.agent.clip_param = il_cfg.clip_param * linear_decay(
                         update, self.config.NUM_UPDATES
                     )
@@ -312,7 +326,7 @@ class ILEnvDDPTrainer(ILEnvTrainer):
                                 config=self.config,
                                 requeue_stats=requeue_stats,
                             ),
-                            interrupted_state_file
+                            interrupted_state_file,
                         )
 
                     requeue_job()
@@ -336,8 +350,7 @@ class ILEnvDDPTrainer(ILEnvTrainer):
                     # This is where the preemption of workers happens.  If a
                     # worker detects it will be a straggler, it preempts itself!
                     if (
-                        step
-                        >= il_cfg.num_steps * self.SHORT_ROLLOUT_THRESHOLD
+                        step >= il_cfg.num_steps * self.SHORT_ROLLOUT_THRESHOLD
                     ) and int(num_rollouts_done_store.get("num_done")) > (
                         il_cfg.sync_frac * self.world_size
                     ):
@@ -345,13 +358,12 @@ class ILEnvDDPTrainer(ILEnvTrainer):
                 profiling_wrapper.range_pop()  # rollouts loop
 
                 num_rollouts_done_store.add("num_done", 1)
-                #logger.info("update: {}".format(update))
+                # logger.info("update: {}".format(update))
 
                 self.agent.train()
-                (
-                    delta_pth_time,
-                    total_loss
-                ) = self._update_agent(il_cfg, rollouts)
+                (delta_pth_time, total_loss) = self._update_agent(
+                    il_cfg, rollouts
+                )
                 pth_time += delta_pth_time
 
                 stats_ordering = sorted(running_episode_stats.keys())
@@ -386,7 +398,10 @@ class ILEnvDDPTrainer(ILEnvTrainer):
                     }
                     deltas["count"] = max(deltas["count"], 1.0)
 
-                    wandb.log({"reward": deltas["reward"] / deltas["count"]}, step=count_steps)
+                    wandb.log(
+                        {"reward": deltas["reward"] / deltas["count"]},
+                        step=count_steps,
+                    )
 
                     # Check to see if there are any metrics
                     # that haven't been logged yet
@@ -398,7 +413,10 @@ class ILEnvDDPTrainer(ILEnvTrainer):
                     if len(metrics) > 0:
                         wandb.log(metrics, step=count_steps)
 
-                    wandb.log({k: l for l, k in zip(losses, ["action_loss"])}, step=count_steps)
+                    wandb.log(
+                        {k: l for l, k in zip(losses, ["action_loss"])},
+                        step=count_steps,
+                    )
 
                     # log stats
                     if update > 0 and update % self.config.LOG_INTERVAL == 0:
@@ -406,7 +424,8 @@ class ILEnvDDPTrainer(ILEnvTrainer):
                             "update: {}\tfps: {:.3f}\tloss: {:.3f}".format(
                                 update,
                                 count_steps
-                                / ((time.time() - t_start) + prev_time), losses[0]
+                                / ((time.time() - t_start) + prev_time),
+                                losses[0],
                             )
                         )
 
@@ -434,7 +453,6 @@ class ILEnvDDPTrainer(ILEnvTrainer):
                             dict(step=count_steps),
                         )
                         count_checkpoints += 1
-
 
                 profiling_wrapper.range_pop()  # train update
 

@@ -97,11 +97,6 @@ RL:
 
 
 MODEL:
-  hm3d_goal: False
-  embed_sge: False
-  USE_SEMANTICS: False
-  USE_PRED_SEMANTICS: False
-  SWITCH_TO_PRED_SEMANTICS_UPDATE: 0
   RGB_ENCODER:
     cnn_type: "VisualEncoder"
     backbone: "resnet50"

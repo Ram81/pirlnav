@@ -5,15 +5,21 @@
 # LICENSE file in the root directory of this source tree.
 import abc
 
-import torch
 from habitat_baselines.rl.ppo import Policy
 from habitat_baselines.utils.common import CategoricalNet
 from torch import nn as nn
 
 
-class ILPolicy(Policy):
-    def __init__(self, net, dim_actions, no_critic=False, mlp_critic=False, critic_hidden_dim=512):
-        super().__init__(net, dim_actions)
+class ILPolicy(nn.Module, Policy):
+    def __init__(
+        self,
+        net,
+        dim_actions,
+        no_critic=False,
+        mlp_critic=False,
+        critic_hidden_dim=512,
+    ):
+        super().__init__()
         self.net = net
         self.dim_actions = dim_actions
         self.no_critic = no_critic
@@ -33,9 +39,7 @@ class ILPolicy(Policy):
                 )
 
     def forward(self, *x):
-        features, rnn_hidden_states = self.net(
-            *x
-        )
+        features, rnn_hidden_states = self.net(*x)
         distribution = self.action_distribution(features)
         distribution_entropy = distribution.entropy().mean()
 
@@ -68,9 +72,19 @@ class ILPolicy(Policy):
         value = self.critic(features)
 
         if return_distribution:
-            return value, action, action_log_probs, rnn_hidden_states, distribution_entropy, distribution
+            return (
+                value,
+                action,
+                action_log_probs,
+                rnn_hidden_states,
+            )
 
-        return value, action, action_log_probs, rnn_hidden_states, distribution_entropy
+        return (
+            value,
+            action,
+            action_log_probs,
+            rnn_hidden_states,
+        )
 
     def get_value(self, observations, rnn_hidden_states, prev_actions, masks):
         features, _ = self.net(
@@ -90,10 +104,12 @@ class ILPolicy(Policy):
         action_log_probs = distribution.log_probs(action)
         distribution_entropy = distribution.entropy().mean()
 
-        aux_loss_meta = {}
-        aux_loss_meta["action_distribution"] = distribution
-
-        return value, action_log_probs, distribution_entropy, rnn_hidden_states, aux_loss_meta
+        return (
+            value,
+            action_log_probs,
+            distribution_entropy,
+            rnn_hidden_states,
+        )
 
     @classmethod
     @abc.abstractmethod
@@ -118,7 +134,7 @@ class MLPCriticHead(nn.Module):
         self.fc = nn.Sequential(
             nn.Linear(input_size, hidden_dim),
             nn.ReLU(),
-            nn.Linear(hidden_dim,  1),
+            nn.Linear(hidden_dim, 1),
         )
         nn.init.orthogonal_(self.fc[0].weight)
         nn.init.constant_(self.fc[0].bias, 0)

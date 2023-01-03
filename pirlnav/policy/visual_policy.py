@@ -5,6 +5,7 @@ from habitat import Config, logger
 from habitat.tasks.nav.nav import EpisodicCompassSensor, EpisodicGPSSensor
 from habitat.tasks.nav.object_nav_task import ObjectGoalSensor
 from habitat_baselines.common.baseline_registry import baseline_registry
+from habitat_baselines.rl.models.rnn_state_encoder import build_rnn_state_encoder
 from habitat_baselines.rl.ppo import Net
 
 from pirlnav.common.rnn_state_encoder import RNNStateEncoder
@@ -27,47 +28,51 @@ class ObjectNavILMAENet(Net):
     def __init__(
         self,
         observation_space: Space,
-        model_config: Config,
+        policy_config: Config,
         num_actions: int,
         run_type: str,
+        hidden_size: int,
+        rnn_type: str,
+        num_recurrent_layers: int,
     ):
         super().__init__()
-        self.model_config = model_config
+        self.policy_config = policy_config
         rnn_input_size = 0
 
-        # Init the RGB visual encoder
-        assert model_config.RGB_ENCODER.cnn_type in [
-            "VisualEncoder",
-        ], "RGB_ENCODER.cnn_type must be 'VisualEncoder'."
+        rgb_config = policy_config.RGB_ENCODER
+        name = "resize"
+        if rgb_config.use_augmentations and run_type == "train":
+            name = rgb_config.augmentations_name
+        if rgb_config.use_augmentations_test_time and run_type == "eval":
+            name = rgb_config.augmentations_name
+        self.visual_transform = get_transform(name, size=rgb_config.image_size)
+        self.visual_transform.randomize_environments = (
+            rgb_config.randomize_augmentations_over_envs
+        )
 
-        rgb_config = model_config.RGB_ENCODER
-        if model_config.RGB_ENCODER.cnn_type == "VisualEncoder":
-            name = "resize"
-            if rgb_config.use_augmentations and run_type == "train":
-                name = rgb_config.augmentations_name
-            if rgb_config.use_augmentations_test_time and run_type == "eval":
-                name = rgb_config.augmentations_name
-            self.visual_transform = get_transform(name, size=rgb_config.image_size)
-            self.visual_transform.randomize_environments = rgb_config.randomize_augmentations_over_envs
+        self.visual_encoder = VisualEncoder(
+            image_size=rgb_config.image_size,
+            backbone=rgb_config.backbone,
+            input_channels=3,
+            resnet_baseplanes=rgb_config.resnet_baseplanes,
+            resnet_ngroups=rgb_config.resnet_baseplanes // 2,
+            avgpooled_image=rgb_config.avgpooled_image,
+            drop_path_rate=rgb_config.drop_path_rate,
+        )
 
-            self.visual_encoder = VisualEncoder(
-                image_size=rgb_config.image_size,
-                backbone=rgb_config.backbone,
-                input_channels=3,
-                resnet_baseplanes=rgb_config.resnet_baseplanes,
-                resnet_ngroups=rgb_config.resnet_baseplanes // 2,
-                avgpooled_image=rgb_config.avgpooled_image,
-                drop_path_rate=rgb_config.drop_path_rate,
-            )
+        self.visual_fc = nn.Sequential(
+            nn.Flatten(),
+            nn.Linear(
+                self.visual_encoder.output_size,
+                policy_config.RGB_ENCODER.hidden_size,
+            ),
+            nn.ReLU(True),
+        )
 
-            self.visual_fc = nn.Sequential(
-                nn.Flatten(),
-                nn.Linear(self.visual_encoder.output_size, model_config.RGB_ENCODER.hidden_size),
-                nn.ReLU(True),
-            )
-
-            rnn_input_size += model_config.RGB_ENCODER.hidden_size
-            logger.info("RGB encoder is {}".format(model_config.RGB_ENCODER.cnn_type))
+        rnn_input_size += policy_config.RGB_ENCODER.hidden_size
+        logger.info(
+            "RGB encoder is {}".format(policy_config.RGB_ENCODER.backbone)
+        )
 
         if EpisodicGPSSensor.cls_uuid in observation_space.spaces:
             input_gps_dim = observation_space.spaces[
@@ -76,7 +81,7 @@ class ObjectNavILMAENet(Net):
             self.gps_embedding = nn.Linear(input_gps_dim, 32)
             rnn_input_size += 32
             logger.info("\n\nSetting up GPS sensor")
-        
+
         if EpisodicCompassSensor.cls_uuid in observation_space.spaces:
             assert (
                 observation_space.spaces[EpisodicCompassSensor.cls_uuid].shape[
@@ -86,7 +91,9 @@ class ObjectNavILMAENet(Net):
             ), "Expected compass with 2D rotation."
             input_compass_dim = 2  # cos and sin of the angle
             self.compass_embedding_dim = 32
-            self.compass_embedding = nn.Linear(input_compass_dim, self.compass_embedding_dim)
+            self.compass_embedding = nn.Linear(
+                input_compass_dim, self.compass_embedding_dim
+            )
             rnn_input_size += 32
             logger.info("\n\nSetting up Compass sensor")
 
@@ -97,14 +104,16 @@ class ObjectNavILMAENet(Net):
                 )
                 + 1
             )
-            logger.info("Object categories: {}".format(self._n_object_categories))
+            logger.info(
+                "Object categories: {}".format(self._n_object_categories)
+            )
             self.obj_categories_embedding = nn.Embedding(
                 self._n_object_categories, 32
             )
             rnn_input_size += 32
             logger.info("\n\nSetting up Object Goal sensor")
 
-        if model_config.SEQ2SEQ.use_prev_action:
+        if policy_config.SEQ2SEQ.use_prev_action:
             self.prev_action_embedding = nn.Embedding(num_actions + 1, 32)
             rnn_input_size += self.prev_action_embedding.embedding_dim
 
@@ -112,26 +121,32 @@ class ObjectNavILMAENet(Net):
 
         # load pretrained weights
         if rgb_config.pretrained_encoder is not None:
-            msg = load_encoder(self.visual_encoder, rgb_config.pretrained_encoder)
-            logger.info("Using weights from {}: {}".format(rgb_config.pretrained_encoder, msg))
+            msg = load_encoder(
+                self.visual_encoder, rgb_config.pretrained_encoder
+            )
+            logger.info(
+                "Using weights from {}: {}".format(
+                    rgb_config.pretrained_encoder, msg
+                )
+            )
 
         # freeze backbone
         if rgb_config.freeze_backbone:
             for p in self.visual_encoder.backbone.parameters():
                 p.requires_grad = False
 
-        self.state_encoder = RNNStateEncoder(
-            input_size=rnn_input_size,
-            hidden_size=model_config.STATE_ENCODER.hidden_size,
-            num_layers=model_config.STATE_ENCODER.num_recurrent_layers,
-            rnn_type=model_config.STATE_ENCODER.rnn_type,
+        self.state_encoder = build_rnn_state_encoder(
+            rnn_input_size,
+            hidden_size=hidden_size,
+            rnn_type=rnn_type,
+            num_layers=num_recurrent_layers,
         )
-
+        self._hidden_size = hidden_size
         self.train()
 
     @property
     def output_size(self):
-        return self.model_config.STATE_ENCODER.hidden_size
+        return self._hidden_size
 
     @property
     def is_blind(self):
@@ -160,12 +175,10 @@ class ObjectNavILMAENet(Net):
                 )
             # visual encoder
             rgb = observations["rgb"]
-            if self.model_config.RGB_ENCODER.cnn_type == "VisualEncoder":    
-                rgb = self.visual_transform(rgb, N)
-                rgb = self.visual_encoder(rgb)
-                rgb = self.visual_fc(rgb)
-            else:
-                rgb = self.visual_encoder(observations)
+
+            rgb = self.visual_transform(rgb, N)
+            rgb = self.visual_encoder(rgb)
+            rgb = self.visual_fc(rgb)
             x.append(rgb)
 
         if EpisodicGPSSensor.cls_uuid in observations:
@@ -173,11 +186,13 @@ class ObjectNavILMAENet(Net):
             if len(obs_gps.size()) == 3:
                 obs_gps = obs_gps.contiguous().view(-1, obs_gps.size(2))
             x.append(self.gps_embedding(obs_gps))
-        
+
         if EpisodicCompassSensor.cls_uuid in observations:
             obs_compass = observations["compass"]
             if len(obs_compass.size()) == 3:
-                obs_compass = obs_compass.contiguous().view(-1, obs_compass.size(2))
+                obs_compass = obs_compass.contiguous().view(
+                    -1, obs_compass.size(2)
+                )
             compass_observations = torch.stack(
                 [
                     torch.cos(obs_compass),
@@ -185,23 +200,29 @@ class ObjectNavILMAENet(Net):
                 ],
                 -1,
             )
-            compass_embedding = self.compass_embedding(compass_observations.float().squeeze(dim=1))
+            compass_embedding = self.compass_embedding(
+                compass_observations.float().squeeze(dim=1)
+            )
             x.append(compass_embedding)
 
         if ObjectGoalSensor.cls_uuid in observations:
             object_goal = observations[ObjectGoalSensor.cls_uuid].long()
             if len(object_goal.size()) == 3:
-                object_goal = object_goal.contiguous().view(-1, object_goal.size(2))
+                object_goal = object_goal.contiguous().view(
+                    -1, object_goal.size(2)
+                )
             x.append(self.obj_categories_embedding(object_goal).squeeze(dim=1))
 
-        if self.model_config.SEQ2SEQ.use_prev_action:
+        if self.policy_config.SEQ2SEQ.use_prev_action:
             prev_actions_embedding = self.prev_action_embedding(
                 ((prev_actions.float() + 1) * masks).long().view(-1)
             )
             x.append(prev_actions_embedding)
 
         x = torch.cat(x, dim=1)
-        x, rnn_hidden_states = self.state_encoder(x, rnn_hidden_states, masks)
+        x, rnn_hidden_states = self.state_encoder(
+            x, rnn_hidden_states.contiguous(), masks
+        )
 
         return x, rnn_hidden_states
 
@@ -209,38 +230,63 @@ class ObjectNavILMAENet(Net):
 @baseline_registry.register_policy
 class ObjectNavILMAEPolicy(ILPolicy):
     def __init__(
-        self, observation_space: Space, action_space: Space, model_config: Config, run_type: str
+        self,
+        observation_space: Space,
+        action_space: Space,
+        policy_config: Config,
+        run_type: str,
+        hidden_size: int,
+        rnn_type: str,
+        num_recurrent_layers: int,
     ):
         super().__init__(
             ObjectNavILMAENet(
                 observation_space=observation_space,
-                model_config=model_config,
+                policy_config=policy_config,
                 num_actions=action_space.n,
                 run_type=run_type,
+                hidden_size=hidden_size,
+                rnn_type=rnn_type,
+                num_recurrent_layers=num_recurrent_layers,
             ),
             action_space.n,
-            no_critic=model_config.CRITIC.no_critic,
-            mlp_critic=model_config.CRITIC.mlp_critic,
-            critic_hidden_dim=model_config.CRITIC.hidden_dim,
+            no_critic=policy_config.CRITIC.no_critic,
+            mlp_critic=policy_config.CRITIC.mlp_critic,
+            critic_hidden_dim=policy_config.CRITIC.hidden_dim,
         )
 
     @classmethod
-    def from_config(
-        cls, config: Config, observation_space, action_space
-    ):
+    def from_config(cls, config: Config, observation_space, action_space):
         return cls(
             observation_space=observation_space,
             action_space=action_space,
-            model_config=config.MODEL,
+            policy_config=config.POLICY,
             run_type=config.RUN_TYPE,
+            hidden_size=config.RL.PPO.hidden_size,
+            rnn_type=config.RL.DDPPO.rnn_type,
+            num_recurrent_layers=config.RL.DDPPO.num_recurrent_layers,
         )
 
     def freeze_visual_encoders(self):
-        if hasattr(self.net, "visual_encoder"):
-            for param in self.net.visual_encoder.parameters():
-                param.requires_grad_(False)
-    
+        for param in self.net.visual_encoder.parameters():
+            param.requires_grad_(False)
+
     def unfreeze_visual_encoders(self):
-        if hasattr(self.net, "visual_encoder"):
-            for param in self.net.visual_encoder.parameters():
-                param.requires_grad_(True)
+        for param in self.net.visual_encoder.parameters():
+            param.requires_grad_(True)
+
+    def freeze_state_encoder(self):
+        for param in self.net.state_encoder.parameters():
+            param.requires_grad_(False)
+
+    def unfreeze_state_encoder(self):
+        for param in self.net.state_encoder.parameters():
+            param.requires_grad_(True)
+
+    def freeze_actor(self):
+        for param in self.action_distribution.parameters():
+            param.requires_grad_(False)
+
+    def unfreeze_actor(self):
+        for param in self.action_distribution.parameters():
+            param.requires_grad_(True)
