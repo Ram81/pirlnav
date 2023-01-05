@@ -1,9 +1,7 @@
 from typing import Any, Dict
 
 import numpy as np
-
 from gym import spaces
-
 from habitat import logger
 from habitat.config import Config
 from habitat.core.embodied_task import EmbodiedTask
@@ -29,7 +27,7 @@ def get_habitat_sim_action(action):
 @registry.register_sensor(name="DemonstrationSensor")
 class DemonstrationSensor(Sensor):
     def __init__(self, **kwargs):
-        self.uuid = "demonstration"
+        self.uuid = "next_actions"
         self.observation_space = spaces.Discrete(1)
         self.timestep = 0
         self.prev_action = 0
@@ -47,7 +45,7 @@ class DemonstrationSensor(Sensor):
         # Fetch next action as observation
         if task._is_resetting:  # reset
             self.timestep = 1
-        
+
         if self.timestep < len(episode.reference_replay):
             action_name = episode.reference_replay[self.timestep].action
             action = get_habitat_sim_action(action_name)
@@ -81,13 +79,16 @@ class InflectionWeightSensor(Sensor):
     ):
         if task._is_resetting:  # reset
             self.timestep = 0
-        
+
         inflection_weight = 1.0
         if self.timestep == 0:
             inflection_weight = 1.0
         elif self.timestep >= len(episode.reference_replay):
-            inflection_weight = 1.0 
-        elif episode.reference_replay[self.timestep - 1].action != episode.reference_replay[self.timestep].action:
+            inflection_weight = 1.0
+        elif (
+            episode.reference_replay[self.timestep - 1].action
+            != episode.reference_replay[self.timestep].action
+        ):
             inflection_weight = self._config.INFLECTION_COEF
         self.timestep += 1
         return inflection_weight

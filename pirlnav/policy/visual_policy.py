@@ -5,7 +5,9 @@ from habitat import Config, logger
 from habitat.tasks.nav.nav import EpisodicCompassSensor, EpisodicGPSSensor
 from habitat.tasks.nav.object_nav_task import ObjectGoalSensor
 from habitat_baselines.common.baseline_registry import baseline_registry
-from habitat_baselines.rl.models.rnn_state_encoder import build_rnn_state_encoder
+from habitat_baselines.rl.models.rnn_state_encoder import (
+    build_rnn_state_encoder,
+)
 from habitat_baselines.rl.ppo import Net
 
 from pirlnav.common.rnn_state_encoder import RNNStateEncoder
@@ -220,6 +222,7 @@ class ObjectNavILMAENet(Net):
             x.append(prev_actions_embedding)
 
         x = torch.cat(x, dim=1)
+
         x, rnn_hidden_states = self.state_encoder(
             x, rnn_hidden_states.contiguous(), masks
         )

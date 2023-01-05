@@ -1,4 +1,3 @@
-from pirlnav import il_ddp_trainer  # noqa
 from pirlnav import il_trainer  # noqa
 from pirlnav import reward  # noqa
 from pirlnav import environment, ppo_trainer

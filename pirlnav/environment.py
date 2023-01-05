@@ -9,9 +9,7 @@ from habitat_baselines.common.baseline_registry import baseline_registry
 @baseline_registry.register_env(name="SimpleRLEnv")
 class SimpleRLEnv(habitat.RLEnv):
     def __init__(self, config: Config, dataset: Optional[Dataset] = None):
-        print(config)
-        super().__init__(config.TASK_CONFIG, dataset)
-        self.config = config
+        super().__init__(config, dataset)
 
     def get_reward_range(self):
         return (-np.inf, np.inf)
@@ -28,5 +26,3 @@ class SimpleRLEnv(habitat.RLEnv):
 
     def get_info(self, observations):
         return self._env.get_metrics()
-
-

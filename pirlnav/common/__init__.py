@@ -1,1 +1,1 @@
-from pirlnav.common import rnn_state_encoder, rollout_storage
+from pirlnav.common import rnn_state_encoder, rollout_storage_v0

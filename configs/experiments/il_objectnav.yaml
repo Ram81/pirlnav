@@ -1,0 +1,31 @@
+BASE_TASK_CONFIG_PATH: "configs/tasks/objectnav_hm3d.yaml"
+CMD_TRAILING_OPTS: ["TASK_CONFIG.ENVIRONMENT.ITERATOR_OPTIONS.MAX_SCENE_REPEAT_STEPS", "50000"]
+ENV_NAME: "SimpleRLEnv"
+SIMULATOR_GPU_ID: 0
+TORCH_GPU_ID: 0
+VIDEO_OPTION: []
+TENSORBOARD_DIR: "tb"
+VIDEO_DIR: "video_dir"
+TEST_EPISODE_COUNT: -1
+EVAL_CKPT_PATH_DIR: "data/new_checkpoints"
+NUM_ENVIRONMENTS: 4
+CHECKPOINT_FOLDER: "data/new_checkpoints"
+TRAINER_NAME: "pirlnav-il"
+SENSORS: ["RGB_SENSOR"]
+NUM_UPDATES: 40000
+LOG_INTERVAL: 10
+NUM_CHECKPOINTS: 10
+# Force PyTorch to be single threaded as
+# this improves performance considerably
+FORCE_TORCH_SINGLE_THREADED: True
+
+EVAL:
+  SPLIT: "val"
+
+IL:
+  POLICY:
+    name: "ObjectNavILMAEPolicy"
+
+RL:
+  SUCCESS_REWARD: 2.5
+  SLACK_REWARD: -1e-3

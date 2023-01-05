@@ -126,11 +126,44 @@ _CONFIG.FORCE_TORCH_SINGLE_THREADED = False
 
 _CONFIG.RUN_TYPE = None
 
+_CONFIG.REWARD_MEASURE = "success"
+_CONFIG.SUCCESS_MEASURE = "success"
+
 _CONFIG.EVAL.SPLIT = "val"
 _CONFIG.EVAL.USE_CKPT_CONFIG = True
 _CONFIG.EVAL.EVAL_FREQ = 5
 
-_CONFIG.RL.POLICY.NAME = "ObjectNavILMAEPolicy"
+_CONFIG.RL.POLICY.name = "ObjectNavILMAEPolicy"
+
+##############################################
+# IL config
+##############################################
+
+_CONFIG.IL = CN()
+_CONFIG.IL.POLICY = CN()
+_CONFIG.IL.POLICY.name = "ObjectNavILMAEPolicy"
+_CONFIG.IL.POLICY.USE_IW = True
+_CONFIG.IL.POLICY.distrib_backend = "NCCL"
+_CONFIG.IL.BehaviorCloning = CN()
+_CONFIG.IL.BehaviorCloning.lr = 0.001
+_CONFIG.IL.BehaviorCloning.encoder_lr = 0.001
+_CONFIG.IL.BehaviorCloning.entropy_coef = 0.0
+_CONFIG.IL.BehaviorCloning.eps = 1.0e-5
+_CONFIG.IL.BehaviorCloning.wd = 1.0e-6
+_CONFIG.IL.BehaviorCloning.clip_param = 0.2
+_CONFIG.IL.BehaviorCloning.num_mini_batch = 2
+_CONFIG.IL.BehaviorCloning.max_grad_norm = 0.2
+_CONFIG.IL.BehaviorCloning.num_steps = 64
+_CONFIG.IL.BehaviorCloning.use_linear_clip_decay = False
+_CONFIG.IL.BehaviorCloning.use_linear_lr_decay = True
+_CONFIG.IL.BehaviorCloning.reward_window_size = 50
+_CONFIG.IL.BehaviorCloning.sync_frac = 0.6
+_CONFIG.IL.BehaviorCloning.use_double_buffered_sampler = False
+_CONFIG.IL.BehaviorCloning.hidden_size = 2048
+
+##############################################
+# Policy config
+##############################################
 
 _CONFIG.POLICY = CN()
 _CONFIG.POLICY.RGB_ENCODER = CN()
