@@ -22,7 +22,10 @@ from habitat_baselines.common.obs_transformers import (
     apply_obs_transforms_obs_space,
     get_active_obs_transforms,
 )
-from habitat_baselines.common.tensorboard_utils import TensorboardWriter, get_writer
+from habitat_baselines.common.tensorboard_utils import (
+    TensorboardWriter,
+    get_writer,
+)
 from habitat_baselines.rl.ddppo.ddp_utils import (
     EXIT,
     add_signal_handlers,
@@ -102,6 +105,13 @@ class ILEnvDDPTrainer(PPOTrainer):
 
         if is_slurm_batch_job():
             add_signal_handlers()
+
+        # Add replay sensors
+        self.config.defrost()
+        self.config.TASK_CONFIG.TASK.SENSORS.extend(
+            ["DEMONSTRATION_SENSOR", "INFLECTION_WEIGHT_SENSOR"]
+        )
+        self.config.freeze()
 
         if self._is_distributed:
             local_rank, tcp_store = init_distrib_slurm(
@@ -349,8 +359,8 @@ class ILEnvDDPTrainer(PPOTrainer):
                 profiling_wrapper.on_start_step()
                 profiling_wrapper.range_push("train update")
 
-                if ppo_cfg.use_linear_clip_decay:
-                    self.agent.clip_param = ppo_cfg.clip_param * (
+                if il_cfg.use_linear_clip_decay:
+                    self.agent.clip_param = il_cfg.clip_param * (
                         1 - self.percent_done()
                     )
 
@@ -430,7 +440,7 @@ class ILEnvDDPTrainer(PPOTrainer):
                     dist_entropy,
                 ) = self._update_agent()
 
-                if ppo_cfg.use_linear_lr_decay:
+                if il_cfg.use_linear_lr_decay:
                     lr_scheduler.step()  # type: ignore
 
                 self.num_updates_done += 1
@@ -458,7 +468,7 @@ class ILEnvDDPTrainer(PPOTrainer):
                 profiling_wrapper.range_pop()  # train update
 
             self.envs.close()
-    
+
     @rank0_only
     def _training_log(
         self, writer, losses: Dict[str, float], prev_time: int = 0
@@ -523,9 +533,7 @@ class ILEnvDDPTrainer(PPOTrainer):
                         if k != "count"
                     ),
                     "  ".join(
-                        "{}: {:.3f}".format(k, v)
-                        for k, v in losses.items()
-                    )
+                        "{}: {:.3f}".format(k, v) for k, v in losses.items()
+                    ),
                 )
             )
-

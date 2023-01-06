@@ -29,3 +29,7 @@ IL:
 RL:
   SUCCESS_REWARD: 2.5
   SLACK_REWARD: -1e-3
+
+POLICY:
+  CRITIC:
+    no_critic: True

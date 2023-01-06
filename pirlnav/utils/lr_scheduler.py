@@ -60,11 +60,12 @@ class PIRLNavLRScheduler(object):
             self.agent.actor_critic.unfreeze_actor()
             self.agent.actor_critic.unfreeze_state_encoder()
 
+            start_index = 1
             for i, param_group in enumerate(
-                self.agent.optimizer.param_groups[1:]
+                self.agent.optimizer.param_groups[start_index:]
             ):
                 param_group["eps"] = self.ppo_eps
-                self.base_lrs[i] = 1.0
+                self.base_lrs[i + start_index] = 1.0
 
                 logger.info(
                     "Start actor finetuning at: {}".format(self.update)
@@ -106,7 +107,7 @@ class PIRLNavLRScheduler(object):
         if update < start_update:
             return 1.0
 
-        if update > max_updates:
+        if update >= max_updates:
             return end_lr
 
         if max_updates == start_update:
@@ -129,7 +130,7 @@ class PIRLNavLRScheduler(object):
         r"""
         Returns a multiplicative factor for linear value decay
         """
-        if update <= start_update:
+        if update < start_update:
             return 1
 
         if update >= max_updates:
