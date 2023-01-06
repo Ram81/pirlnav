@@ -113,7 +113,7 @@ class ILAgent(nn.Module):
             ].view(T, N, -1)
 
             action_loss_term = (
-                (inflections_batch * action_loss).sum(0)
+                (inflections_batch * action_loss.unsqueeze(-1)).sum(0)
                 / inflections_batch.sum(0)
             ).mean()
             total_loss = action_loss_term - entropy_term

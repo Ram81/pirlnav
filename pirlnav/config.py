@@ -48,6 +48,9 @@ _TASK_CONFIG.TASK.SUCCESS.SUCCESS_DISTANCE = 0.1
 _TASK_CONFIG.TASK.SUCCESS_MEASURE = "success"
 _TASK_CONFIG.TASK.SUCCESS_REWARD = 2.5
 
+_TASK_CONFIG.DATASET.TYPE = "ObjectNav-v2"
+_TASK_CONFIG.DATASET.MAX_EPISODE_STEPS = 500
+
 
 def get_task_config(
     config_paths: Optional[Union[List[str], str]] = None,
@@ -106,8 +109,6 @@ _CONFIG.RUN_TYPE = None
 _CONFIG.EVAL.SPLIT = "val"
 _CONFIG.EVAL.USE_CKPT_CONFIG = True
 _CONFIG.EVAL.EVAL_FREQ = 5
-
-_CONFIG.RL.POLICY.name = "ObjectNavILMAEPolicy"
 
 ##############################################
 # IL config
@@ -173,6 +174,14 @@ _CONFIG.POLICY.CRITIC.mlp_critic = False
 _CONFIG.POLICY.CRITIC.hidden_dim = 512
 
 ##############################################
+# Default RL config
+##############################################
+
+_CONFIG.RL.POLICY.name = "ObjectNavILMAEPolicy"
+_CONFIG.RL.PPO.num_mini_batch = 2
+_CONFIG.RL.PPO.use_linear_lr_decay = True
+
+##############################################
 # Policy Finetuning config
 ##############################################
 
@@ -184,8 +193,8 @@ _CONFIG.RL.Finetune.lr = 1.5e-5
 
 _CONFIG.RL.Finetune.start_actor_warmup_at = 50
 _CONFIG.RL.Finetune.start_actor_update_at = 100
-_CONFIG.RL.Finetune.start_critic_warmup_at = 50
-_CONFIG.RL.Finetune.start_critic_update_at = 100
+_CONFIG.RL.Finetune.start_critic_warmup_at = 20
+_CONFIG.RL.Finetune.start_critic_update_at = 80
 
 def get_config(
     config_paths: Optional[Union[List[str], str]] = None,

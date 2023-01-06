@@ -33,7 +33,6 @@ RL:
     # ppo params
     clip_param: 0.2
     ppo_epoch: 4
-    num_mini_batch: 2
     value_loss_coef: 0.5
     entropy_coef: 0.01
     lr: 2.5e-4
@@ -44,7 +43,6 @@ RL:
     gamma: 0.99
     tau: 0.95
     use_linear_clip_decay: False
-    use_linear_lr_decay: False
     reward_window_size: 50
 
     use_normalized_advantage: False
@@ -65,8 +63,3 @@ RL:
     train_encoder: True
     # Whether or not to reset the critic linear layer
     reset_critic: True
-
-    # Model parameters
-    backbone: resnet50
-    rnn_type: LSTM
-    num_recurrent_layers: 2

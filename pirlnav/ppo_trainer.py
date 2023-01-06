@@ -19,7 +19,6 @@ from habitat_baselines.common.obs_transformers import (
 )
 from habitat_baselines.common.rollout_storage import RolloutStorage
 from habitat_baselines.common.tensorboard_utils import get_writer
-from habitat_baselines.rl.ddppo.algo import DDPPO
 from habitat_baselines.rl.ddppo.ddp_utils import (
     EXIT,
     add_signal_handlers,
@@ -30,7 +29,6 @@ from habitat_baselines.rl.ddppo.ddp_utils import (
     requeue_job,
     save_resume_state,
 )
-from habitat_baselines.rl.ppo import PPO
 from habitat_baselines.rl.ppo.ppo_trainer import PPOTrainer
 from habitat_baselines.utils.common import (
     batch_obs,
@@ -38,6 +36,7 @@ from habitat_baselines.utils.common import (
     is_continuous_action_space,
 )
 
+from pirlnav.algos.ppo import DDPPO, PPO
 from pirlnav.utils.lr_scheduler import PIRLNavLRScheduler
 
 
