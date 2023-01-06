@@ -7,7 +7,7 @@ SIMULATOR:
   TILT_ANGLE: 30
   ACTION_SPACE_CONFIG: "v1"
   AGENT_0:
-    SENSORS: ['RGB_SENSOR', 'DEPTH_SENSOR', 'SEMANTIC_SENSOR']
+    SENSORS: ['RGB_SENSOR']
     HEIGHT: 0.88
     RADIUS: 0.18
   HABITAT_SIM_V0:
@@ -38,12 +38,15 @@ TASK:
 
   SENSORS: ['OBJECTGOAL_SENSOR', 'COMPASS_SENSOR', 'GPS_SENSOR', 'DEMONSTRATION_SENSOR', 'INFLECTION_WEIGHT_SENSOR']
   GOAL_SENSOR_UUID: objectgoal
+  
   DEMONSTRATION_SENSOR:
     TYPE: DemonstrationSensor
-  DEMONSTRATION_SENSOR_UUID: "demonstration"
+  DEMONSTRATION_SENSOR_UUID: "next_actions"
+
   INFLECTION_WEIGHT_SENSOR:
     TYPE: InflectionWeightSensor
     INFLECTION_COEF: 3.477512060914205
+
   INFLECTION_WEIGHT_SENSOR_UUID: "inflection_weight"
 
   MEASUREMENTS: ['DISTANCE_TO_GOAL', 'SUCCESS', 'SPL', 'SOFT_SPL', 'SPARSE_REWARD']
@@ -54,9 +57,8 @@ TASK:
   SUCCESS:
     SUCCESS_DISTANCE: 0.1
 
-SEED: 103
 DATASET:
-  TYPE: ObjectNav-v1
+  TYPE: ObjectNav-v2
   SPLIT: train
   DATA_PATH: "data/datasets/objectnav/objectnav_hm3d/objectnav_hm3d_v1/{split}/{split}.json.gz"
   SCENES_DIR: "data/scene_datasets/"

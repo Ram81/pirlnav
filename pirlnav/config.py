@@ -41,33 +41,13 @@ _TASK_CONFIG.TASK.SPARSE_REWARD = CN()
 _TASK_CONFIG.TASK.SPARSE_REWARD.TYPE = "SparseReward"
 _TASK_CONFIG.TASK.SPARSE_REWARD.SUCCESS_REWARD = 2.5
 
-_TASK_CONFIG.TASK.ANGLE_TO_GOAL = CN()
-_TASK_CONFIG.TASK.ANGLE_TO_GOAL.TYPE = "AngleToGoal"
-
-_TASK_CONFIG.TASK.ANGLE_SUCCESS = CN()
-_TASK_CONFIG.TASK.ANGLE_SUCCESS.TYPE = "AngleSuccess"
-_TASK_CONFIG.TASK.ANGLE_SUCCESS.SUCCESS_ANGLE = 25.0
-_TASK_CONFIG.TASK.ANGLE_SUCCESS.USE_TRAIN_SUCCESS = True
-
-_TASK_CONFIG.TASK.IMAGEGOAL_ROTATION_SENSOR = CN()
-_TASK_CONFIG.TASK.IMAGEGOAL_ROTATION_SENSOR.TYPE = "ImageGoalRotationSensor"
-_TASK_CONFIG.TASK.IMAGEGOAL_ROTATION_SENSOR.SAMPLE_ANGLE = True
-
 _TASK_CONFIG.TASK.TYPE = "Nav-v0"
 _TASK_CONFIG.TASK.SUCCESS_DISTANCE = 0.1
 _TASK_CONFIG.TASK.SUCCESS.SUCCESS_DISTANCE = 0.1
 
-_TASK_CONFIG.TASK.TRAIN_SUCCESS = CN()
-_TASK_CONFIG.TASK.TRAIN_SUCCESS.TYPE = "TrainSuccess"
-_TASK_CONFIG.TASK.TRAIN_SUCCESS.SUCCESS_DISTANCE = 0.1
+_TASK_CONFIG.TASK.SUCCESS_MEASURE = "success"
+_TASK_CONFIG.TASK.SUCCESS_REWARD = 2.5
 
-
-
-# -----------------------------------------------------------------------------
-# Behavior Metrics MEASUREMENT
-# -----------------------------------------------------------------------------
-_TASK_CONFIG.TASK.BEHAVIOR_METRICS = CN()
-_TASK_CONFIG.TASK.BEHAVIOR_METRICS.TYPE = "BehaviorMetrics"
 
 def get_task_config(
     config_paths: Optional[Union[List[str], str]] = None,
@@ -100,13 +80,10 @@ _CONFIG.defrost()
 
 _CONFIG.VERBOSE = True
 
-_CONFIG.BASE_TASK_CONFIG_PATH = "configs/tasks/imagenav.yaml"
+_CONFIG.BASE_TASK_CONFIG_PATH = "configs/tasks/objectnav_hm3d.yaml"
 
-_CONFIG.TRAINER_NAME = "mppo"
+_CONFIG.TRAINER_NAME = "pirlnav-ddppo"
 _CONFIG.ENV_NAME = "SimpleRLEnv"
-_CONFIG.WANDB_PROJECT_NAME = "pirlnav"
-_CONFIG.WANDB_NAME = "pirlnav"
-_CONFIG.WANDB_MODE = "online"
 _CONFIG.SENSORS = ["RGB_SENSOR"]
 
 _CONFIG.VIDEO_OPTION = []
@@ -125,9 +102,6 @@ _CONFIG.TOTAL_NUM_STEPS = -1.0
 _CONFIG.FORCE_TORCH_SINGLE_THREADED = False
 
 _CONFIG.RUN_TYPE = None
-
-_CONFIG.REWARD_MEASURE = "success"
-_CONFIG.SUCCESS_MEASURE = "success"
 
 _CONFIG.EVAL.SPLIT = "val"
 _CONFIG.EVAL.USE_CKPT_CONFIG = True
@@ -205,11 +179,6 @@ _CONFIG.POLICY.CRITIC.hidden_dim = 512
 _CONFIG.RL.Finetune = CN()
 _CONFIG.RL.Finetune.finetune = True
 _CONFIG.RL.Finetune.freeze_encoders = True
-
-_CONFIG.RL.Finetune.vpt_finetuning = False
-_CONFIG.RL.Finetune.kl_coef = 0.2
-_CONFIG.RL.Finetune.kl_decay_coef = 0.9995
-_CONFIG.RL.Finetune.zero_critic_weights = False
 
 _CONFIG.RL.Finetune.lr = 1.5e-5
 

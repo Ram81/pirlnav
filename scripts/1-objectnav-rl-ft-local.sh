@@ -25,7 +25,6 @@ NUM_PROCESSES 2 \
 RL.DDPPO.pretrained_weights $PRETRAINED_WEIGHTS \
 RL.DDPPO.distrib_backend "NCCL" \
 RL.PPO.num_mini_batch 1 \
-RL.PPO.hidden_size 2048 \
 RL.Finetune.finetune True \
 RL.Finetune.start_actor_update_at 50 \
 RL.Finetune.start_actor_warmup_at 50 \
@@ -38,4 +37,3 @@ TASK_CONFIG.DATASET.DATA_PATH "$DATA_PATH/{split}/{split}.json.gz" \
 TASK_CONFIG.DATASET.TYPE "ObjectNav-v2" \
 TASK_CONFIG.DATASET.MAX_EPISODE_STEPS 500 \
 TASK_CONFIG.TASK.SENSORS "['OBJECTGOAL_SENSOR']" \
-WANDB_NAME "pirlnav-rl-ft" \

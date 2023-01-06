@@ -1,20 +1,30 @@
 import contextlib
+import os
+import random
 import time
+from collections import defaultdict, deque
 from typing import Dict
 
+import numpy as np
 import torch
 import torch.nn as nn
+from gym import spaces
 from habitat import Config, logger
 from habitat.utils import profiling_wrapper
 from habitat_baselines.common.baseline_registry import baseline_registry
 from habitat_baselines.common.obs_transformers import (
+    apply_obs_transforms_batch,
     apply_obs_transforms_obs_space,
     get_active_obs_transforms,
 )
+from habitat_baselines.common.rollout_storage import RolloutStorage
 from habitat_baselines.common.tensorboard_utils import get_writer
 from habitat_baselines.rl.ddppo.algo import DDPPO
 from habitat_baselines.rl.ddppo.ddp_utils import (
     EXIT,
+    add_signal_handlers,
+    init_distrib_slurm,
+    is_slurm_batch_job,
     load_resume_state,
     rank0_only,
     requeue_job,
@@ -22,6 +32,11 @@ from habitat_baselines.rl.ddppo.ddp_utils import (
 )
 from habitat_baselines.rl.ppo import PPO
 from habitat_baselines.rl.ppo.ppo_trainer import PPOTrainer
+from habitat_baselines.utils.common import (
+    batch_obs,
+    get_num_actions,
+    is_continuous_action_space,
+)
 
 from pirlnav.utils.lr_scheduler import PIRLNavLRScheduler
 
@@ -273,6 +288,152 @@ class PIRLNavPPOTrainer(PPOTrainer):
 
             self.envs.close()
 
+    def _init_train(self):
+        resume_state = load_resume_state(self.config)
+        if resume_state is not None:
+            self.config: Config = resume_state["config"]
+            self.using_velocity_ctrl = (
+                self.config.TASK_CONFIG.TASK.POSSIBLE_ACTIONS
+            ) == ["VELOCITY_CONTROL"]
+
+        if self.config.RL.DDPPO.force_distributed:
+            self._is_distributed = True
+
+        if is_slurm_batch_job():
+            add_signal_handlers()
+
+        if self._is_distributed:
+            local_rank, tcp_store = init_distrib_slurm(
+                self.config.RL.DDPPO.distrib_backend
+            )
+            if rank0_only():
+                logger.info(
+                    "Initialized DD-PPO with {} workers".format(
+                        torch.distributed.get_world_size()
+                    )
+                )
+
+            self.config.defrost()
+            self.config.TORCH_GPU_ID = local_rank
+            self.config.SIMULATOR_GPU_ID = local_rank
+            # Multiply by the number of simulators to make sure they also get unique seeds
+            self.config.TASK_CONFIG.SEED += (
+                torch.distributed.get_rank() * self.config.NUM_ENVIRONMENTS
+            )
+            self.config.freeze()
+
+            random.seed(self.config.TASK_CONFIG.SEED)
+            np.random.seed(self.config.TASK_CONFIG.SEED)
+            torch.manual_seed(self.config.TASK_CONFIG.SEED)
+            self.num_rollouts_done_store = torch.distributed.PrefixStore(
+                "rollout_tracker", tcp_store
+            )
+            self.num_rollouts_done_store.set("num_done", "0")
+
+        if rank0_only() and self.config.VERBOSE:
+            logger.info(f"config: {self.config}")
+
+        profiling_wrapper.configure(
+            capture_start_step=self.config.PROFILING.CAPTURE_START_STEP,
+            num_steps_to_capture=self.config.PROFILING.NUM_STEPS_TO_CAPTURE,
+        )
+
+        self._init_envs()
+
+        action_space = self.envs.action_spaces[0]
+        if self.using_velocity_ctrl:
+            # For navigation using a continuous action space for a task that
+            # may be asking for discrete actions
+            self.policy_action_space = action_space["VELOCITY_CONTROL"]
+            action_shape = (2,)
+            discrete_actions = False
+        else:
+            self.policy_action_space = action_space
+            if is_continuous_action_space(action_space):
+                # Assume ALL actions are NOT discrete
+                action_shape = (get_num_actions(action_space),)
+                discrete_actions = False
+            else:
+                # For discrete pointnav
+                action_shape = None
+                discrete_actions = True
+
+        ppo_cfg = self.config.RL.PPO
+        policy_cfg = self.config.POLICY
+        if torch.cuda.is_available():
+            self.device = torch.device("cuda", self.config.TORCH_GPU_ID)
+            torch.cuda.set_device(self.device)
+        else:
+            self.device = torch.device("cpu")
+
+        if rank0_only() and not os.path.isdir(self.config.CHECKPOINT_FOLDER):
+            os.makedirs(self.config.CHECKPOINT_FOLDER)
+
+        self._setup_actor_critic_agent(ppo_cfg)
+        if self._is_distributed:
+            self.agent.init_distributed(find_unused_params=True)  # type: ignore
+
+        logger.info(
+            "agent number of parameters: {}".format(
+                sum(param.numel() for param in self.agent.parameters())
+            )
+        )
+
+        obs_space = self.obs_space
+        if self._static_encoder:
+            self._encoder = self.actor_critic.net.visual_encoder
+            obs_space = spaces.Dict(
+                {
+                    "visual_features": spaces.Box(
+                        low=np.finfo(np.float32).min,
+                        high=np.finfo(np.float32).max,
+                        shape=self._encoder.output_shape,
+                        dtype=np.float32,
+                    ),
+                    **obs_space.spaces,
+                }
+            )
+
+        self._nbuffers = 2 if ppo_cfg.use_double_buffered_sampler else 1
+
+        self.rollouts = RolloutStorage(
+            ppo_cfg.num_steps,
+            self.envs.num_envs,
+            obs_space,
+            self.policy_action_space,
+            policy_cfg.STATE_ENCODER.hidden_size,
+            num_recurrent_layers=self.actor_critic.net.num_recurrent_layers,
+            is_double_buffered=ppo_cfg.use_double_buffered_sampler,
+            action_shape=action_shape,
+            discrete_actions=discrete_actions,
+        )
+        self.rollouts.to(self.device)
+
+        observations = self.envs.reset()
+        batch = batch_obs(
+            observations, device=self.device, cache=self._obs_batching_cache
+        )
+        batch = apply_obs_transforms_batch(batch, self.obs_transforms)  # type: ignore
+
+        if self._static_encoder:
+            with torch.no_grad():
+                batch["visual_features"] = self._encoder(batch)
+
+        self.rollouts.buffers["observations"][0] = batch  # type: ignore
+
+        self.current_episode_reward = torch.zeros(self.envs.num_envs, 1)
+        self.running_episode_stats = dict(
+            count=torch.zeros(self.envs.num_envs, 1),
+            reward=torch.zeros(self.envs.num_envs, 1),
+        )
+        self.window_episode_stats = defaultdict(
+            lambda: deque(maxlen=ppo_cfg.reward_window_size)
+        )
+
+        self.env_time = 0.0
+        self.pth_time = 0.0
+        self.t_start = time.time()
+
     @rank0_only
     def _training_log(
         self, writer, losses: Dict[str, float], prev_time: int = 0
@@ -308,6 +469,11 @@ class PIRLNavPPOTrainer(PPOTrainer):
 
         fps = self.num_steps_done / ((time.time() - self.t_start) + prev_time)
         writer.add_scalar("metrics/fps", fps, self.num_steps_done)
+
+        lrs = {}
+        for i, param_group in enumerate(self.agent.optimizer.param_groups):
+            lrs["pg_{}".format(i)] = param_group["lr"]
+        writer.add_scalars("learning_rate", lrs, self.num_steps_done)
 
         # log stats
         if self.num_updates_done % self.config.LOG_INTERVAL == 0:

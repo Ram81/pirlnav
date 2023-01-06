@@ -17,7 +17,6 @@ from habitat.utils.visualizations.utils import (
 from numpy import ndarray
 from torch import Tensor
 
-import wandb
 from pirlnav.policy.models.resnet_gn import ResNet
 
 
@@ -25,95 +24,13 @@ def load_encoder(encoder, path):
     assert os.path.exists(path)
     if isinstance(encoder.backbone, ResNet):
         state_dict = torch.load(path, map_location="cpu")["teacher"]
-        state_dict = {k.replace("module.", ""): v for k, v in state_dict.items()}
+        state_dict = {
+            k.replace("module.", ""): v for k, v in state_dict.items()
+        }
         return encoder.load_state_dict(state_dict=state_dict, strict=False)
     else:
         raise ValueError("unknown encoder backbone")
 
-
-def setup_wandb(config, train, project_name="imagenav"):
-    if train:
-        file_name = "wandb_id.txt"
-        project_name = project_name + "_training"
-        run_name = config.WANDB_NAME + "_" + str(config.TASK_CONFIG.SEED)
-    else:
-        file_name = "wandb_id_eval_" + str(config.EVAL.SPLIT) + ".txt"
-        project_name = project_name + "_testing"
-        ckpt_str = "_"
-        if os.path.isfile(config.EVAL_CKPT_PATH_DIR):
-            ckpt_str = "_" + config.EVAL_CKPT_PATH_DIR.split("/")[-1].split(".")[1] + "_"
-        run_name = config.WANDB_NAME + "_" + str(config.EVAL.SPLIT) + ckpt_str + \
-            str(config.TASK_CONFIG.SEED)
-
-    wandb_filepath = os.path.join(config.TENSORBOARD_DIR, file_name)
-
-    # If file exists, then we are resuming from a previous eval
-    if os.path.exists(wandb_filepath):
-        with open(wandb_filepath, 'r') as file:
-            wandb_id = file.read().rstrip('\n')
-        
-        wandb.init(
-            group=config.WANDB_NAME,
-            job_type=str(config.TASK_CONFIG.SEED),
-            id=wandb_id,
-            project=project_name,
-            config=config,
-            mode=config.WANDB_MODE,
-            resume='allow'
-        )
-    
-    else:
-        wandb_id=wandb.util.generate_id()
-        
-        with open(wandb_filepath, 'w') as file:
-            file.write(wandb_id)
-        
-        wandb.init(
-            group=config.WANDB_NAME,
-            job_type=str(config.TASK_CONFIG.SEED),
-            id=wandb_id,
-            project=project_name,
-            config=config,
-            mode=config.WANDB_MODE
-        )
-
-    wandb.run.name = run_name
-    wandb.run.save()
-
-def poll_checkpoint_folder(
-    checkpoint_folder: str, previous_ckpt_ind: int, suggested_interval: int, max_ckpts: int
-) -> Optional[str]:
-    r"""Return (previous_ckpt_ind + 1)th checkpoint in checkpoint folder
-    (sorted by time of last modification).
-
-    Args:
-        checkpoint_folder: directory to look for checkpoints.
-        previous_ckpt_ind: index of checkpoint last returned.
-
-    Returns:
-        return checkpoint path if (previous_ckpt_ind + 1)th checkpoint is found
-        else return None.
-    """
-    assert os.path.isdir(checkpoint_folder), (
-        f"invalid checkpoint folder " f"path {checkpoint_folder}"
-    )
-    models_paths = list(
-        filter(os.path.isfile, glob.glob(checkpoint_folder + "/*"))
-    )
-
-    models_paths.sort(key=os.path.getmtime)
-
-    if previous_ckpt_ind == -1:
-        ind = 0
-    else:
-        ind = previous_ckpt_ind + suggested_interval
-
-    if ind < len(models_paths):
-        return models_paths[ind], ind
-    elif ind == max_ckpts and len(models_paths) == max_ckpts:
-        return models_paths[-1], len(models_paths) - 1
-
-    return None, previous_ckpt_ind
 
 def observations_to_image(observation: Dict, info: Dict) -> np.ndarray:
     r"""Generate image of single frame from observation and info
@@ -215,10 +132,7 @@ def generate_video(
     if "disk" in video_option:
         assert video_dir is not None
         images_to_video(images, video_dir, video_name, verbose=verbose)
-    if "wandb" in video_option:
-        images = np.array(images)
-        images = images.transpose(0, 3, 1, 2)
-        wandb.log({f"episode{episode_id}_{checkpoint_idx}": wandb.Video(images, fps=fps)})
+
 
 def add_info_to_image(frame, info):
     string = "d2g: {} | a2g: {} |\nsimple reward: {} |\nsuccess: {} | angle success: {}".format(
@@ -231,14 +145,17 @@ def add_info_to_image(frame, info):
     frame = append_text_to_image(frame, string)
     return frame
 
+
 def write_json(data, path):
-    with open(path, 'w') as file:
+    with open(path, "w") as file:
         file.write(json.dumps(data))
+
 
 def load_dataset(path):
     with gzip.open(path, "rb") as file:
         data = json.loads(file.read(), encoding="utf-8")
     return data
+
 
 def load_json_dataset(path):
     file = open(path, "r")
@@ -288,7 +205,10 @@ def batch_obs(
 
     return batch_t
 
-def linear_warmup(epoch: int, start_update: int, max_updates: int, start_lr: int, end_lr: int) -> float:
+
+def linear_warmup(
+    epoch: int, start_update: int, max_updates: int, start_lr: int, end_lr: int
+) -> float:
     r"""Returns a multiplicative factor for linear value decay
 
     Args:
@@ -299,9 +219,9 @@ def linear_warmup(epoch: int, start_update: int, max_updates: int, start_lr: int
         multiplicative factor that decreases param value linearly
     """
     # logger.info("policy: {}, {}, {}, {}, {}".format(epoch, start_update, max_updates, start_lr, end_lr))
-    if epoch  < start_update:
+    if epoch < start_update:
         return 1.0
-    
+
     if epoch > max_updates:
         return end_lr
 
@@ -315,7 +235,10 @@ def linear_warmup(epoch: int, start_update: int, max_updates: int, start_lr: int
     # logger.info("{}, {}, {}, {}, {}, {}".format(epoch, start_update, max_updates, start_lr, end_lr, step_lr))
     return step_lr
 
-def critic_linear_decay(epoch: int, start_update: int, max_updates: int, start_lr: int, end_lr: int) -> float:
+
+def critic_linear_decay(
+    epoch: int, start_update: int, max_updates: int, start_lr: int, end_lr: int
+) -> float:
     r"""Returns a multiplicative factor for linear value decay
 
     Args:
@@ -328,17 +251,16 @@ def critic_linear_decay(epoch: int, start_update: int, max_updates: int, start_l
     # logger.info("critic lr: {}, {}, {}, {}, {}".format(epoch, start_update, max_updates, start_lr, end_lr))
     if epoch <= start_update:
         return 1
-    
+
     if epoch >= max_updates:
         return end_lr
-    
+
     if max_updates == start_update:
         return end_lr
 
     pct_step = (epoch - start_update) / (max_updates - start_update)
-    step_lr = start_lr - (start_lr - end_lr) * pct_step 
+    step_lr = start_lr - (start_lr - end_lr) * pct_step
     if step_lr < end_lr:
         step_lr = end_lr
     # logger.info("{}, {}, {}, {}, {}, {}".format(epoch, start_update, max_updates, start_lr, end_lr, step_lr))
     return step_lr
-

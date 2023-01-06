@@ -10,7 +10,6 @@ from habitat_baselines.rl.models.rnn_state_encoder import (
 )
 from habitat_baselines.rl.ppo import Net
 
-from pirlnav.common.rnn_state_encoder import RNNStateEncoder
 from pirlnav.policy.policy import ILPolicy
 from pirlnav.policy.transforms import get_transform
 from pirlnav.policy.visual_encoder import VisualEncoder
@@ -265,9 +264,9 @@ class ObjectNavILMAEPolicy(ILPolicy):
             action_space=action_space,
             policy_config=config.POLICY,
             run_type=config.RUN_TYPE,
-            hidden_size=config.RL.PPO.hidden_size,
-            rnn_type=config.RL.DDPPO.rnn_type,
-            num_recurrent_layers=config.RL.DDPPO.num_recurrent_layers,
+            hidden_size=config.POLICY.STATE_ENCODER.hidden_size,
+            rnn_type=config.POLICY.STATE_ENCODER.rnn_type,
+            num_recurrent_layers=config.POLICY.STATE_ENCODER.num_recurrent_layers,
         )
 
     def freeze_visual_encoders(self):

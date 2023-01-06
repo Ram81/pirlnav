@@ -9,7 +9,7 @@ import os
 import random
 import time
 from collections import defaultdict, deque
-from typing import DefaultDict, Optional
+from typing import Dict
 
 import numpy as np
 import torch
@@ -154,6 +154,7 @@ class ILEnvDDPTrainer(PPOTrainer):
             discrete_actions = True
 
         il_cfg = self.config.IL.BehaviorCloning
+        policy_cfg = self.config.POLICY
         if torch.cuda.is_available():
             self.device = torch.device("cuda", self.config.TORCH_GPU_ID)
             torch.cuda.set_device(self.device)
@@ -195,7 +196,7 @@ class ILEnvDDPTrainer(PPOTrainer):
             self.envs.num_envs,
             obs_space,
             self.policy_action_space,
-            il_cfg.hidden_size,
+            policy_cfg.STATE_ENCODER.hidden_size,
             num_recurrent_layers=self.actor_critic.net.num_recurrent_layers,
             is_double_buffered=il_cfg.use_double_buffered_sampler,
             action_shape=action_shape,
@@ -457,3 +458,74 @@ class ILEnvDDPTrainer(PPOTrainer):
                 profiling_wrapper.range_pop()  # train update
 
             self.envs.close()
+    
+    @rank0_only
+    def _training_log(
+        self, writer, losses: Dict[str, float], prev_time: int = 0
+    ):
+        deltas = {
+            k: (
+                (v[-1] - v[0]).sum().item()
+                if len(v) > 1
+                else v[0].sum().item()
+            )
+            for k, v in self.window_episode_stats.items()
+        }
+        deltas["count"] = max(deltas["count"], 1.0)
+
+        writer.add_scalar(
+            "reward",
+            deltas["reward"] / deltas["count"],
+            self.num_steps_done,
+        )
+
+        # Check to see if there are any metrics
+        # that haven't been logged yet
+        metrics = {
+            k: v / deltas["count"]
+            for k, v in deltas.items()
+            if k not in {"reward", "count"}
+        }
+
+        for k, v in metrics.items():
+            writer.add_scalar(f"metrics/{k}", v, self.num_steps_done)
+        for k, v in losses.items():
+            writer.add_scalar(f"losses/{k}", v, self.num_steps_done)
+
+        fps = self.num_steps_done / ((time.time() - self.t_start) + prev_time)
+        writer.add_scalar("metrics/fps", fps, self.num_steps_done)
+
+        # log stats
+        if self.num_updates_done % self.config.LOG_INTERVAL == 0:
+            logger.info(
+                "update: {}\tfps: {:.3f}\t".format(
+                    self.num_updates_done,
+                    fps,
+                )
+            )
+
+            logger.info(
+                "update: {}\tenv-time: {:.3f}s\tpth-time: {:.3f}s\t"
+                "frames: {}".format(
+                    self.num_updates_done,
+                    self.env_time,
+                    self.pth_time,
+                    self.num_steps_done,
+                )
+            )
+
+            logger.info(
+                "Average window size: {}  {}  {}".format(
+                    len(self.window_episode_stats["count"]),
+                    "  ".join(
+                        "{}: {:.3f}".format(k, v / deltas["count"])
+                        for k, v in deltas.items()
+                        if k != "count"
+                    ),
+                    "  ".join(
+                        "{}: {:.3f}".format(k, v)
+                        for k, v in losses.items()
+                    )
+                )
+            )
+
