@@ -40,7 +40,7 @@ pip install -e .
 - Move the HM3D scene dataset or create a symlink at `data/scene_datasets/hm3d`.
 
 
-### Downloading Human Demonstrations Dataset
+### Download Demonstrations Dataset
 
 You can use the following datasets to reproduce results reported in our paper.
 
@@ -51,6 +51,11 @@ You can use the following datasets to reproduce results reported in our paper.
 | ObjectNav-FE | HM3D | 70k | [objectnav_hm3d_fe_240k.json.gz]() | `data/datasets/objectnav/objectnav_hm3d_fe_70k/` |
 
 The demonstration datasets released as part of this project are licensed under a [Creative Commons Attribution-NonCommercial 4.0 License](https://creativecommons.org/licenses/by-nc/4.0/legalcode).
+
+### Download HM3D Episode Dataset
+
+- Download the ObjectNav HM3D episode dataset from [here](https://github.com/facebookresearch/habitat-lab/blob/main/DATASETS.md#task-datasets).
+
 
 ### Dataset Folder Structure
 
@@ -76,74 +81,51 @@ The code requires the datasets in `data` folder in the following format:
 ### Training
 
 
-For training the behavior cloning policy on the ObjectGoal Navigation task using the environment based setup:
+For training the behavior cloning policy on the ObjectGoal Navigation task:
     
 1. Use the following script for multi-node training
 
   ```bash
-  sbatch job_scripts/run_objectnav_training.sh habitat_baselines/config/objectnav/il_ddp_objectnav.yaml
+  sbatch scripts/1-objectnav-il.sh
   ```
 
-2. To run training on a single node use:
-
-  ```bash
-  sbatch job_scripts/run_objectnav_training.sh habitat_baselines/config/objectnav/il_objectnav.yaml
-  ```
-
-For training the behavior cloning policy on the Pick-and-Place task using the disk based setup:
+For RL finetuning the behavior cloned policy on the ObjectGoal Navigation task:
     
 1. Use the following script for multi-node training
 
   ```bash
-  sbatch job_scripts/run_pickplace_training.sh ddp
-  ```
-
-2. To run training on a single node use:
-
-  ```bash
-  sbatch job_scripts/run_pickplace_training.sh single_node
+  sbatch scripts/2-objectnav-rl-ft.sh
   ```
 
 ### Evaluation
 
-To evaluate pretrained checkpoint on ObjectGoal Navigation, download the `objectnav_mp3d_v1` dataset from [here](https://github.com/facebookresearch/habitat-lab#task-datasets).
+To evaluate pretrained checkpoint on ObjectGoal Navigation, download the `objectnav_hm3d_v1` dataset from [here](https://github.com/facebookresearch/habitat-lab#task-datasets).
 
-For evaluating a checkpoint on the ObjectGoal Navigation task using the environment based setup:
+For evaluating a checkpoint on the ObjectGoal Navigation task using behavior cloning checkpoint:
     
-1. Use the following script if trained using distributed setup
+1. Use the following command
 
   ```bash
-  sbatch job_scripts/run_objectnav_eval.sh habitat_baselines/config/objectnav/il_ddp_objectnav.yaml data/datasets/objectnav_mp3d_v1 /path/to/checkpoint
+  sbatch scripts/1-objectnav-il-eval.sh /path/to/checkpoint
   ```
 
-2. Use the following script for evaluating single node checkpoint
+For evaluating a checkpoint on the ObjectGoal Navigation task using RL finetuned checkpoint:
+
+1. Use the following command
 
   ```bash
-  sbatch job_scripts/run_objectnav_eval.sh habitat_baselines/config/objectnav/il_objectnav.yaml data/datasets/objectnav_mp3d_v1 /path/to/checkpoint
+  sbatch scripts/1-objectnav-rl-ft-eval.sh/path/to/checkpoint
   ```
 
-For evaluating the behavior cloning policy on the Pick-and-Place task using the disk based setup:
-    
-1. Use the following script if trained using dristributed setup
-
-  ```bash
-  sbatch job_scripts/run_pickplace_eval.sh ddp
-  ```
-
-2. Use the following script for evaluating single node checkpoint
-
-  ```bash
-  sbatch job_scripts/run_pickplace_eval.sh single_node
-  ```
 
 ## Reproducing Results
 
 We provide best checkpoints for agents trained on ObjectNav task with imitation learning and RL finetuning. You can use the following checkpoints to reproduce results reported in our paper.
 
-| Task | Split | Checkpoint | Success Rate | SPL |
+| Task | Checkpoint | Success Rate | SPL |
 | --- | --- | --- | --- | --- |
-| 🆕[ObjectNav](https://arxiv.org/abs/2006.13171) | v1 | [objectnav_il.ckpt]() | 64.1 | 27.1 |
-| 🆕[ObjectNav](https://arxiv.org/abs/2006.13171) | v1 | [objectnav_rl_ft.ckpt]() | 70.4 | - |
+| 🆕[ObjectNav](https://arxiv.org/abs/2006.13171) | [objectnav_il.ckpt]() | 64.1 | 27.1 |
+| 🆕[ObjectNav](https://arxiv.org/abs/2006.13171) | [objectnav_rl_ft.ckpt]() | 70.4 | - |
 
 
 ## Citation
