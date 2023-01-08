@@ -5,6 +5,7 @@
 # LICENSE file in the root directory of this source tree.
 import abc
 
+from habitat import logger
 from habitat_baselines.rl.ppo import Policy
 from habitat_baselines.utils.common import CategoricalNet
 from torch import nn as nn

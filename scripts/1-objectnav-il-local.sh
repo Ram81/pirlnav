@@ -5,8 +5,8 @@ export HABITAT_SIM_LOG=quiet
 
 config="configs/experiments/il_objectnav.yaml"
 
-TENSORBOARD_DIR="tb/objectnav_il/overfitting/ovrl_resnet50/seed_1/"
-CHECKPOINT_DIR="data/new_checkpoints/objectnav_il/overfitting/ovrl_resnet50/seed_1/"
+TENSORBOARD_DIR="tb/objectnav_il/overfitting/ovrl_resnet50/seed_2/"
+CHECKPOINT_DIR="data/new_checkpoints/objectnav_il/overfitting/ovrl_resnet50/seed_2/"
 DATA_PATH="data/datasets/objectnav/objectnav_hm3d/objectnav_hm3d_2k/"
 
 mkdir -p $TENSORBOARD_DIR
