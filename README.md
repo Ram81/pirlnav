@@ -123,7 +123,7 @@ For evaluating a checkpoint on the ObjectGoal Navigation task using RL finetuned
 We provide best checkpoints for agents trained on ObjectNav task with imitation learning and RL finetuning. You can use the following checkpoints to reproduce results reported in our paper.
 
 | Task | Checkpoint | Success Rate | SPL |
-| --- | --- | --- | --- | --- |
+| --- | --- | --- | --- |
 | 🆕[ObjectNav](https://arxiv.org/abs/2006.13171) | [objectnav_il.ckpt]() | 64.1 | 27.1 |
 | 🆕[ObjectNav](https://arxiv.org/abs/2006.13171) | [objectnav_rl_ft.ckpt]() | 70.4 | - |
 
