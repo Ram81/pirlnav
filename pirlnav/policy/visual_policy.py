@@ -5,9 +5,7 @@ from habitat import Config, logger
 from habitat.tasks.nav.nav import EpisodicCompassSensor, EpisodicGPSSensor
 from habitat.tasks.nav.object_nav_task import ObjectGoalSensor
 from habitat_baselines.common.baseline_registry import baseline_registry
-from habitat_baselines.rl.models.rnn_state_encoder import (
-    build_rnn_state_encoder,
-)
+from habitat_baselines.rl.models.rnn_state_encoder import build_rnn_state_encoder
 from habitat_baselines.rl.ppo import Net
 
 from pirlnav.policy.policy import ILPolicy
@@ -135,6 +133,12 @@ class ObjectNavILMAENet(Net):
         if rgb_config.freeze_backbone:
             for p in self.visual_encoder.backbone.parameters():
                 p.requires_grad = False
+
+        logger.info(
+            "State enc: {} - {} - {} - {}".format(
+                rnn_input_size, hidden_size, rnn_type, num_recurrent_layers
+            )
+        )
 
         self.state_encoder = build_rnn_state_encoder(
             rnn_input_size,
@@ -268,6 +272,10 @@ class ObjectNavILMAEPolicy(ILPolicy):
             rnn_type=config.POLICY.STATE_ENCODER.rnn_type,
             num_recurrent_layers=config.POLICY.STATE_ENCODER.num_recurrent_layers,
         )
+
+    @property
+    def num_recurrent_layers(self):
+        return self.net.num_recurrent_layers
 
     def freeze_visual_encoders(self):
         for param in self.net.visual_encoder.parameters():

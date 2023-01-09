@@ -180,6 +180,7 @@ _CONFIG.POLICY.CRITIC.hidden_dim = 512
 _CONFIG.RL.POLICY.name = "ObjectNavILMAEPolicy"
 _CONFIG.RL.PPO.num_mini_batch = 2
 _CONFIG.RL.PPO.use_linear_lr_decay = True
+_CONFIG.RL.PPO.hidden_size = 2048
 
 ##############################################
 # Policy Finetuning config

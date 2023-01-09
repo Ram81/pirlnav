@@ -9,13 +9,16 @@ import os
 import random
 import time
 from collections import defaultdict, deque
-from typing import Dict
+from typing import Any, Dict, List
 
 import numpy as np
 import torch
+import tqdm
 from gym import spaces
 from habitat import Config, logger
 from habitat.utils import profiling_wrapper
+from habitat.utils.render_wrapper import overlay_frame
+from habitat.utils.visualizations.utils import observations_to_image
 from habitat_baselines.common.baseline_registry import baseline_registry
 from habitat_baselines.common.obs_transformers import (
     apply_obs_transforms_batch,
@@ -29,7 +32,6 @@ from habitat_baselines.common.tensorboard_utils import (
 from habitat_baselines.rl.ddppo.ddp_utils import (
     EXIT,
     add_signal_handlers,
-    get_distrib_size,
     init_distrib_slurm,
     is_slurm_batch_job,
     load_resume_state,
@@ -60,10 +62,10 @@ class ILEnvDDPTrainer(PPOTrainer):
         super().__init__(config)
 
     def _setup_actor_critic_agent(self, il_cfg: Config) -> None:
-        r"""Sets up actor critic and agent for PPO.
+        r"""Sets up actor critic and agent for IL.
 
         Args:
-            ppo_cfg: config node with relevant params
+            il_cfg: config node with relevant params
 
         Returns:
             None
@@ -537,3 +539,286 @@ class ILEnvDDPTrainer(PPOTrainer):
                     ),
                 )
             )
+
+    def _eval_checkpoint(
+        self,
+        checkpoint_path: str,
+        writer: TensorboardWriter,
+        checkpoint_index: int = 0,
+    ) -> None:
+        r"""Evaluates a single checkpoint.
+
+        Args:
+            checkpoint_path: path of checkpoint
+            writer: tensorboard writer object for logging to tensorboard
+            checkpoint_index: index of cur checkpoint for logging
+
+        Returns:
+            None
+        """
+        if self._is_distributed:
+            raise RuntimeError("Evaluation does not support distributed mode")
+
+        # Map location CPU is almost always better than mapping to a CUDA device.
+        if self.config.EVAL.SHOULD_LOAD_CKPT:
+            ckpt_dict = self.load_checkpoint(
+                checkpoint_path, map_location="cpu"
+            )
+        else:
+            ckpt_dict = {}
+
+        if self.config.EVAL.USE_CKPT_CONFIG:
+            config = self._setup_eval_config(ckpt_dict["config"])
+        else:
+            config = self.config.clone()
+
+        config.defrost()
+        config.TASK_CONFIG.DATASET.SPLIT = config.EVAL.SPLIT
+        config.freeze()
+
+        if (
+            len(self.config.VIDEO_OPTION) > 0
+            and self.config.VIDEO_RENDER_TOP_DOWN
+        ):
+            config.defrost()
+            config.TASK_CONFIG.TASK.MEASUREMENTS.append("TOP_DOWN_MAP")
+            config.TASK_CONFIG.TASK.MEASUREMENTS.append("COLLISIONS")
+            config.freeze()
+
+        if config.VERBOSE:
+            logger.info(f"env config: {config}")
+
+        self._init_envs(config)
+
+        action_space = self.envs.action_spaces[0]
+        if self.using_velocity_ctrl:
+            # For navigation using a continuous action space for a task that
+            # may be asking for discrete actions
+            self.policy_action_space = action_space["VELOCITY_CONTROL"]
+            action_shape = (2,)
+            discrete_actions = False
+        else:
+            self.policy_action_space = action_space
+            if is_continuous_action_space(action_space):
+                # Assume NONE of the actions are discrete
+                action_shape = (get_num_actions(action_space),)
+                discrete_actions = False
+            else:
+                # For discrete pointnav
+                action_shape = (1,)
+                discrete_actions = True
+
+        il_cfg = config.IL.BehaviorCloning
+        policy_cfg = config.POLICY
+        self._setup_actor_critic_agent(il_cfg)
+
+        if self.agent.actor_critic.should_load_agent_state:
+            self.agent.load_state_dict(ckpt_dict["state_dict"])
+        self.actor_critic = self.agent.actor_critic
+
+        observations = self.envs.reset()
+        batch = batch_obs(
+            observations, device=self.device, cache=self._obs_batching_cache
+        )
+        batch = apply_obs_transforms_batch(batch, self.obs_transforms)  # type: ignore
+
+        current_episode_reward = torch.zeros(
+            self.envs.num_envs, 1, device="cpu"
+        )
+
+        test_recurrent_hidden_states = torch.zeros(
+            self.config.NUM_ENVIRONMENTS,
+            self.actor_critic.net.num_recurrent_layers,
+            policy_cfg.STATE_ENCODER.hidden_size,
+            device=self.device,
+        )
+        prev_actions = torch.zeros(
+            self.config.NUM_ENVIRONMENTS,
+            *action_shape,
+            device=self.device,
+            dtype=torch.long if discrete_actions else torch.float,
+        )
+        not_done_masks = torch.zeros(
+            self.config.NUM_ENVIRONMENTS,
+            1,
+            device=self.device,
+            dtype=torch.bool,
+        )
+        stats_episodes: Dict[
+            Any, Any
+        ] = {}  # dict of dicts that stores stats per episode
+
+        rgb_frames = [
+            [] for _ in range(self.config.NUM_ENVIRONMENTS)
+        ]  # type: List[List[np.ndarray]]
+        if len(self.config.VIDEO_OPTION) > 0:
+            os.makedirs(self.config.VIDEO_DIR, exist_ok=True)
+
+        number_of_eval_episodes = self.config.TEST_EPISODE_COUNT
+        if number_of_eval_episodes == -1:
+            number_of_eval_episodes = sum(self.envs.number_of_episodes)
+        else:
+            total_num_eps = sum(self.envs.number_of_episodes)
+            if total_num_eps < number_of_eval_episodes:
+                logger.warn(
+                    f"Config specified {number_of_eval_episodes} eval episodes"
+                    ", dataset only has {total_num_eps}."
+                )
+                logger.warn(f"Evaluating with {total_num_eps} instead.")
+                number_of_eval_episodes = total_num_eps
+
+        pbar = tqdm.tqdm(total=number_of_eval_episodes)
+        logger.info("Sampling actions deterministically...")
+        self.actor_critic.eval()
+        while (
+            len(stats_episodes) < number_of_eval_episodes
+            and self.envs.num_envs > 0
+        ):
+            current_episodes = self.envs.current_episodes()
+
+            with torch.no_grad():
+                (
+                    actions,
+                    test_recurrent_hidden_states,
+                ) = self.actor_critic.act(
+                    batch,
+                    test_recurrent_hidden_states,
+                    prev_actions,
+                    not_done_masks,
+                    deterministic=True,
+                )
+
+                prev_actions.copy_(actions)  # type: ignore
+            # NB: Move actions to CPU.  If CUDA tensors are
+            # sent in to env.step(), that will create CUDA contexts
+            # in the subprocesses.
+            # For backwards compatibility, we also call .item() to convert to
+            # an int
+            if actions[0].shape[0] > 1:
+                step_data = [
+                    action_array_to_dict(self.policy_action_space, a)
+                    for a in actions.to(device="cpu")
+                ]
+            else:
+                step_data = [a.item() for a in actions.to(device="cpu")]
+
+            outputs = self.envs.step(step_data)
+
+            observations, rewards_l, dones, infos = [
+                list(x) for x in zip(*outputs)
+            ]
+            batch = batch_obs(  # type: ignore
+                observations,
+                device=self.device,
+                cache=self._obs_batching_cache,
+            )
+            batch = apply_obs_transforms_batch(batch, self.obs_transforms)  # type: ignore
+
+            not_done_masks = torch.tensor(
+                [[not done] for done in dones],
+                dtype=torch.bool,
+                device="cpu",
+            )
+
+            rewards = torch.tensor(
+                rewards_l, dtype=torch.float, device="cpu"
+            ).unsqueeze(1)
+            current_episode_reward += rewards
+            next_episodes = self.envs.current_episodes()
+            envs_to_pause = []
+            n_envs = self.envs.num_envs
+            for i in range(n_envs):
+                if (
+                    next_episodes[i].scene_id,
+                    next_episodes[i].episode_id,
+                ) in stats_episodes:
+                    envs_to_pause.append(i)
+
+                # episode ended
+                if not not_done_masks[i].item():
+                    pbar.update()
+                    episode_stats = {
+                        "reward": current_episode_reward[i].item()
+                    }
+                    episode_stats.update(
+                        self._extract_scalars_from_info(infos[i])
+                    )
+                    current_episode_reward[i] = 0
+                    # use scene_id + episode_id as unique id for storing stats
+                    stats_episodes[
+                        (
+                            current_episodes[i].scene_id,
+                            current_episodes[i].episode_id,
+                        )
+                    ] = episode_stats
+
+                    if len(self.config.VIDEO_OPTION) > 0:
+                        generate_video(
+                            video_option=self.config.VIDEO_OPTION,
+                            video_dir=self.config.VIDEO_DIR,
+                            images=rgb_frames[i],
+                            episode_id=current_episodes[i].episode_id,
+                            checkpoint_idx=checkpoint_index,
+                            metrics=self._extract_scalars_from_info(infos[i]),
+                            fps=self.config.VIDEO_FPS,
+                            tb_writer=writer,
+                            keys_to_include_in_name=self.config.EVAL_KEYS_TO_INCLUDE_IN_NAME,
+                        )
+
+                        rgb_frames[i] = []
+
+                # episode continues
+                elif len(self.config.VIDEO_OPTION) > 0:
+                    # TODO move normalization / channel changing out of the policy and undo it here
+                    frame = observations_to_image(
+                        {k: v[i] for k, v in batch.items()}, infos[i]
+                    )
+                    if self.config.VIDEO_RENDER_ALL_INFO:
+                        frame = overlay_frame(frame, infos[i])
+
+                    rgb_frames[i].append(frame)
+
+            not_done_masks = not_done_masks.to(device=self.device)
+            (
+                self.envs,
+                test_recurrent_hidden_states,
+                not_done_masks,
+                current_episode_reward,
+                prev_actions,
+                batch,
+                rgb_frames,
+            ) = self._pause_envs(
+                envs_to_pause,
+                self.envs,
+                test_recurrent_hidden_states,
+                not_done_masks,
+                current_episode_reward,
+                prev_actions,
+                batch,
+                rgb_frames,
+            )
+
+        num_episodes = len(stats_episodes)
+        aggregated_stats = {}
+        for stat_key in next(iter(stats_episodes.values())).keys():
+            aggregated_stats[stat_key] = (
+                sum(v[stat_key] for v in stats_episodes.values())
+                / num_episodes
+            )
+
+        for k, v in aggregated_stats.items():
+            logger.info(f"Average episode {k}: {v:.4f}")
+
+        step_id = checkpoint_index
+        if "extra_state" in ckpt_dict and "step" in ckpt_dict["extra_state"]:
+            step_id = ckpt_dict["extra_state"]["step"]
+
+        writer.add_scalar(
+            "eval_reward/average_reward", aggregated_stats["reward"], step_id
+        )
+
+        metrics = {k: v for k, v in aggregated_stats.items() if k != "reward"}
+        for k, v in metrics.items():
+            writer.add_scalar(f"eval_metrics/{k}", v, step_id)
+
+        self.envs.close()

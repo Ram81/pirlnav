@@ -68,7 +68,7 @@ class ILPolicy(nn.Module, Policy):
         distribution_entropy = distribution.entropy().mean()
 
         if self.no_critic:
-            return action, rnn_hidden_states, distribution_entropy
+            return action, rnn_hidden_states
 
         value = self.critic(features)
 
