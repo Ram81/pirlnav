@@ -46,9 +46,9 @@ You can use the following datasets to reproduce results reported in our paper.
 
 | Dataset| Scene dataset | Split | Link | Extract path |
 | ----- | --- | --- | --- | --- |
-| ObjectNav-HD | HM3D | 77k | [objectnav_hm3d_hd_70k.json.gz]() | `data/datasets/objectnav/objectnav_hm3d_hd_70k/` |
-| ObjectNav-SP | HM3D | 240k | [objectnav_hm3d_sp_240k.json.gz]() | `data/datasets/objectnav/objectnav_hm3d_sp_240k/` |
-| ObjectNav-FE | HM3D | 70k | [objectnav_hm3d_fe_240k.json.gz]() | `data/datasets/objectnav/objectnav_hm3d_fe_70k/` |
+| ObjectNav-HD | HM3D | 77k | [objectnav_hm3d_hd.json.gz](https://habitat-on-web.s3.amazonaws.com/pirlnav_release/objectnav_hm3d_hd.zip) | `data/datasets/objectnav/objectnav_hm3d_hd/` |
+| ObjectNav-SP | HM3D | 240k | [objectnav_hm3d_sp.json.gz](https://habitat-on-web.s3.amazonaws.com/pirlnav_release/objectnav_hm3d_sp.zip) | `data/datasets/objectnav/objectnav_hm3d_sp/` |
+| ObjectNav-FE | HM3D | 70k | [objectnav_hm3d_fe.json.gz](https://habitat-on-web.s3.amazonaws.com/pirlnav_release/objectnav_hm3d_fe.zip) | `data/datasets/objectnav/objectnav_hm3d_fe/` |
 
 The demonstration datasets released as part of this project are licensed under a [Creative Commons Attribution-NonCommercial 4.0 License](https://creativecommons.org/licenses/by-nc/4.0/legalcode).
 
