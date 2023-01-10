@@ -119,7 +119,7 @@ We provide best checkpoints for agents trained on ObjectNav task with imitation 
 | Task | Checkpoint | Success Rate | SPL |
 | --- | --- | --- | --- |
 | 🆕[ObjectNav](https://arxiv.org/abs/2006.13171) | [objectnav_il.ckpt]() | 64.1 | 27.1 |
-| 🆕[ObjectNav](https://arxiv.org/abs/2006.13171) | [objectnav_rl_ft.ckpt]() | 70.4 | 34.08 |
+| 🆕[ObjectNav](https://arxiv.org/abs/2006.13171) | [objectnav_rl_ft.ckpt]() | 70.4 | 34.1 |
 
 
 ## Citation
