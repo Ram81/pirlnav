@@ -25,10 +25,7 @@ from habitat_baselines.common.obs_transformers import (
     apply_obs_transforms_obs_space,
     get_active_obs_transforms,
 )
-from habitat_baselines.common.tensorboard_utils import (
-    TensorboardWriter,
-    get_writer,
-)
+from habitat_baselines.common.tensorboard_utils import TensorboardWriter, get_writer
 from habitat_baselines.rl.ddppo.ddp_utils import (
     EXIT,
     add_signal_handlers,

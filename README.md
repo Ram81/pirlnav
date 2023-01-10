@@ -7,7 +7,7 @@ Ram Ramrakhya, Dhruv Batra, Erik Wijmans, Abhishek Das
 
 ## Installation
 
-1. Run the following commands:
+Run the following commands:
 
 ```
 git clone https://github.com/Ram81/pirlnav.git
@@ -33,11 +33,13 @@ pip install -e .
 
 ## Data
 
-### Downloading HM3D Scene Dataset
+### Downloading HM3D Scene and Episode Dataset
 
 - Download the HM3D dataset using the instructions [here](https://github.com/facebookresearch/habitat-sim/blob/main/DATASETS.md#habitat-matterport-3d-research-dataset-hm3d) (download the full HM3D dataset for use with habitat)
 
 - Move the HM3D scene dataset or create a symlink at `data/scene_datasets/hm3d`.
+
+- Download the ObjectNav HM3D episode dataset from [here](https://github.com/facebookresearch/habitat-lab/blob/main/DATASETS.md#task-datasets).
 
 
 ### Download Demonstrations Dataset
@@ -51,10 +53,6 @@ You can use the following datasets to reproduce results reported in our paper.
 | ObjectNav-FE | HM3D | 70k | [objectnav_hm3d_fe.json.gz](https://habitat-on-web.s3.amazonaws.com/pirlnav_release/objectnav_hm3d_fe.zip) | `data/datasets/objectnav/objectnav_hm3d_fe/` |
 
 The demonstration datasets released as part of this project are licensed under a [Creative Commons Attribution-NonCommercial 4.0 License](https://creativecommons.org/licenses/by-nc/4.0/legalcode).
-
-### Download HM3D Episode Dataset
-
-- Download the ObjectNav HM3D episode dataset from [here](https://github.com/facebookresearch/habitat-lab/blob/main/DATASETS.md#task-datasets).
 
 
 ### Dataset Folder Structure
@@ -70,51 +68,47 @@ The code requires the datasets in `data` folder in the following format:
   │  │  │  │  └── JeFG25nYj2p.navmesh
   │  │  ├── datasets
   │  │  │  ├── objectnav/
-  │  │  │  │  ├── hm3d/
-  │  │  │  │  │  ├── v1/
-  │  │  │  │  │  |   ├── train/
-  │  │  │  │  │  |   ├── val/
+  │  │  │  │  ├── objectnav_hm3d/
+  │  │  │  │  │  ├── objectnav_hm3d_hd/
+  │  │  │  │  │  │   ├── train/
+  │  │  │  │  │  ├── objectnav_hm3d_v1/
+  │  │  │  │  │  │   ├── train/
+  │  │  │  │  │  │   ├── val/
   ```
 
 ## Usage
 
-### Training
+### IL Training
 
 
-For training the behavior cloning policy on the ObjectGoal Navigation task:
-    
-1. Use the following script for multi-node training
+For training the behavior cloning policy on the ObjectGoal Navigation task use the following script:
 
   ```bash
-  sbatch scripts/1-objectnav-il.sh
+  sbatch scripts/1-objectnav-il.sh <dataset_name>
   ```
 
-For RL finetuning the behavior cloned policy on the ObjectGoal Navigation task:
-    
-1. Use the following script for multi-node training
+  where `dataset_name` can be `objectnav_hm3d_hd`, `objectnav_hm3d_sp`, or `objectnav_hm3d_fe`
+
+### RL Finetuning
+
+For RL finetuning the behavior cloned policy on the ObjectGoal Navigation task use the following script:
 
   ```bash
-  sbatch scripts/2-objectnav-rl-ft.sh
+  sbatch scripts/2-objectnav-rl-ft.sh /path/to/initial/checkpoint
   ```
 
 ### Evaluation
 
-To evaluate pretrained checkpoint on ObjectGoal Navigation, download the `objectnav_hm3d_v1` dataset from [here](https://github.com/facebookresearch/habitat-lab#task-datasets).
-
-For evaluating a checkpoint on the ObjectGoal Navigation task using behavior cloning checkpoint:
-    
-1. Use the following command
+To evaluate a checkpoint trained using behavior cloning checkpoint use the following command:
 
   ```bash
   sbatch scripts/1-objectnav-il-eval.sh /path/to/checkpoint
   ```
 
-For evaluating a checkpoint on the ObjectGoal Navigation task using RL finetuned checkpoint:
-
-1. Use the following command
+For evaluating a checkpoint trained using RL finetuning use the following command: 
 
   ```bash
-  sbatch scripts/1-objectnav-rl-ft-eval.sh/path/to/checkpoint
+  sbatch scripts/1-objectnav-rl-ft-eval.sh /path/to/checkpoint
   ```
 
 
@@ -125,7 +119,7 @@ We provide best checkpoints for agents trained on ObjectNav task with imitation 
 | Task | Checkpoint | Success Rate | SPL |
 | --- | --- | --- | --- |
 | 🆕[ObjectNav](https://arxiv.org/abs/2006.13171) | [objectnav_il.ckpt]() | 64.1 | 27.1 |
-| 🆕[ObjectNav](https://arxiv.org/abs/2006.13171) | [objectnav_rl_ft.ckpt]() | 70.4 | - |
+| 🆕[ObjectNav](https://arxiv.org/abs/2006.13171) | [objectnav_rl_ft.ckpt]() | 70.4 | 34.08 |
 
 
 ## Citation
@@ -133,7 +127,7 @@ We provide best checkpoints for agents trained on ObjectNav task with imitation 
 If you use this code in your research, please consider citing:
 
 ```
-@article{pirlnav_rramrakhya2023,
+@article{rramrakhya2023,
       title={PIRLNav: Pretraining with Imitation and RL Finetuning for ObjectNav},
       author={Ram Ramrakhya and Dhruv Batra and Erik Wijmans and Abhishek Das},
       year={2022},

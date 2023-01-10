@@ -24,10 +24,10 @@ export MASTER_ADDR
 
 config="configs/experiments/rl_ft_objectnav.yaml"
 
-TENSORBOARD_DIR="tb/objectnav_il_rl_ft/overfitting/ovrl_resnet50/seed_1/"
-CHECKPOINT_DIR="data/new_checkpoints/objectnav_il_rl_ft/overfitting/ovrl_resnet50/seed_1/"
 DATA_PATH="data/datasets/objectnav/objectnav_hm3d/objectnav_hm3d_v1/"
-PRETRAINED_WEIGHTS="data/new_checkpoints/objectnav_il/overfitting/ovrl_resnet50/seed_1/ckpt.0.pth"
+TENSORBOARD_DIR="tb/objectnav_il_rl_ft/ovrl_resnet50/seed_1/"
+CHECKPOINT_DIR="data/new_checkpoints/objectnav_il_rl_ft/ovrl_resnet50/seed_1/"
+PRETRAINED_WEIGHTS=$1
 
 mkdir -p $TENSORBOARD_DIR
 mkdir -p $CHECKPOINT_DIR

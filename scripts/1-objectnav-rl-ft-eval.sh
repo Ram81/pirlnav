@@ -25,8 +25,8 @@ export MASTER_ADDR
 config="configs/experiments/rl_ft_objectnav.yaml"
 
 DATA_PATH="data/datasets/objectnav/objectnav_hm3d/objectnav_hm3d_v1/"
-TENSORBOARD_DIR="tb/objectnav_il_rl_ft/overfitting/ovrl_resnet50/seed_1/"
-EVAL_CKPT_PATH_DIR="data/new_checkpoints/objectnav_il_rl_ft/overfitting/ovrl_resnet50/seed_1/ckpt.0.pth"
+TENSORBOARD_DIR="tb/objectnav_il_rl_ft/ovrl_resnet50/seed_1/"
+EVAL_CKPT_PATH_DIR=$1
 
 mkdir -p $TENSORBOARD_DIR
 set -x

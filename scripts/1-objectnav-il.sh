@@ -2,7 +2,7 @@
 #SBATCH --job-name=pirlnav
 #SBATCH --gres gpu:4
 #SBATCH --nodes 1
-#SBATCH --cpus-per-task 8
+#SBATCH --cpus-per-task 10
 #SBATCH --ntasks-per-node 4
 #SBATCH --signal=USR1@1000
 #SBATCH --partition=short
@@ -24,11 +24,13 @@ export MASTER_ADDR
 
 cd /srv/flash1/rramrakhya6/spring_2022/pirlnav
 
+dataset=$1
+
 config="configs/experiments/il_objectnav.yaml"
 
-DATA_PATH="data/datasets/objectnav/objectnav_hm3d/objectnav_hm3d_10k"
-TENSORBOARD_DIR="tb/objectnav_il/overfitting/ovrl_resnet50/seed_3_wd_zero/"
-CHECKPOINT_DIR="data/new_checkpoints/objectnav_il/overfitting/ovrl_resnet50/seed_3_wd_zero/"
+DATA_PATH="data/datasets/objectnav/objectnav_hm3d/${dataset}"
+TENSORBOARD_DIR="tb/objectnav_il/${dataset}/ovrl_resnet50/seed_1/"
+CHECKPOINT_DIR="data/new_checkpoints/objectnav_il/${dataset}/ovrl_resnet50/seed_1/"
 INFLECTION_COEF=3.234951275740812
 
 mkdir -p $TENSORBOARD_DIR
