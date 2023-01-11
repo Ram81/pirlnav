@@ -9,8 +9,7 @@ Ram Ramrakhya, Dhruv Batra, Erik Wijmans, Abhishek Das
 
 ## What is PIRLNav?
 
-PIRLNav is a two-stage learning scheme for IL pretraining on human demonstrations followed by RL-finetuning. To enable successful RL finetuning, we present a two-stage learning
-scheme involving a critic-only learning phase first that gradually transitions over to training both the actor and critic. 
+PIRLNav is a two-stage learning scheme for IL pretraining on human demonstrations followed by RL-finetuning for ObjectNav. To enable successful RL finetuning, we present a two-stage learning scheme involving a critic-only learning phase first that gradually transitions over to training both the actor and critic. 
 
 <p align="center">
   <img src="imgs/teaser.png"  height="400">
