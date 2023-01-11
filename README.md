@@ -1,8 +1,27 @@
 # PIRLNav: Pretraining with Imitation and RL Finetuning for ObjectNav
 
-Code for our paper [PIRLNav: Pretraining with Imitation and RL Finetuning for ObjectNav]().  [Project Page]()
+Code for our paper [PIRLNav: Pretraining with Imitation and RL Finetuning for ObjectNav](). 
+
+[Project Page](https://ram81.github.io/projects/pirlnav)
 
 Ram Ramrakhya, Dhruv Batra, Erik Wijmans, Abhishek Das
+
+
+## What is PIRLNav?
+
+PIRLNav is a two-stage learning scheme for IL pretraining on human demonstrations followed by RL-finetuning. To enable successful RL finetuning, we present a two-stage learning
+scheme involving a critic-only learning phase first that gradually transitions over to training both the actor and critic. 
+
+<p align="center">
+  <img src="imgs/teaser.png"  height="400">
+
+  <p align="center"><i>Scaling laws of <code>IL→RL</code> for ObjectNav </i></p>
+</p>
+
+Using this IL→RL training recipe, we present a rigorous empirical analysis of design choices. We study how
+RL-finetuning performance scales with the size of the IL pretraining dataset. We find that as we increase the size of the IL-pretraining dataset and get to high IL accuracies, the improvements from RL-finetuning are smaller, and that 90% of the performance of our best IL→RL policy can be achieved with less than half the number of IL demonstrations.
+
+Read more in the [paper]().
 
 
 ## Installation
@@ -118,8 +137,8 @@ We provide best checkpoints for agents trained on ObjectNav task with imitation 
 
 | Task | Checkpoint | Success Rate | SPL |
 | --- | --- | --- | --- |
-| 🆕[ObjectNav](https://arxiv.org/abs/2006.13171) | [objectnav_il.ckpt]() | 64.1 | 27.1 |
-| 🆕[ObjectNav](https://arxiv.org/abs/2006.13171) | [objectnav_rl_ft.ckpt]() | 70.4 | 34.1 |
+| 🆕[ObjectNav](https://arxiv.org/abs/2006.13171) | [objectnav_il_hd.ckpt](https://habitat-on-web.s3.amazonaws.com/pirlnav_release/checkpoints/objectnav_il_hd.ckpt) | 64.1 | 27.1 |
+| 🆕[ObjectNav](https://arxiv.org/abs/2006.13171) | [objectnav_rl_ft_hd.ckpt](https://habitat-on-web.s3.amazonaws.com/pirlnav_release/checkpoints/objectnav_rl_ft_hd.ckpt) | 70.4 | 34.1 |
 
 
 ## Citation
