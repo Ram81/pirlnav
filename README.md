@@ -2,9 +2,9 @@
 
 Code for our paper [PIRLNav: Pretraining with Imitation and RL Finetuning for ObjectNav](). 
 
-[Project Page](https://ram81.github.io/projects/pirlnav)
-
 Ram Ramrakhya, Dhruv Batra, Erik Wijmans, Abhishek Das
+
+[Project Page](https://ram81.github.io/projects/pirlnav)
 
 
 ## What is PIRLNav?
@@ -73,6 +73,10 @@ You can use the following datasets to reproduce results reported in our paper.
 The demonstration datasets released as part of this project are licensed under a [Creative Commons Attribution-NonCommercial 4.0 License](https://creativecommons.org/licenses/by-nc/4.0/legalcode).
 
 
+### OVRL Encoder Weights
+
+To train policies using OVRL pretrained RGB encoder, download the model weights from [here](https://habitat-on-web.s3.amazonaws.com/pirlnav_release/checkpoints/omnidata_DINO_02.pth) and move to `data/visual_encoders/`.
+
 ### Dataset Folder Structure
 
 The code requires the datasets in `data` folder in the following format:
@@ -92,6 +96,7 @@ The code requires the datasets in `data` folder in the following format:
   │  │  │  │  │  ├── objectnav_hm3d_v1/
   │  │  │  │  │  │   ├── train/
   │  │  │  │  │  │   ├── val/
+  │  │  ├── visual_encoders
   ```
 
 ## Usage
