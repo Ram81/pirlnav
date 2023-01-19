@@ -150,10 +150,11 @@ We provide best checkpoints for agents trained on ObjectNav task with imitation 
 If you use this code in your research, please consider citing:
 
 ```
-@article{rramrakhya2023,
+@article{ramrakhya2023pirlnav,
       title={PIRLNav: Pretraining with Imitation and RL Finetuning for ObjectNav},
       author={Ram Ramrakhya and Dhruv Batra and Erik Wijmans and Abhishek Das},
-      year={2022},
+      journal={arXiv preprint arXiv:2301.07302},
+      year={2023},
 }
 ```
 
