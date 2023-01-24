@@ -403,7 +403,11 @@ class DDPPOTrainer(PPOTrainer):
                 for param in self.actor_critic.action_distribution.parameters():
                     param.requires_grad_(True)
                 for param in self.actor_critic.net.state_encoder.parameters():
-                    param.requires_grad_(True)      
+                    param.requires_grad_(True)   
+
+                for i, param_group in enumerate(self.agent.optimizer.param_groups):
+                    param_group["eps"] = self.config.RL.PPO.eps
+                    lr_scheduler.base_lrs[i] = 1.0
                 logger.info("unfreezing params")
             logger.info("Loaded state from interrupted state")
         

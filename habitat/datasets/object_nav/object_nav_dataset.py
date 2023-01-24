@@ -147,6 +147,11 @@ class ObjectNavDatasetV1(PointNavDatasetV1):
             episode = ObjectGoalNavEpisode(**episode)
             episode.episode_id = "{}_{}_{}_{}".format(episode.scene_id.split("/")[-1].split(".")[0], str(i), start_position, episode.object_category)
 
+            # webpage_ep_ids = json.loads(open("data/webpage_episodes.json").read())
+            # webpage_ep_ids = [w.replace(",_", ", ") for w in webpage_ep_ids]
+            # if not episode.episode_id in webpage_ep_ids:
+            #     continue
+
             if scenes_dir is not None:
                 if episode.scene_id.startswith(DEFAULT_SCENE_PATH_PREFIX):
                     episode.scene_id = episode.scene_id[

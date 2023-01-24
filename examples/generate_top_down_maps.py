@@ -15,6 +15,7 @@ from PIL import Image, ImageEnhance
 from habitat.tasks.nav.nav import MAP_THICKNESS_SCALAR
 from habitat import logger
 from habitat_sim.utils.common import quat_to_coeffs
+from tqdm import tqdm
 
 config = habitat.get_config("configs/tasks/objectnav_mp3d_il_video.yaml")
 
@@ -154,13 +155,16 @@ def run_reference_replay(
             step_index = 1
             total_reward = 0.0
             episode = env.current_episode
-            
-            if episode.object_category != "bed":
-                continue
-            print(episode.episode_id)
+
+            print(episode.episode_id, ep_id)
             if specific_episode_id is not None and episode.episode_id != specific_episode_id:
                 continue
             positions = [env._sim.get_agent_state()]
+
+            webpage_ep_ids = load_json_dataset("data/webpage_episodes.json")
+            webpage_ep_ids = [w.replace(",_", ", ") for w in webpage_ep_ids]
+            if not env.current_episode.episode_id in webpage_ep_ids or ep_id <= 3:
+                continue
 
             reference_replay = env.current_episode.reference_replay
             if evaluation_meta is not None:
@@ -169,8 +173,7 @@ def run_reference_replay(
                     step_index = 0
                 print("Expected succesS: {}".format(episode_eval_meta_map[env.current_episode.episode_id]["metrics"]["success"]))
 
-
-            for step_id, data in enumerate(reference_replay[step_index:]):
+            for step_id, data in tqdm(enumerate(reference_replay[step_index:])):
                 if type(data) is str:
                     action = possible_actions.index(data)
                 else:
@@ -214,15 +217,18 @@ def run_reference_replay(
                 if action_name == "STOP":
                     break
 
+            suffix = "{}_sucess={}".format(ep_id,episode_eval_meta_map[env.current_episode.episode_id]["metrics"]["success"])
             if save_videos:
-                make_videos([observation_list], output_prefix, ep_id)
+                make_videos([observation_list], output_prefix, suffix)
 
             if save_top_down_map:
-                make_videos([top_down_map_observation_list], "{}_top_down_map".format(output_prefix), ep_id)
+                make_videos([top_down_map_observation_list], "{}_top_down_map".format(output_prefix), suffix)
 
-            print("Total reward: {}, Success: {}, Steps: {}, Attempts: {}".format(total_reward, info["success"], len(reference_replay), episode.attempts))
+            print("Total reward: {}, Success: {}, DTG: {}, Steps: {}, Attempts: {}".format(total_reward, info["success"], info["distance_to_goal"], len(reference_replay), episode.attempts))
             if "top_down_map" in info:
                 del info["top_down_map"]
+
+            if "behavior_metrics" in info:
                 del info["behavior_metrics"]
 
             episode_meta.append({
@@ -283,7 +289,7 @@ def main():
         "--baseline", type=str, default="demo"
     )
     parser.add_argument(
-        "--specific-episode-id", type=str, default="ziup5kvtCCR_26_[5.47169, 0.02122, 2.32604]_plant.png"
+        "--specific-episode-id", type=str, default=None
     )
     args = parser.parse_args()
     cfg = config
@@ -301,8 +307,8 @@ def main():
     cfg.TASK.SIMPLE_REWARD.USE_DTG_REWARD = False
     cfg.TASK.SIMPLE_REWARD.USE_ANGLE_SUCCESS_REWARD = True
     cfg.DATASET.TYPE = "ObjectNav-v1"
-    cfg.DATASET.CONTENT_SCENES = ["svBbv1Pavdk", "Dd4bFSTQ8gi", "QaLdnwvtxbs", "ziup5kvtCCR", "5cdEh9F2hJL", "mv2HUxq3B53", "Nfvxx8J5NCo"]
-    cfg.DATASET.CONTENT_SCENES = ["zt1RVoi7PcG"]
+    # cfg.DATASET.CONTENT_SCENES = ["svBbv1Pavdk", "Dd4bFSTQ8gi", "QaLdnwvtxbs", "ziup5kvtCCR", "5cdEh9F2hJL", "mv2HUxq3B53", "Nfvxx8J5NCo"]
+    # cfg.DATASET.CONTENT_SCENES = ["4ok3usBNeis"]
     cfg.freeze()
 
     run_reference_replay(
