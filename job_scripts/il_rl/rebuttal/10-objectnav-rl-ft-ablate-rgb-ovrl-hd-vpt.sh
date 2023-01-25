@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH --job-name=onav_ilrl
 #SBATCH --gres gpu:8
-#SBATCH --nodes 1
+#SBATCH --nodes 2
 #SBATCH --cpus-per-task 10
 #SBATCH --ntasks-per-node 8
 #SBATCH --signal=USR1@300
@@ -38,8 +38,8 @@ SENSORS "['RGB_SENSOR']" \
 TENSORBOARD_DIR $TENSORBOARD_DIR \
 CHECKPOINT_FOLDER $CHECKPOINT_DIR \
 NUM_UPDATES 40000 \
-NUM_PROCESSES 16 \
-RL.PPO.num_mini_batch 4 \
+NUM_PROCESSES 8 \
+RL.PPO.num_mini_batch 2 \
 RL.DDPPO.pretrained_weights $PRETRAINED_WEIGHTS \
 RL.DDPPO.distrib_backend "NCCL" \
 RL.Finetune.start_actor_finetuning_at 0 \
