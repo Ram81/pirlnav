@@ -24,8 +24,8 @@ export MASTER_ADDR
 
 config="habitat_baselines/config/objectnav/il_rl/ddppo_rgb_ovrl_ft_objectnav.yaml"
 
-TENSORBOARD_DIR="tb/objectnav_il_rl_ft/ddppo_hm3d_pt_20k/rgb_ovrl_with_augs/sparse_reward_ckpt_38_no_actor_decay/hm3d_v0_1_0/seed_1/"
-CHECKPOINT_DIR="data/new_checkpoints/objectnav_il_rl_ft/ddppo_hm3d_pt_20k/rgb_ovrl_with_augs/sparse_reward_ckpt_38_no_actor_decay/hm3d_v0_1_0/seed_1/"
+TENSORBOARD_DIR="tb/objectnav_il_rl_ft/ddppo_hm3d_pt_20k/rgb_ovrl_with_augs/sparse_reward_ckpt_38_no_critic_decay/hm3d_v0_1_0/seed_1/"
+CHECKPOINT_DIR="data/new_checkpoints/objectnav_il_rl_ft/ddppo_hm3d_pt_20k/rgb_ovrl_with_augs/sparse_reward_ckpt_38_no_critic_decay/hm3d_v0_1_0/seed_1/"
 DATA_PATH="data/datasets/objectnav/objectnav_hm3d/objectnav_hm3d_v1/"
 PRETRAINED_WEIGHTS="data/new_checkpoints/objectnav_il/objectnav_hm3d/objectnav_hm3d_20k/rgb_ovrl/seed_1/ckpt.38.pth"
 set -x
@@ -47,7 +47,7 @@ RL.Finetune.start_actor_finetuning_at 750 \
 RL.Finetune.actor_lr_warmup_update 1500 \
 RL.Finetune.start_critic_warmup_at 1000 \
 RL.Finetune.critic_lr_decay_update 1000 \
-RL.Finetune.policy_ft_lr 2.5e-4 \
+RL.Finetune.policy_ft_lr 1.5e-5 \
 RL.PPO.use_linear_lr_decay True \
 TASK_CONFIG.DATASET.SPLIT "train" \
 TASK_CONFIG.DATASET.DATA_PATH "$DATA_PATH/{split}/{split}.json.gz" \
