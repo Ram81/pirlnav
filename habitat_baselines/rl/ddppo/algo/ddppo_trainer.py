@@ -475,7 +475,9 @@ class DDPPOTrainer(PPOTrainer):
                     if self.config.RL.Finetune.unfreeze_encoders_after_warmup:
                         self.actor_critic.unfreeze_visual_encoders()
 
-                    for i, param_group in enumerate(self.agent.optimizer.param_groups[1:]):
+                    for i, param_group in enumerate(self.agent.optimizer.param_groups):
+                        if i == 0:
+                            continue
                         param_group["eps"] = self.config.RL.PPO.eps
                         lr_scheduler.base_lrs[i] = 1.0
 
