@@ -1,6 +1,6 @@
 # PIRLNav: Pretraining with Imitation and RL Finetuning for ObjectNav
 
-Code for our paper [PIRLNav: Pretraining with Imitation and RL Finetuning for ObjectNav](). 
+Code for our paper [PIRLNav: Pretraining with Imitation and RL Finetuning for ObjectNav](https://arxiv.org/pdf/2301.07302.pdf). 
 
 Ram Ramrakhya, Dhruv Batra, Erik Wijmans, Abhishek Das
 
@@ -150,10 +150,10 @@ We provide best checkpoints for agents trained on ObjectNav task with imitation 
 If you use this code in your research, please consider citing:
 
 ```
-@article{ramrakhya2023pirlnav,
+@inproceedings{ramrakhya2023pirlnav,
       title={PIRLNav: Pretraining with Imitation and RL Finetuning for ObjectNav},
       author={Ram Ramrakhya and Dhruv Batra and Erik Wijmans and Abhishek Das},
-      journal={arXiv preprint arXiv:2301.07302},
+      booktitle={CVPR},
       year={2023},
 }
 ```
