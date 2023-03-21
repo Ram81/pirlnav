@@ -137,6 +137,7 @@ class ObjectNavDatasetV2(PointNavDatasetV1):
                 episode["scene_id"] = "gibson_semantic/{}".format(episode["scene_id"].split("/")[-1])
 
             episode = ObjectGoalNavEpisode(**episode)
+            episode.episode_id = str(i)
             episode.start_position = list(map(float, episode.start_position))
             episode.start_rotation = list(map(float, episode.start_rotation))
 
