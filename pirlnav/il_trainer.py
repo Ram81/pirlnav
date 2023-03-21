@@ -610,7 +610,10 @@ class ILEnvDDPTrainer(PPOTrainer):
         self._setup_actor_critic_agent(il_cfg)
 
         if self.agent.actor_critic.should_load_agent_state:
-            self.agent.load_state_dict(ckpt_dict["state_dict"])
+            self.agent.load_state_dict({
+                k.replace("model.", "actor_critic."): v
+                for k, v in ckpt_dict["state_dict"].items()
+            })
         self.actor_critic = self.agent.actor_critic
 
         observations = self.envs.reset()
